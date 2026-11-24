@@ -6,13 +6,17 @@
     "bun": ">=1.4"
   },
   "dependencies": {
-    "image-size": "2.0.2",
+    "image-size": "2.0.3",
     "ipaddr.js": "2.3.0",
     "jsqr": "1.4.0",
     "pngjs": "7.0.0",
     "qrcode-terminal": "0.12.0",
-    "ws": "8.18.3",
+    "ws": "8.21.0",
     "zca-js": "2.3.0"
+  },
+  "overrides": {
+    "image-size": "2.0.3",
+    "ws": "8.21.0"
   },
   "devDependencies": {
     "@types/bun": "1.2.21",

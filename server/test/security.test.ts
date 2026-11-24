@@ -362,11 +362,18 @@ describe("messages", () => {
 describe("file modes", () => {
   test("cli serve leaves wal/shm and tmp owner-only", async () => {
     const dir = mkdtempSync(join(tmpdir(), "zalos-umask-"));
+    const childEnv: Record<string, string | undefined> = {
+      ...process.env,
+      ZALOS_DATA_DIR: dir,
+    };
+    // GitHub Actions / systemd-launched runners export INVOCATION_ID, which
+    // cli.ts treats as a production systemd unit and rejects --dev.
+    delete childEnv.INVOCATION_ID;
     const proc = Bun.spawn(
       ["bun", "src/cli.ts", "serve", "--dev", "--fake", "--port", "0"],
       {
         cwd: `${process.cwd()}`,
-        env: { ...process.env, ZALOS_DATA_DIR: dir },
+        env: childEnv,
         stdout: "pipe",
         stderr: "pipe",
       },
