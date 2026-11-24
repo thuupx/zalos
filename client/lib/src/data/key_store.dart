@@ -27,23 +27,113 @@ class MemoryKeyStore implements KeyStore {
 
 class SecureKeyStore implements KeyStore {
   const SecureKeyStore([this._storage = _secureStorage]);
-  // macOS: the data protection keychain is used in release builds where the
-  // keychain-access-groups entitlement is signed; debug builds fall back to
-  // the file-based keychain so they sign without a development profile.
+
+  // iOS: device-only keychain item accessible after first unlock (no iCloud/backup migration).
+  // macOS: data protection keychain in signed release builds, with automatic fallback to the
+  // login keychain when built without the keychain-access-groups entitlement.
+  static const _iosPrimaryOptions = IOSOptions(
+    accessibility: KeychainAccessibility.first_unlock_this_device,
+  );
+  static const _macosPrimaryOptions = MacOsOptions(
+    usesDataProtectionKeychain: kReleaseMode,
+  );
+  static const _macosFallbackOptions = MacOsOptions(
+    usesDataProtectionKeychain: false,
+  );
+  static const _legacyIosAccessibilities = [
+    KeychainAccessibility.unlocked,
+    KeychainAccessibility.unlocked_this_device,
+    KeychainAccessibility.first_unlock,
+    KeychainAccessibility.passcode,
+  ];
+
   static const _secureStorage = FlutterSecureStorage(
-    iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock_this_device),
-    mOptions: MacOsOptions(usesDataProtectionKeychain: kReleaseMode),
+    iOptions: _iosPrimaryOptions,
+    mOptions: _macosPrimaryOptions,
   );
   final FlutterSecureStorage _storage;
 
   @override
-  Future<String?> read(String key) => _storage.read(key: key);
+  Future<String?> read(String key) async {
+    try {
+      final value = await _storage.read(key: key);
+      if (value != null) return value;
+    } catch (_) {
+      // Fall through to legacy/fallback read on Apple keychains.
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.macOS) {
+        return _storage.read(key: key, mOptions: _macosFallbackOptions);
+      }
+      rethrow;
+    }
+
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+      // Seamless migration from older installs that wrote with default `unlocked` accessibility.
+      for (final acc in _legacyIosAccessibilities) {
+        try {
+          final legacyOpts = IOSOptions(accessibility: acc);
+          final legacyValue = await _storage.read(key: key, iOptions: legacyOpts);
+          if (legacyValue != null) {
+            try {
+              await _storage.delete(key: key, iOptions: legacyOpts);
+              await _storage.write(key: key, value: legacyValue);
+            } catch (_) {
+              // Keep returning the value even if in-place migration cannot complete yet.
+            }
+            return legacyValue;
+          }
+        } catch (_) {
+          // Ignore probe errors for non-matching legacy accessibility buckets.
+        }
+      }
+    }
+    return null;
+  }
 
   @override
-  Future<void> write(String key, String value) => _storage.write(key: key, value: value);
+  Future<void> write(String key, String value) async {
+    try {
+      await _storage.write(key: key, value: value);
+      return;
+    } catch (_) {
+      // On iOS, flutter_secure_storage queries `kSecAttrAccessible` when checking
+      // existence, so updating an item previously saved under `unlocked` fails
+      // SecItemAdd with errSecDuplicateItem (-25299) until the legacy item is deleted.
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+        await _deleteLegacyIosEntries(key);
+        await _storage.write(key: key, value: value);
+        return;
+      }
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.macOS && kReleaseMode) {
+        await _storage.write(key: key, value: value, mOptions: _macosFallbackOptions);
+        return;
+      }
+      rethrow;
+    }
+  }
 
   @override
-  Future<void> delete(String key) => _storage.delete(key: key);
+  Future<void> delete(String key) async {
+    try {
+      await _storage.delete(key: key);
+    } catch (_) {
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.macOS) {
+        await _storage.delete(key: key, mOptions: _macosFallbackOptions);
+      }
+    }
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+      await _deleteLegacyIosEntries(key);
+    }
+  }
+
+  Future<void> _deleteLegacyIosEntries(String key) async {
+    for (final acc in _legacyIosAccessibilities) {
+      try {
+        await _storage.delete(key: key, iOptions: IOSOptions(accessibility: acc));
+      } catch (_) {
+        // Best-effort cleanup of older accessibility entries.
+      }
+    }
+  }
 }
 
 /// Everything a paired device needs to reach its server again.
