@@ -6,8 +6,8 @@ pub struct Keypair {
 pub fn generate_keypair() -> Result<Keypair, String> {
     zalos_noise::generate_keypair()
         .map(|kp| Keypair {
-            public: kp.public,
-            private: kp.private,
+            public: kp.public.clone(),
+            private: kp.private.clone(),
         })
         .map_err(|e| e.to_string())
 }

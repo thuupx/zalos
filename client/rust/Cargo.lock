@@ -1249,6 +1249,7 @@ name = "zalos-noise"
 version = "0.1.0"
 dependencies = [
  "snow",
+ "zeroize",
 ]
 
 [[package]]
@@ -1259,6 +1260,7 @@ dependencies = [
  "hkdf 0.12.4",
  "hpke",
  "sha2 0.10.9",
+ "zeroize",
 ]
 
 [[package]]

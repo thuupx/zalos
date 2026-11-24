@@ -74,6 +74,8 @@
 	<string>zalos uses the microphone to record voice messages.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>zalos only requests location access if you choose to share your location or attach photos containing location metadata in chats.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>zalos uses Face ID to verify your identity before exporting recovery codes, pairing or revoking devices, or resetting your hidden chats PIN.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>

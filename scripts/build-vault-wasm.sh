@@ -8,3 +8,4 @@ wasm-pack build crates/zalos-vault-wasm \
   --target nodejs \
   --out-dir ../../server/vendor/zalos-vault \
   --out-name zalos_vault
+rm -f server/vendor/zalos-vault/.gitignore

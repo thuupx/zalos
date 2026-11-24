@@ -17,8 +17,8 @@ pub fn derive_public_key(root: &[u8], slot: &str) -> Result<Vec<u8>, String> {
 pub fn box_keypair() -> BoxKeypair {
     let kp = zalos_vault::box_keypair();
     BoxKeypair {
-        public: kp.public,
-        private: kp.private,
+        public: kp.public.clone(),
+        private: kp.private.clone(),
     }
 }
 

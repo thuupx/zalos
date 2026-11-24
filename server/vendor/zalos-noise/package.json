@@ -1,0 +1,13 @@
+{
+  "name": "zalos-noise-wasm",
+  "description": "wasm-bindgen bindings for zalos-noise",
+  "version": "0.1.0",
+  "license": "MIT",
+  "files": [
+    "zalos_noise_bg.wasm",
+    "zalos_noise.js",
+    "zalos_noise.d.ts"
+  ],
+  "main": "zalos_noise.js",
+  "types": "zalos_noise.d.ts"
+}

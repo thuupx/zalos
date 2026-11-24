@@ -18,7 +18,7 @@ pub fn derive_public_key(root: &[u8], slot: &str) -> Result<Vec<u8>, JsError> {
 pub fn box_keypair() -> Vec<u8> {
     let kp = zalos_vault::box_keypair();
     // public || private, 32 bytes each
-    let mut out = kp.public;
+    let mut out = kp.public.clone();
     out.extend_from_slice(&kp.private);
     out
 }

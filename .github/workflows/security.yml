@@ -20,7 +20,7 @@ jobs:
     name: Security & Cryptography Test Gate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -57,25 +57,25 @@ jobs:
     name: Vulnerability & Secret Scanning (SSDF PW.3 / RV.1)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: OSV-Scanner (Bun, Rust, Flutter lockfiles)
-        uses: google/osv-scanner-action/osv-scanner-action@v2
+        uses: google/osv-scanner-action/osv-scanner-action@v2.7.1
         with:
-          scan-args: >-
+          scan-args: |-
             --lockfile=server/bun.lock
             --lockfile=Cargo.lock
             --lockfile=client/pubspec.lock
 
       - name: Cargo Audit (Rust advisories)
-        uses: rustsec/audit-check@v2
+        uses: rustsec/audit-check@v2.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Gitleaks secret scan
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@v2.3.9
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -84,10 +84,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [security-tests]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Generate CycloneDX SBOM
-        uses: anchore/sbom-action@v0
+        uses: anchore/sbom-action@v0.24.4
         with:
           path: .
           format: cyclonedx-json
@@ -97,7 +97,7 @@ jobs:
         run: sha256sum zalos-sbom.cdx.json > SHA256SUMS.txt
 
       - name: Upload SBOM & checksums
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: zalos-ssdf-sbom
           path: |

@@ -1,0 +1,13 @@
+{
+  "name": "zalos-vault-wasm",
+  "description": "wasm-bindgen bindings for zalos-vault",
+  "version": "0.1.0",
+  "license": "MIT",
+  "files": [
+    "zalos_vault_bg.wasm",
+    "zalos_vault.js",
+    "zalos_vault.d.ts"
+  ],
+  "main": "zalos_vault.js",
+  "types": "zalos_vault.d.ts"
+}

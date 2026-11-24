@@ -8,3 +8,4 @@ wasm-pack build crates/zalos-noise-wasm \
   --target nodejs \
   --out-dir ../../server/vendor/zalos-noise \
   --out-name zalos_noise
+rm -f server/vendor/zalos-noise/.gitignore
