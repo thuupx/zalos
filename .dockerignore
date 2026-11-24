@@ -1,0 +1,14 @@
+.git
+client
+crates
+rust
+docs
+scripts
+server/node_modules
+server/data
+server/spike
+server/test/*
+!server/test/support
+deploy/*
+!deploy/docker
+*.md

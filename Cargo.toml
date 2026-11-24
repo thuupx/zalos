@@ -1,0 +1,12 @@
+[workspace]
+resolver = "2"
+members = [
+  "crates/zalos-noise",
+  "crates/zalos-noise-wasm",
+  "crates/zalos-vault",
+  "crates/zalos-vault-wasm",
+]
+
+[workspace.package]
+edition = "2021"
+license = "MIT"

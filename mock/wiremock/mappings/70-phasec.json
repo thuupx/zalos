@@ -1,0 +1,516 @@
+{
+  "mappings": [
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/friend-wpa.chat.zalo.me/api/friend/profile/get"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": {
+              "avatar": "https://avatar-mock.zdn.vn/u777000222.jpg",
+              "cover": "https://cover-mock.zdn.vn/u777000222.jpg",
+              "status": "",
+              "gender": 1,
+              "dob": 631152000,
+              "sdob": "01/01/1990",
+              "globalId": "777000222",
+              "bizPkg": { "pkgId": 0 },
+              "uid": "777000222",
+              "zalo_name": "Trần Thị Hoa",
+              "display_name": "Trần Thị Hoa"
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/friend-wpa.chat.zalo.me/api/friend/search/by-user-name"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": {
+              "avatar": "https://avatar-mock.zdn.vn/u777000333.jpg",
+              "cover": "https://cover-mock.zdn.vn/u777000333.jpg",
+              "status": "",
+              "gender": 0,
+              "dob": 662688000,
+              "sdob": "01/01/1991",
+              "globalId": "777000333",
+              "bizPkg": { "pkgId": 0 },
+              "uid": "777000333",
+              "zalo_name": "Lê Quốc Bảo",
+              "display_name": "Lê Quốc Bảo"
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/friend-wpa.chat.zalo.me/api/friend/sendreq"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": ""
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/friend-wpa.chat.zalo.me/api/friend/reqstatus"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": {
+              "addFriendPrivacy": 0,
+              "isSeenFriendReq": true,
+              "is_friend": 0,
+              "is_requested": 1,
+              "is_requesting": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/friend-wpa.chat.zalo.me/api/friend/recommendsv2/list"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": {
+              "expiredDuration": 0,
+              "collapseMsgListConfig": {
+                "collapseId": 0,
+                "collapseXItem": 0,
+                "collapseYItem": 0
+              },
+              "recommItems": [
+                {
+                  "recommItemType": 1,
+                  "dataInfo": {
+                    "userId": "777000444",
+                    "zaloName": "Phạm Minh Đức",
+                    "displayName": "Phạm Minh Đức",
+                    "avatar": "https://avatar-mock.zdn.vn/u777000444.jpg",
+                    "phoneNumber": "0912000003",
+                    "status": "",
+                    "gender": 0,
+                    "dob": 694224000,
+                    "type": 1,
+                    "recommType": 2,
+                    "recommSrc": 0,
+                    "recommTime": 1700000000000,
+                    "recommInfo": {
+                      "suggestWay": 0,
+                      "source": 0,
+                      "message": "Xin chào, mình là Đức",
+                      "customText": null
+                    },
+                    "bizPkg": { "pkgId": 0 },
+                    "isSeenFriendReq": false
+                  }
+                },
+                {
+                  "recommItemType": 1,
+                  "dataInfo": {
+                    "userId": "777000555",
+                    "zaloName": "Vũ Thu Hằng",
+                    "displayName": "Vũ Thu Hằng",
+                    "avatar": "https://avatar-mock.zdn.vn/u777000555.jpg",
+                    "phoneNumber": "0912000004",
+                    "status": "",
+                    "gender": 1,
+                    "dob": 725760000,
+                    "type": 1,
+                    "recommType": 1,
+                    "recommSrc": 0,
+                    "recommTime": 1700000000000,
+                    "recommInfo": {
+                      "suggestWay": 0,
+                      "source": 0,
+                      "message": "Có 5 bạn chung",
+                      "customText": null
+                    },
+                    "bizPkg": { "pkgId": 0 },
+                    "isSeenFriendReq": false
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/friend-wpa.chat.zalo.me/api/friend/requested/list"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": {
+              "777000666": {
+                "userId": "777000666",
+                "zaloName": "Đỗ Anh Tuấn",
+                "displayName": "Đỗ Anh Tuấn",
+                "avatar": "https://avatar-mock.zdn.vn/u777000666.jpg",
+                "globalId": "777000666",
+                "bizPkg": { "pkgId": 0 },
+                "fReqInfo": {
+                  "message": "Kết bạn nhé",
+                  "src": 30,
+                  "time": 1700000000000
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/friend-wpa.chat.zalo.me/api/friend/undo"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": ""
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/friend-wpa.chat.zalo.me/api/friend/accept"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": ""
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/friend-wpa.chat.zalo.me/api/friend/reject"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": ""
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/friend-wpa.chat.zalo.me/api/friend/remove"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": ""
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/friend-wpa.chat.zalo.me/api/friend/block"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": ""
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/friend-wpa.chat.zalo.me/api/friend/unblock"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": ""
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/friend-wpa.chat.zalo.me/api/friend/mget-qr"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": {
+              "777000111": "https://qr-talk.zdn.vn/mock/777000111.png",
+              "777000222": "https://qr-talk.zdn.vn/mock/777000222.png",
+              "777000333": "https://qr-talk.zdn.vn/mock/777000333.png",
+              "777000444": "https://qr-talk.zdn.vn/mock/777000444.png",
+              "777000555": "https://qr-talk.zdn.vn/mock/777000555.png",
+              "777000666": "https://qr-talk.zdn.vn/mock/777000666.png"
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/alias-wpa.chat.zalo.me/api/alias/list"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": {
+              "items": [
+                { "userId": "777000222", "alias": "Hoa" },
+                { "userId": "777000333", "alias": "Bảo" }
+              ],
+              "updateTime": "1700000000000"
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/alias-wpa.chat.zalo.me/api/alias/update"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": ""
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/alias-wpa.chat.zalo.me/api/alias/remove"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": ""
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/profile-wpa.chat.zalo.me/api/social/friend/onlines"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": {
+              "predefine": [],
+              "ownerStatus": "online",
+              "onlines": [
+                {
+                  "userId": "777000222",
+                  "status": "{\"status\":\"online\"}"
+                },
+                {
+                  "userId": "777000333",
+                  "status": "{\"status\":\"offline\"}"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/profile-wpa.chat.zalo.me/api/social/friend/getclosedfriends"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": [
+              {
+                "userId": "777000222",
+                "username": "",
+                "displayName": "Trần Thị Hoa",
+                "zaloName": "Trần Thị Hoa",
+                "avatar": "https://avatar-mock.zdn.vn/u777000222.jpg",
+                "bgavatar": "",
+                "cover": "",
+                "gender": 1,
+                "dob": 631152000,
+                "sdob": "01/01/1990",
+                "status": "",
+                "phoneNumber": "",
+                "isFr": 1,
+                "isBlocked": 0,
+                "lastActionTime": 1700000000000,
+                "lastUpdateTime": 1700000000000,
+                "isActive": 1,
+                "key": 0,
+                "type": 1,
+                "isActivePC": 0,
+                "isActiveWeb": 0,
+                "isValid": 1,
+                "userKey": "",
+                "accountStatus": 0,
+                "oaInfo": null,
+                "user_mode": 0,
+                "globalId": "777000222",
+                "bizPkg": { "pkgId": 0 },
+                "createdTs": 0,
+                "oa_status": null
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/profile-wpa.chat.zalo.me/api/social/profile/lastOnline"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": {
+              "settings": { "show_online_status": true },
+              "lastOnline": 1700000000000
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/profile-wpa.chat.zalo.me/api/report/abuse-v2"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "body": "{\"data\":{\"error_code\":0,\"error_message\":\"Success\",\"data\":{\"reportId\":\"report-mock-{{randomValue length=8 type='NUMERIC'}}\"}}}",
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/profile-wpa.chat.zalo.me/api/social/profile/reportabuse"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "body": "{\"data\":{\"error_code\":0,\"error_message\":\"Success\",\"data\":{\"reportId\":\"report-mock-{{randomValue length=8 type='NUMERIC'}}\"}}}",
+        "transformers": ["response-template"]
+      }
+    }
+  ]
+}

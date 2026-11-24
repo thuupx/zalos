@@ -1,0 +1,172 @@
+{
+  "mappings": [
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/avatar-mock\\.zdn\\.vn/(.+/)?(bk-)?u777000111\\.jpg"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "image/jpeg"
+        },
+        "bodyFileName": "avatars/u777000111.jpg"
+      },
+      "priority": 1
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/avatar-mock\\.zdn\\.vn/(.+/)?(bk-)?u777000222\\.jpg"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "image/jpeg"
+        },
+        "bodyFileName": "avatars/u777000222.jpg"
+      },
+      "priority": 1
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/avatar-mock\\.zdn\\.vn/(.+/)?(bk-)?u777000333\\.jpg"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "image/jpeg"
+        },
+        "bodyFileName": "avatars/u777000333.jpg"
+      },
+      "priority": 1
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/avatar-mock\\.zdn\\.vn/(.+/)?(bk-)?u777000444\\.jpg"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "image/jpeg"
+        },
+        "bodyFileName": "avatars/u777000444.jpg"
+      },
+      "priority": 1
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/avatar-mock\\.zdn\\.vn/(.+/)?(bk-)?u777000555\\.jpg"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "image/jpeg"
+        },
+        "bodyFileName": "avatars/u777000555.jpg"
+      },
+      "priority": 1
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/avatar-mock\\.zdn\\.vn/(.+/)?(bk-)?u777000666\\.jpg"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "image/jpeg"
+        },
+        "bodyFileName": "avatars/u777000666.jpg"
+      },
+      "priority": 1
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/avatar-mock\\.zdn\\.vn/(.+/)?(bk-)?g880000111\\.jpg"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "image/jpeg"
+        },
+        "bodyFileName": "avatars/g880000111.jpg"
+      },
+      "priority": 1
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/avatar-mock\\.zdn\\.vn/(.+/)?(bk-)?g880000222\\.jpg"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "image/jpeg"
+        },
+        "bodyFileName": "avatars/g880000222.jpg"
+      },
+      "priority": 1
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/avatar-mock\\.zdn\\.vn/(.+/)?(bk-)?oa9001\\.jpg"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "image/jpeg"
+        },
+        "bodyFileName": "avatars/oa9001.jpg"
+      },
+      "priority": 1
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/avatar-mock\\.zdn\\.vn/(.+/)?(bk-)?oa-u-1\\.jpg"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "image/jpeg"
+        },
+        "bodyFileName": "avatars/oa-u-1.jpg"
+      },
+      "priority": 1
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/avatar-mock\\.zdn\\.vn/(.+/)?(bk-)?oa-u-2\\.jpg"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "image/jpeg"
+        },
+        "bodyFileName": "avatars/oa-u-2.jpg"
+      },
+      "priority": 1
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/avatar-mock\\.zdn\\.vn/.*"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "image/jpeg"
+        },
+        "bodyFileName": "avatars/default.jpg"
+      },
+      "priority": 10
+    }
+  ]
+}

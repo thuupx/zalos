@@ -1,0 +1,239 @@
+{
+  "mappings": [
+    {
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "/.*/api/pinconvers/updatev2"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": true
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/.*/api/pinconvers/list"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": {
+              "conversations": []
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "/.*/api/conv/(addUnreadMark|removeUnreadMark)"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": { "data": "{}", "status": 0 }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/.*/api/conv/getUnreadMark"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": { "data": "{}", "status": 0 }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "/.*/api/social/profile/setmute"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": true
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/.*/api/social/profile/getmute"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": { "listMute": [] }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "/.*/api/(message|group)/deleteconver"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": true
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "/.*/api/(message|group)/mforward"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": {
+              "msgId": "{{randomValue length=12 type='NUMERIC'}}",
+              "clientId": "{{randomValue length=12 type='NUMERIC'}}"
+            }
+          }
+        },
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/.*/api/social/group/members"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": {
+              "profiles": {
+                "777000111_0": {
+                  "displayName": "Nguyễn Văn Minh",
+                  "zaloName": "Nguyễn Văn Minh",
+                  "avatar": "https://avatar-mock.zdn.vn/u777000111.jpg"
+                },
+                "777000222_0": {
+                  "displayName": "Trần Thị Hoa",
+                  "zaloName": "Trần Thị Hoa",
+                  "avatar": "https://avatar-mock.zdn.vn/u777000222.jpg"
+                },
+                "777000333_0": {
+                  "displayName": "Lê Quốc Bảo",
+                  "zaloName": "Lê Quốc Bảo",
+                  "avatar": "https://avatar-mock.zdn.vn/u777000333.jpg"
+                },
+                "777000444_0": {
+                  "displayName": "Phạm Minh Đức",
+                  "zaloName": "Phạm Minh Đức",
+                  "avatar": "https://avatar-mock.zdn.vn/u777000444.jpg"
+                },
+                "777000555_0": {
+                  "displayName": "Vũ Thu Hằng",
+                  "zaloName": "Vũ Thu Hằng",
+                  "avatar": "https://avatar-mock.zdn.vn/u777000555.jpg"
+                },
+                "777000666_0": {
+                  "displayName": "Đỗ Anh Tuấn",
+                  "zaloName": "Đỗ Anh Tuấn",
+                  "avatar": "https://avatar-mock.zdn.vn/u777000666.jpg"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/.*/keepalive"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": true
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/id.zalo.me/jr/logout-token"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "jsonBody": {
+          "error_code": 0,
+          "error_message": "Success",
+          "data": { "token": "mock-logout-token" }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/id.zalo.me/account/logout"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "text/html" },
+        "body": "<html><script>var listSetSidUrls : [];</script></html>"
+      }
+    }
+  ]
+}

@@ -1,0 +1,126 @@
+{
+  "mappings": [
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/mock-media\\.za?dn\\.vn/files/img-(normal|hd|thumb)\\.jpg.*"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "image/jpeg"
+        },
+        "bodyFileName": "sample.jpg"
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/mock-media\\.za?dn\\.vn/files/(doc|upload)\\.bin"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/octet-stream"
+        },
+        "bodyFileName": "sample.bin"
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/mock-media\\.za?dn\\.vn/media/.*"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/octet-stream"
+        },
+        "bodyFileName": "sample.bin"
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/mock-media\\.za?dn\\.vn/files/gif-thumb\\.jpg"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "image/jpeg"
+        },
+        "bodyFileName": "gif-thumb.jpg"
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/mock-media\\.za?dn\\.vn/stickers/12001\\.png"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "image/png"
+        },
+        "bodyFileName": "stickers/12001.png"
+      },
+      "priority": 1
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/mock-media\\.za?dn\\.vn/stickers/12002\\.png"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "image/png"
+        },
+        "bodyFileName": "stickers/12002.png"
+      },
+      "priority": 1
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/mock-media\\.za?dn\\.vn/stickers/12003\\.png"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "image/png"
+        },
+        "bodyFileName": "stickers/12003.png"
+      },
+      "priority": 1
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/mock-media\\.za?dn\\.vn/stickers/s\\.png"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "image/png"
+        },
+        "bodyFileName": "stickers/s.png"
+      },
+      "priority": 1
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/mock-media\\.za?dn\\.vn/stickers/.*\\.png"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "image/png"
+        },
+        "bodyFileName": "stickers/12001.png"
+      },
+      "priority": 10
+    }
+  ]
+}

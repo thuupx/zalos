@@ -1,0 +1,16 @@
+[package]
+name = "zalos-vault-wasm"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "wasm-bindgen bindings for zalos-vault"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+zalos-vault = { path = "../zalos-vault" }
+wasm-bindgen = "=0.2.108"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom = { version = "=0.3.4", features = ["wasm_js"] }

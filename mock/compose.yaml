@@ -1,0 +1,43 @@
+# Offline mock of the Zalo backend for development and e2e tests.
+# wiremock holds plaintext JSON stubs; the gateway does the crypto and
+# WebSocket work the real backend does. See mock/README.md.
+services:
+  wiremock:
+    image: wiremock/wiremock:3.13.1@sha256:d61e7720f89483fdef5366843b58d1dfd06bcce5828179c9f2f54de5c28354b0
+    command:
+      - --verbose=false
+    volumes:
+      - ./wiremock/mappings:/home/wiremock/mappings:ro
+      - ./wiremock/__files:/home/wiremock/__files:ro
+    networks:
+      - mock
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/__admin/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+
+  gateway:
+    build:
+      context: ./gateway
+    environment:
+      MOCK_PORT: "7355"
+      WIREMOCK_URL: http://wiremock:8080
+      MOCK_SESSION_KEY: MDEyMzQ1Njc4OUFCQ0RFRg==
+    ports:
+      - "127.0.0.1:7355:7355"
+    depends_on:
+      wiremock:
+        condition: service_healthy
+    networks:
+      - mock
+    healthcheck:
+      test: ["CMD", "bun", "-e", "const r=await fetch('http://localhost:7355/healthz');if(!r.ok)process.exit(1)"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+networks:
+  mock:
+    driver: bridge

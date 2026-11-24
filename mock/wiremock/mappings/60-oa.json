@@ -1,0 +1,188 @@
+{
+  "mappings": [
+    {
+      "priority": 10,
+      "request": {
+        "method": "GET",
+        "urlPath": "/openapi.zalo.me/v3.0/oa/getoa"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "error": 0,
+          "message": "",
+          "data": {
+            "oa_id": "oa-9001",
+            "name": "Quán Cà Phê Sáng",
+            "avatar": "https://avatar-mock.zdn.vn/oa9001.jpg",
+            "description": "Cà phê mang đi mỗi sáng",
+            "num_follower": 2
+          }
+        }
+      }
+    },
+    {
+      "priority": 10,
+      "request": {
+        "method": "GET",
+        "urlPath": "/openapi.zalo.me/v3.0/oa/user/detail",
+        "queryParameters": {
+          "data": { "contains": "oa-u-1" }
+        }
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "error": 0,
+          "message": "",
+          "data": {
+            "user_id": "oa-u-1",
+            "display_name": "Ngô Thu Trang",
+            "avatar": "https://avatar-mock.zdn.vn/oa-u-1.jpg",
+            "user_is_follower": true
+          }
+        }
+      }
+    },
+    {
+      "priority": 10,
+      "request": {
+        "method": "GET",
+        "urlPath": "/openapi.zalo.me/v3.0/oa/user/detail",
+        "queryParameters": {
+          "data": { "contains": "oa-u-2" }
+        }
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "error": 0,
+          "message": "",
+          "data": {
+            "user_id": "oa-u-2",
+            "display_name": "Bùi Hải Nam",
+            "avatar": "https://avatar-mock.zdn.vn/oa-u-2.jpg",
+            "user_is_follower": true
+          }
+        }
+      }
+    },
+    {
+      "priority": 15,
+      "request": {
+        "method": "GET",
+        "urlPath": "/openapi.zalo.me/v3.0/oa/user/detail"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "error": 0,
+          "message": "",
+          "data": {
+            "display_name": "",
+            "avatar": ""
+          }
+        }
+      }
+    },
+    {
+      "priority": 10,
+      "request": {
+        "method": "GET",
+        "urlPath": "/openapi.zalo.me/v2.0/oa/getfollowers"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "error": 0,
+          "message": "",
+          "data": {
+            "total": 2,
+            "followers": [
+              {
+                "user_id": "oa-u-1",
+                "display_name": "Ngô Thu Trang",
+                "avatar": "https://avatar-mock.zdn.vn/oa-u-1.jpg"
+              },
+              {
+                "user_id": "oa-u-2",
+                "display_name": "Bùi Hải Nam",
+                "avatar": "https://avatar-mock.zdn.vn/oa-u-2.jpg"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "priority": 10,
+      "request": {
+        "method": "POST",
+        "urlPath": "/openapi.zalo.me/v2.0/oa/upload/image"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "error": 0,
+          "message": "",
+          "data": { "attachment_id": "att-img-1" }
+        }
+      }
+    },
+    {
+      "priority": 10,
+      "request": {
+        "method": "POST",
+        "urlPath": "/openapi.zalo.me/v2.0/oa/upload/file"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "error": 0,
+          "message": "",
+          "data": { "attachment_id": "att-file-1" }
+        }
+      }
+    },
+    {
+      "priority": 10,
+      "request": {
+        "method": "POST",
+        "urlPath": "/openapi.zalo.me/v3.0/oa/message/cs",
+        "bodyPatterns": [{ "contains": "u-rate" }]
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": { "error": -32, "message": "rate limit" }
+      }
+    },
+    {
+      "priority": 10,
+      "request": {
+        "method": "POST",
+        "urlPath": "/openapi.zalo.me/v3.0/oa/message/cs",
+        "bodyPatterns": [{ "contains": "u-quota" }]
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": { "error": -211, "message": "out of quota" }
+      }
+    },
+    {
+      "priority": 15,
+      "request": {
+        "method": "POST",
+        "urlPath": "/openapi.zalo.me/v3.0/oa/message/cs"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "error": 0,
+          "message": "",
+          "data": { "message_id": "oam-srv-{{randomValue length=10 type='NUMERIC'}}" }
+        },
+        "transformers": ["response-template"]
+      }
+    }
+  ]
+}

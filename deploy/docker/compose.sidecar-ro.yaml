@@ -1,0 +1,14 @@
+# Hardened sidecar overlay: separates the application from Tailscale's
+# write-capable LocalAPI control socket.
+#
+# Usage:
+#   docker compose -f compose.yaml -f compose.sidecar-ro.yaml up -d
+#
+# The `zalos` container receives only the pre-discovered Tailscale IPv4 address
+# via ZALOS_TAILSCALE_IP (or --host) and never mounts tailscaled.sock.
+services:
+  zalos:
+    environment:
+      ZALOS_TAILSCALE_SOCKET: ""
+    volumes:
+      - zalos-data:/var/lib/zalos

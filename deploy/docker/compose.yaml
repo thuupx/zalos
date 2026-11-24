@@ -1,0 +1,70 @@
+name: zalos
+
+# Two containers share one network namespace and publish no ports: the
+# server is reachable only over the tailnet.
+
+services:
+  tailscale:
+    image: tailscale/tailscale:v1.104.4@sha256:ed6480b33c6eb67c9cbd203ed42b9fb57e361986725b6856def71b7a3d9e276c
+    environment:
+      TS_USERSPACE: "false"
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_HOSTNAME: ${TS_HOSTNAME:-zalos}
+      TS_AUTHKEY: ${TS_AUTHKEY:-}
+      TS_SOCKET: /var/run/tailscale/tailscaled.sock
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    volumes:
+      - ts-state:/var/lib/tailscale
+      - ts-socket:/var/run/tailscale
+    healthcheck:
+      test:
+        - CMD
+        - tailscale
+        - --socket
+        - /var/run/tailscale/tailscaled.sock
+        - status
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+    init: true
+
+  zalos:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    image: zalos:local
+    network_mode: service:tailscale
+    depends_on:
+      tailscale:
+        condition: service_started
+    environment:
+      ZALOS_DATA_DIR: /var/lib/zalos
+      ZALOS_UPLOAD_TMP_DIR: /tmp/zalos-uploads
+      ZALOS_TAILSCALE_SOCKET: /var/run/tailscale/tailscaled.sock
+      ZALOS_PORT: ${ZALOS_PORT:-7443}
+      TZ: ${TZ:-Asia/Ho_Chi_Minh}
+    volumes:
+      - zalos-data:/var/lib/zalos
+      - ts-socket:/var/run/tailscale
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,noexec,nosuid,mode=0700
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    pids_limit: 256
+    cpus: "1.0"
+    restart: unless-stopped
+    init: true
+
+volumes:
+  ts-state:
+  ts-socket:
+  zalos-data:

@@ -1,0 +1,10 @@
+{
+  "name": "zalo-mock-gateway",
+  "version": "0.1.0",
+  "type": "module",
+  "engines": { "bun": ">=1.4" },
+  "scripts": {
+    "start": "bun src/index.ts",
+    "test": "bun test"
+  }
+}

@@ -1,0 +1,41 @@
+name: zalos-local
+
+# Development variant: no Tailscale sidecar. The server binds 0.0.0.0
+# inside the container and the only protection is that the port is
+# published on host loopback only. Use compose.yaml for real deployment.
+
+services:
+  zalos:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    image: zalos:local
+    command: ["zalos", "serve", "--local"]
+    ports:
+      - "${ZALOS_BIND_HOST:-127.0.0.1}:${ZALOS_PORT:-7443}:7443"
+    environment:
+      ZALOS_DATA_DIR: /var/lib/zalos
+      ZALOS_UPLOAD_TMP_DIR: /tmp/zalos-uploads
+      ZALOS_CONTAINER: "1"
+      ZALOS_ALLOW_LOCAL: "1"
+      ZALOS_PORT: "7443"
+      ZALOS_PUBLIC_HOST: ${ZALOS_PUBLIC_HOST:-127.0.0.1}
+      ZALOS_PUBLIC_PORT: ${ZALOS_PUBLIC_PORT:-7443}
+      TZ: ${TZ:-Asia/Ho_Chi_Minh}
+    volumes:
+      - zalos-data-local:/var/lib/zalos
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,noexec,nosuid,mode=0700
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    pids_limit: 256
+    cpus: "1.0"
+    restart: unless-stopped
+    init: true
+
+volumes:
+  zalos-data-local:

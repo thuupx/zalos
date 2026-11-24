@@ -1,0 +1,203 @@
+{
+  "mappings": [
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/id.zalo.me/account"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "text/html; charset=utf-8"
+        },
+        "body": "<html><head><script src=\"https://stc-zlogin.zdn.vn/main-9.9.9.js\"></script></head><body>mock login page</body></html>"
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/id.zalo.me/account/logininfo"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "set-cookie": "zpw_sek=mocksek123; Domain=zalo.me; Path=/"
+        },
+        "jsonBody": {
+          "error_code": 0,
+          "error_message": "",
+          "data": {}
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/id.zalo.me/account/verify-client"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "error_code": 0,
+          "error_message": "",
+          "data": {}
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/id.zalo.me/account/authen/qr/generate"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{\"error_code\": 0, \"error_message\": \"\", \"data\": {\"code\": \"MOCKQR-CODE-1\", \"image\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMYAAADGCAYAAACJm/9dAAAAAklEQVR4AewaftIAAASiSURBVO3BQQ4jyREEQY8E///l0FwXWTtACU2QlNws/QNJ/zBIWgZJyyBpGSQtg6RlkLQMkpZB0jJIWgZJyyBpGSQtg6RlkLQMkpZB0jJIWgZJyyBpGSQtg6RlkLQMkpYXb5aEX9CWkyTcaMtJEk7acpKEG215QhJ+QVveaZC0DJKWQdIySFoGScuLD2nLJyThmyThRltuJOGkLTfa8glJ+IRB0jJIWgZJyyBpGSQtL75MEp7QlndqyxPacpKEJ7TlnZLwhLZ8k0HSMkhaBknLIGkZJC0v9FdtOUnCjbacJOEJSbjRFv27QdIySFoGScsgaRkkLS/0V0m40ZYntOUkCSdtOUmC7g2SlkHSMkhaBknLIGl58WXa8k3aciMJN9ryTm15p7b8LxokLYOkZZC0DJKWQdLy4kOS8AuScNKWG205ScJJW56QhJO23EjC/5NB0jJIWgZJyyBpGSQt6R/oMUm40ZaTJJy05SQJJ23RvUHSMkhaBknLIGkZJC0v3iwJJ225kYRv0pYnJOGkLU9Iwo223EjCSVtOkvCEtrzTIGkZJC2DpGWQtAySlhdv1pYbSbjRlick4aQtJ0m40ZYbSXhCW56QhE9oyycMkpZB0jJIWgZJyyBpSf/gA5Jw0pYbSfgmbfmEJNxoy40kPKEtN5Jw0pZ3GiQtg6RlkLQMkpZB0vLizZJwIwk32vIJSXhCEk7acpKEk7bcSMI7teUkCb9gkLQMkpZB0jJIWgZJy4s3a8s7JeGkLSdJOGnLSRKekISTtpwk4QlJOGnLSRJutOUkCSdt+QWDpGWQtAySlkHSMkha0j94oyQ8oS03knDSlpMknLTlJAknbbmRhBttOUnCSVuekIR3ass3GSQtg6RlkLQMkpZB0pL+wRsl4Z3aciMJN9pyIwknbbmRhJO2nCThCW25kYSTtpwk4QlteadB0jJIWgZJyyBpGSQtLz6kLU9IwklbTtpyIwknbXlCEk7acpKEG205ScIT2nKShBtt+SaDpGWQtAySlkHSMkhaXvyIJJy05SQJT2jLE5LwTm05ScKNJHxCEk7a8gmDpGWQtAySlkHSMkhaXrxZW57QlhtteUIS3qktn9CWJyThRlt+wSBpGSQtg6RlkLQMkpYXb5aEX9CWG205ScJJW06S8E2ScNKWG205ScJJW06ScNKWdxokLYOkZZC0DJKWQdLy4kPa8glJeEISbiThpC0nSbiRhCe05QlJOGnLLxgkLYOkZZC0DJKWQdLy4ssk4Qlteae2nCThRhJutOUkCTeS8E2S8E0GScsgaRkkLYOkZZC0vNB/JQknbbmRhJO2nCThE9pyIwm/bJC0DJKWQdIySFoGScsL/VVbbiThl7XlJAk32nKShF8wSFoGScsgaRkkLYOk5cWXaYv+XVveKQlPSMIvGyQtg6RlkLQMkpZB0vLiQ5LwC5Jw0pYntOUkCTfacpKEk7actOUkCU9oy40kfMIgaRkkLYOkZZC0DJKW9A8k/cMgaRkkLYOkZZC0DJKWQdIySFoGScsgaRkkLYOkZZC0DJKWQdIySFoGScsgaRkkLYOkZZC0DJKWQdIySFr+A+I0gaVsGAgKAAAAAElFTkSuQmCC\"}}"
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/id.zalo.me/account/authen/qr/waiting-scan"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "error_code": 8,
+          "error_message": "waiting"
+        },
+        "headers": {
+          "set-cookie": "zpw_sek=mocksek123; Domain=zalo.me; Path=/"
+        }
+      },
+      "scenarioName": "zalo-qr",
+      "requiredScenarioState": "Started"
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/id.zalo.me/account/authen/qr/waiting-scan"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "error_code": 0,
+          "error_message": "",
+          "data": {
+            "display_name": "Nguy\u1ec5n V\u0103n Minh",
+            "avatar": "https://avatar-mock.zdn.vn/u777000111.jpg",
+            "uid": "777000111"
+          }
+        },
+        "headers": {
+          "set-cookie": "zpsid=mockzpsid; Domain=zalo.me; Path=/"
+        }
+      },
+      "scenarioName": "zalo-qr",
+      "requiredScenarioState": "scanned"
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/id.zalo.me/account/authen/qr/waiting-scan"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "error_code": -2,
+          "error_message": "qr expired"
+        }
+      },
+      "scenarioName": "zalo-qr",
+      "requiredScenarioState": "expired"
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/id.zalo.me/account/authen/qr/waiting-confirm"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "error_code": 8,
+          "error_message": "waiting confirm"
+        }
+      },
+      "scenarioName": "zalo-qr",
+      "requiredScenarioState": "scanned"
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/id.zalo.me/account/authen/qr/waiting-confirm"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "error_code": 0,
+          "error_message": ""
+        },
+        "headers": {
+          "set-cookie": "zpw_sek=mocksek123; Domain=zalo.me; Path=/"
+        }
+      },
+      "scenarioName": "zalo-qr",
+      "requiredScenarioState": "confirmed"
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/id.zalo.me/account/authen/qr/waiting-confirm"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "error_code": -13,
+          "error_message": "declined"
+        }
+      },
+      "scenarioName": "zalo-qr",
+      "requiredScenarioState": "declined"
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/id.zalo.me/account/checksession"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "set-cookie": "zpw_sek=mocksek123; Domain=zalo.me; Path=/",
+          "content-type": "text/html"
+        },
+        "body": "<html><body>session ok</body></html>"
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/jr.chat.zalo.me/jr/userinfo"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "error_code": 0,
+          "error_message": "",
+          "data": {
+            "logged": true,
+            "info": {
+              "userId": "777000111",
+              "uid": "777000111",
+              "display_name": "Nguy\u1ec5n V\u0103n Minh",
+              "avatar": "https://avatar-mock.zdn.vn/u777000111.jpg",
+              "phone_number": "0901234567",
+              "enabled": 1
+            }
+          }
+        }
+      }
+    }
+  ]
+}

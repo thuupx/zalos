@@ -1,0 +1,478 @@
+{
+  "mappings": [
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/profile-wpa.chat.zalo.me/api/social/friend/getfriends"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": [
+              {
+                "userId": "777000222",
+                "displayName": "Trần Thị Hoa",
+                "avatar": "https://avatar-mock.zdn.vn/u777000222.jpg",
+                "gender": 1,
+                "dob": 631152000,
+                "type": 1,
+                "recommendType": 1,
+                "phoneNumber": "0912000001",
+                "alias": "Hoa",
+                "lastActionTime": 1700000000000,
+                "lastUpdateTime": 1700000000000,
+                "keyReq": "k1",
+                "businessPkg": 0,
+                "real-name": "Trần Thị Hoa"
+              },
+              {
+                "userId": "777000333",
+                "displayName": "Lê Quốc Bảo",
+                "avatar": "https://avatar-mock.zdn.vn/u777000333.jpg",
+                "gender": 0,
+                "dob": 662688000,
+                "type": 1,
+                "recommendType": 1,
+                "phoneNumber": "0912000002",
+                "alias": "Bảo",
+                "lastActionTime": 1700000000000,
+                "lastUpdateTime": 1700000000000,
+                "keyReq": "k2",
+                "businessPkg": 0,
+                "real-name": "Lê Quốc Bảo"
+              },
+              {
+                "userId": "777000444",
+                "displayName": "Phạm Minh Đức",
+                "avatar": "https://avatar-mock.zdn.vn/u777000444.jpg",
+                "gender": 0,
+                "dob": 694224000,
+                "type": 1,
+                "recommendType": 1,
+                "phoneNumber": "0912000003",
+                "alias": "Đức",
+                "lastActionTime": 1700000000000,
+                "lastUpdateTime": 1700000000000,
+                "keyReq": "k3",
+                "businessPkg": 0,
+                "real-name": "Phạm Minh Đức"
+              },
+              {
+                "userId": "777000555",
+                "displayName": "Vũ Thu Hằng",
+                "avatar": "https://avatar-mock.zdn.vn/u777000555.jpg",
+                "gender": 1,
+                "dob": 725760000,
+                "type": 1,
+                "recommendType": 1,
+                "phoneNumber": "0912000004",
+                "alias": "Hằng",
+                "lastActionTime": 1700000000000,
+                "lastUpdateTime": 1700000000000,
+                "keyReq": "k4",
+                "businessPkg": 0,
+                "real-name": "Vũ Thu Hằng"
+              },
+              {
+                "userId": "777000666",
+                "displayName": "Đỗ Anh Tuấn",
+                "avatar": "https://avatar-mock.zdn.vn/u777000666.jpg",
+                "gender": 0,
+                "dob": 757296000,
+                "type": 1,
+                "recommendType": 1,
+                "phoneNumber": "0912000005",
+                "alias": "Tuấn",
+                "lastActionTime": 1700000000000,
+                "lastUpdateTime": 1700000000000,
+                "keyReq": "k5",
+                "businessPkg": 0,
+                "real-name": "Đỗ Anh Tuấn"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/poll-grp.chat.zalo.me/api/group/getlg/v4"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": {
+              "gridVerMap": {
+                "880000111": 0,
+                "880000222": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/group.wpa.chat.zalo.me/api/group/getmg-v2"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": {
+              "gridInfoMap": {
+                "880000111": {
+                  "groupId": "880000111",
+                  "name": "Nhóm Gia Đình",
+                  "avt": "https://avatar-mock.zdn.vn/g880000111.jpg",
+                  "fullAvt": "https://avatar-mock.zdn.vn/g880000111.jpg",
+                  "creatorId": "777000111",
+                  "memberIds": [
+                    "777000111",
+                    "777000222",
+                    "777000333"
+                  ],
+                  "memVerList": [],
+                  "grpType": 1,
+                  "totalMember": 3,
+                  "adminIds": [
+                    "777000222"
+                  ]
+                },
+                "880000222": {
+                  "groupId": "880000222",
+                  "name": "Team Dự Án Mới",
+                  "avt": "https://avatar-mock.zdn.vn/g880000222.jpg",
+                  "fullAvt": "https://avatar-mock.zdn.vn/g880000222.jpg",
+                  "creatorId": "777000444",
+                  "memberIds": [
+                    "777000111",
+                    "777000444",
+                    "777000555",
+                    "777000666"
+                  ],
+                  "memVerList": [],
+                  "grpType": 1,
+                  "totalMember": 4,
+                  "adminIds": [
+                    "777000555"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/profile-wpa.chat.zalo.me/api/social/friend/getprofiles/v2"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": {
+              "changed_profiles": {
+                "777000222_0": {
+                  "userId": "777000222",
+                  "displayName": "Trần Thị Hoa",
+                  "avatar": "https://avatar-mock.zdn.vn/u777000222.jpg",
+                  "gender": 1,
+                  "lastActionTime": 1700000000000,
+                  "bizPkg": {
+                    "pkgId": 0
+                  },
+                  "phonebook_version": 0,
+                  "zalo_name": "Trần Thị Hoa"
+                },
+                "777000333_0": {
+                  "userId": "777000333",
+                  "displayName": "Lê Quốc Bảo",
+                  "avatar": "https://avatar-mock.zdn.vn/u777000333.jpg",
+                  "gender": 0,
+                  "lastActionTime": 1700000000000,
+                  "bizPkg": {
+                    "pkgId": 0
+                  },
+                  "phonebook_version": 0,
+                  "zalo_name": "Lê Quốc Bảo"
+                },
+                "777000444_0": {
+                  "userId": "777000444",
+                  "displayName": "Phạm Minh Đức",
+                  "avatar": "https://avatar-mock.zdn.vn/u777000444.jpg",
+                  "gender": 0,
+                  "lastActionTime": 1700000000000,
+                  "bizPkg": {
+                    "pkgId": 0
+                  },
+                  "phonebook_version": 0,
+                  "zalo_name": "Phạm Minh Đức"
+                },
+                "777000555_0": {
+                  "userId": "777000555",
+                  "displayName": "Vũ Thu Hằng",
+                  "avatar": "https://avatar-mock.zdn.vn/u777000555.jpg",
+                  "gender": 1,
+                  "lastActionTime": 1700000000000,
+                  "bizPkg": {
+                    "pkgId": 0
+                  },
+                  "phonebook_version": 0,
+                  "zalo_name": "Vũ Thu Hằng"
+                },
+                "777000666_0": {
+                  "userId": "777000666",
+                  "displayName": "Đỗ Anh Tuấn",
+                  "avatar": "https://avatar-mock.zdn.vn/u777000666.jpg",
+                  "gender": 0,
+                  "lastActionTime": 1700000000000,
+                  "bizPkg": {
+                    "pkgId": 0
+                  },
+                  "phonebook_version": 0,
+                  "zalo_name": "Đỗ Anh Tuấn"
+                },
+                "777000111_0": {
+                  "userId": "777000111",
+                  "displayName": "Nguyễn Văn Minh",
+                  "avatar": "https://avatar-mock.zdn.vn/u777000111.jpg",
+                  "gender": 0,
+                  "lastActionTime": 1700000000000,
+                  "bizPkg": {
+                    "pkgId": 0
+                  },
+                  "phonebook_version": 0,
+                  "zalo_name": "Nguyễn Văn Minh"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/profile-wpa.chat.zalo.me/api/social/profile/me-v2"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": {
+              "profile": {
+                "userId": "777000111",
+                "uid": "777000111",
+                "displayName": "Nguyễn Văn Minh",
+                "avatar": "https://avatar-mock.zdn.vn/u777000111.jpg",
+                "zalo_name": "Nguyễn Văn Minh"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/profile-wpa.chat.zalo.me/api/social/profile/me-v2"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": {
+              "profile": {
+                "userId": "777000111",
+                "uid": "777000111",
+                "displayName": "Nguyễn Văn Minh",
+                "avatar": "https://avatar-mock.zdn.vn/u777000111.jpg",
+                "zalo_name": "Nguyễn Văn Minh"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/group.wpa.chat.zalo.me/api/group/history"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": {
+              "lastActionId": "3",
+              "lastActionIdOther": "3",
+              "more": 0,
+              "groupMsgs": [
+                {
+                  "actionId": "3",
+                  "msgId": "gh-{{request.query.mock_grid}}-3",
+                  "cliMsgId": "gh-{{request.query.mock_grid}}-3",
+                  "msgType": "webchat",
+                  "uidFrom": "777000444",
+                  "idTo": "{{request.query.mock_grid}}",
+                  "dName": "Phạm Minh Đức",
+                  "ts": "1700000120000",
+                  "st": 0,
+                  "at": 0,
+                  "cmd": 0,
+                  "status": 1,
+                  "content": "Mọi người xem lại biên bản nhé",
+                  "propertyExt": {
+                    "color": -1,
+                    "size": -1,
+                    "type": 0,
+                    "subType": 0,
+                    "ext": "{}"
+                  },
+                  "ttl": 0
+                },
+                {
+                  "actionId": "2",
+                  "msgId": "gh-{{request.query.mock_grid}}-2",
+                  "cliMsgId": "gh-{{request.query.mock_grid}}-2",
+                  "msgType": "webchat",
+                  "uidFrom": "777000555",
+                  "idTo": "{{request.query.mock_grid}}",
+                  "dName": "Vũ Thu Hằng",
+                  "ts": "1700000060000",
+                  "st": 0,
+                  "at": 0,
+                  "cmd": 0,
+                  "status": 1,
+                  "content": "Đính kèm tài liệu tuần trước",
+                  "propertyExt": {
+                    "color": -1,
+                    "size": -1,
+                    "type": 0,
+                    "subType": 0,
+                    "ext": "{}"
+                  },
+                  "ttl": 0
+                },
+                {
+                  "actionId": "1",
+                  "msgId": "gh-{{request.query.mock_grid}}-1",
+                  "cliMsgId": "gh-{{request.query.mock_grid}}-1",
+                  "msgType": "webchat",
+                  "uidFrom": "777000333",
+                  "idTo": "{{request.query.mock_grid}}",
+                  "dName": "Lê Quốc Bảo",
+                  "ts": "1700000000000",
+                  "st": 0,
+                  "at": 0,
+                  "cmd": 0,
+                  "status": 1,
+                  "content": "Tin nhắn cũ từ lịch sử nhóm",
+                  "propertyExt": {
+                    "color": -1,
+                    "size": -1,
+                    "type": 0,
+                    "subType": 0,
+                    "ext": "{}"
+                  },
+                  "ttl": 0
+                }
+              ]
+            }
+          }
+        },
+        "transformers": [
+          "response-template"
+        ]
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/profile-wpa.chat.zalo.me/api/social/profile/avatar"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": {
+              "full_avatar": "https://avatar-mock.zdn.vn/full/u{{request.query.mock_fid}}.jpg",
+              "bk_full_avatar": "https://avatar-mock.zdn.vn/full/bk-u{{request.query.mock_fid}}.jpg"
+            }
+          }
+        },
+        "transformers": [
+          "response-template"
+        ]
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/profile-wpa.chat.zalo.me/api/social/profile/avatar",
+        "queryParameters": {
+          "mock_fid": {
+            "equalTo": "777000666"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": {
+              "full_avatar": "",
+              "bk_full_avatar": ""
+            }
+          }
+        }
+      },
+      "priority": 1
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/profile-wpa.chat.zalo.me/api/social/profile/avatar-url"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": {
+              "777000666": {
+                "avatar": "https://avatar-mock.zdn.vn/240/u777000666.jpg"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

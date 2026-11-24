@@ -1,0 +1,19 @@
+.research/
+node_modules/
+target/
+.dart_tool/
+build/
+.DS_Store
+client/web/pkg/
+client/rust/target/
+client/build/
+server/node_modules/
+
+# Docker deployment secrets
+deploy/docker/.env
+
+# Runtime data (server key, database)
+server/data/
+
+# Golden test failure output
+client/test/ui/failures/

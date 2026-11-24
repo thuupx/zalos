@@ -1,0 +1,167 @@
+{
+  "mappings": [
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/wpa.chat.zalo.me/api/login/getLoginInfo"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "data": {
+            "data": {
+              "uid": "777000111",
+              "zpw_enk": "MDEyMzQ1Njc4OUFCQ0RFRg==",
+              "zpw_ws": [
+                "ws://placeholder/ws1"
+              ],
+              "zpw_service_map_v3": {
+                "chat": [
+                  "https://chat.zalo.me"
+                ],
+                "group": [
+                  "https://group.wpa.chat.zalo.me"
+                ],
+                "file": [
+                  "https://file-wpa.chat.zalo.me"
+                ],
+                "profile": [
+                  "https://profile-wpa.chat.zalo.me"
+                ],
+                "group_poll": [
+                  "https://poll-grp.chat.zalo.me"
+                ],
+                "reaction": [
+                  "https://reaction.chat.zalo.me"
+                ],
+                "sticker": [
+                  "https://sticker.chat.zalo.me"
+                ],
+                "friend": [
+                  "https://friend-wpa.chat.zalo.me"
+                ],
+                "quick_message": [
+                  "https://chat.wpa.chat.zalo.me"
+                ],
+                "conversation": [
+                  "https://chat.wpa.chat.zalo.me"
+                ],
+                "label": [
+                  "https://label-wpa.chat.zalo.me"
+                ],
+                "alias": [
+                  "https://alias-wpa.chat.zalo.me"
+                ],
+                "auto_reply": [
+                  "https://autoreply-wpa.chat.zalo.me"
+                ],
+                "catalog": [
+                  "https://catalog-wpa.chat.zalo.me"
+                ],
+                "friend_board": [
+                  "https://fboard-wpa.chat.zalo.me"
+                ],
+                "group_board": [
+                  "https://gboard-wpa.chat.zalo.me"
+                ],
+                "group_cloud_message": [
+                  "https://group.wpa.chat.zalo.me"
+                ],
+                "aext": [
+                  "https://aext-wpa.chat.zalo.me"
+                ],
+                "zimsg": [
+                  "https://zimsg-wpa.chat.zalo.me"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/wpa.chat.zalo.me/api/login/getLoginInfo"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "error_code": 216,
+          "error_message": "session expired"
+        }
+      },
+      "scenarioName": "zalo-auth",
+      "requiredScenarioState": "expired",
+      "priority": 1
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/wpa.chat.zalo.me/api/login/getLoginInfo"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "error_code": -212,
+          "error_message": "invalid session"
+        }
+      },
+      "scenarioName": "zalo-auth",
+      "requiredScenarioState": "invalid",
+      "priority": 1
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/wpa.chat.zalo.me/api/login/getServerInfo"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "error_code": 0,
+          "error_message": "Success",
+          "data": {
+            "settings": {
+              "features": {
+                "socket": {
+                  "ping_interval": 15000,
+                  "close_and_retry_codes": [
+                    1006
+                  ],
+                  "rotate_error_codes": [
+                    503
+                  ],
+                  "retries": {
+                    "1006": {
+                      "times": [
+                        100,
+                        300
+                      ],
+                      "max": 2
+                    }
+                  }
+                },
+                "sharefile": {
+                  "max_file": 10,
+                  "max_size_share_file_v3": 50,
+                  "chunk_size_file": 2097152,
+                  "restricted_ext_file": [
+                    "exe",
+                    "bat"
+                  ]
+                }
+              }
+            },
+            "extra_ver": {
+              "phonebook": 0
+            },
+            "extra_info": {
+              "logged_time": 1700000000000
+            }
+          }
+        }
+      }
+    }
+  ]
+}

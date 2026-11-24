@@ -1,0 +1,80 @@
+{
+  "mappings": [
+    {
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "/file-wpa\\.chat\\.zalo\\.me/api/(message|group)/gif.*"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{\"data\":{\"error_code\":0,\"error_message\":\"Success\",\"data\":{\"msgId\":\"{{randomValue length=12 type='NUMERIC'}}\",\"cliMsgId\":\"{{randomValue length=12 type='NUMERIC'}}\"}}}",
+        "transformers": [
+          "response-template"
+        ]
+      },
+      "priority": 5
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/zimsg-wpa.chat.zalo.me/api/transfer/card"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": ""
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "/(chat\\.zalo\\.me/api/message/link|group\\.wpa\\.chat\\.zalo\\.me/api/group/sendlink)"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{\"data\":{\"error_code\":0,\"error_message\":\"Success\",\"data\":{\"msgId\":\"{{randomValue length=12 type='NUMERIC'}}\"}}}",
+        "transformers": [
+          "response-template"
+        ]
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/file-wpa.chat.zalo.me/api/product/upload/photo"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "jsonBody": {
+          "data": {
+            "error_code": 0,
+            "error_message": "Success",
+            "data": {
+              "photoId": 9001,
+              "thumbUrl": "http://mock-media.zdn.vn/qm/thumb.jpg",
+              "normalUrl": "http://mock-media.zdn.vn/qm/normal.jpg",
+              "hdUrl": "http://mock-media.zdn.vn/qm/hd.jpg"
+            }
+          }
+        }
+      }
+    }
+  ]
+}
