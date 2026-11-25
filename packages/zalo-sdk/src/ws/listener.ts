@@ -261,7 +261,12 @@ export class ZaloListener extends EventEmitter {
       if (typeof envelope.key === "string" && envelope.key.length > 0) {
         this.cipherKey = envelope.key;
       }
-      const decoded = this.safeDecode(envelope);
+      let decoded: unknown = envelope;
+      try {
+        decoded = decodeWsPayload(envelope, this.cipherKey);
+      } catch {
+        // Handshake succeeded with cipherKey; ignore non-JSON opaque AUTHEN data (matches zca-js).
+      }
       this.authenticated = true;
       this.retryCount = 0;
       this.startPingTimer();

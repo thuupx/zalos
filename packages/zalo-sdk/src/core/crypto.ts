@@ -4,7 +4,12 @@ import {
   createHash,
   randomUUID,
 } from "node:crypto";
-import { deflateSync, inflateSync } from "node:zlib";
+import {
+  deflateSync,
+  gunzipSync,
+  inflateRawSync,
+  inflateSync,
+} from "node:zlib";
 import JSONBigFactory from "json-bigint";
 
 import {
@@ -239,6 +244,28 @@ export interface WsEnvelope {
  * - `2`: URL-decode -> base64 -> AES-GCM (iv[0..16], aad[16..32], ct+tag[32..]) -> zlib inflate
  * - `3`: URL-decode -> base64 -> AES-GCM (raw UTF-8)
  */
+function decompressWsPlaintext(plaintext: Buffer): Buffer {
+  if (plaintext.length === 0) return plaintext;
+  try {
+    return inflateSync(plaintext);
+  } catch {
+    if (plaintext[0] === 0x1f && plaintext[1] === 0x8b) {
+      return gunzipSync(plaintext);
+    }
+    try {
+      return inflateRawSync(plaintext);
+    } catch {
+      const trimmed = plaintext.toString("utf8").trimStart();
+      if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+        return plaintext;
+      }
+      throw new ZaloCryptoError(
+        `Unable to inflate WS encrypt=2 payload (hdr=${plaintext.subarray(0, 4).toString("hex")})`,
+      );
+    }
+  }
+}
+
 export function decodeWsPayload<T = unknown>(
   envelope: WsEnvelope,
   cipherKeyB64?: string,
@@ -257,7 +284,8 @@ export function decodeWsPayload<T = unknown>(
   }
 
   if (encrypt === 1) {
-    const inflated = inflateSync(Buffer.from(raw, "base64"));
+    const rawBuf = Buffer.from(raw, "base64");
+    const inflated = decompressWsPlaintext(rawBuf);
     return parseJsonSafe<T>(inflated.toString("utf8"));
   }
 
@@ -282,7 +310,7 @@ export function decodeWsPayload<T = unknown>(
     decipher.setAAD(aad);
     decipher.setAuthTag(tag);
     const plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
-    const finalBytes = encrypt === 2 ? inflateSync(plaintext) : plaintext;
+    const finalBytes = encrypt === 2 ? decompressWsPlaintext(plaintext) : plaintext;
     return parseJsonSafe<T>(finalBytes.toString("utf8"));
   }
 
