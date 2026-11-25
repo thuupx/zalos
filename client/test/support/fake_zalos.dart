@@ -438,6 +438,7 @@ class FakeSession implements AccountSession {
   final Map<String, int> _shown = {};
   final Map<String, ValueNotifier<List<Message>>> _notifiers = {};
   final StreamController<TypingEvent> _typing = StreamController.broadcast();
+  final StreamController<Map<String, dynamic>> _callMediaIce = StreamController.broadcast();
   int _seq = 0;
   bool _disposed = false;
 
@@ -2079,6 +2080,23 @@ class FakeSession implements AccountSession {
   @override
   ValueListenable<ActiveCall?> get activeCall => _activeCall;
 
+  @override
+  Stream<Map<String, dynamic>> get callMediaIceEvents => _callMediaIce.stream;
+
+  @override
+  Future<List<Map<String, dynamic>>> callMediaIceServers() async => const [];
+
+  @override
+  Future<Map<String, dynamic>> callMediaOffer(String callId, String sdp) async {
+    await _wait();
+    return {'sdp': sdp, 'type': 'answer', 'iceServers': const []};
+  }
+
+  @override
+  Future<void> callMediaIce(String callId, Map<String, dynamic> candidate) async {
+    await _wait();
+  }
+
   void simulateIncomingCall(ActiveCall call) {
     if (_disposed) return;
     _activeCall.value = call;
@@ -2609,5 +2627,6 @@ class FakeSession implements AccountSession {
     _disposed = true;
     _activeCall.dispose();
     _typing.close();
+    _callMediaIce.close();
   }
 }

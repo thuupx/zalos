@@ -1010,10 +1010,36 @@ export interface ZaloGateway {
     serverConfig?: Record<string, unknown>;
     groupCallId?: string;
   }>;
+  sendCallInvite?(
+    callId: string,
+    opts: {
+      calleeId: string;
+      rtpAddress: string;
+      rtcpAddress: string;
+      codec: string;
+      session: string;
+      extendData?: string;
+    },
+  ): Promise<unknown>;
+  sendRingRing?(callId: string, callerId: string): Promise<unknown>;
   answerCall?(
     callId: string,
-    opts: { callerId?: string; groupId?: string; media: CallMediaKind },
+    opts: {
+      callerId?: string;
+      groupId?: string;
+      media: CallMediaKind;
+      rtpAddress?: string;
+      rtcpAddress?: string;
+      codec?: string;
+      sessionId?: string;
+      extendData?: string;
+    },
   ): Promise<{ serverConfig?: Record<string, unknown> }>;
+  answerAck?(callId: string, calleeId: string): Promise<unknown>;
+  cancelCall?(
+    callId: string,
+    opts: { peerId: string; media: CallMediaKind },
+  ): Promise<unknown>;
   rejectCall?(
     callId: string,
     opts: { callerId?: string; groupId?: string; reason?: number },

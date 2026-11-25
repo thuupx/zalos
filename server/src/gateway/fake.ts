@@ -1395,12 +1395,51 @@ export class FakeGateway implements ZaloGateway {
     };
   }
 
+  async sendCallInvite(
+    callId: string,
+    opts: {
+      calleeId: string;
+      rtpAddress: string;
+      rtcpAddress: string;
+      codec: string;
+      session: string;
+      extendData?: string;
+    },
+  ) {
+    this.calls.push({ method: "sendCallInvite", args: [callId, opts] });
+    return { ok: true };
+  }
+
+  async sendRingRing(callId: string, callerId: string) {
+    this.calls.push({ method: "sendRingRing", args: [callId, callerId] });
+    return { ok: true };
+  }
+
   async answerCall(
     callId: string,
-    opts: { callerId?: string; groupId?: string; media: "voice" | "video" },
+    opts: {
+      callerId?: string;
+      groupId?: string;
+      media: "voice" | "video";
+      rtpAddress?: string;
+      rtcpAddress?: string;
+      codec?: string;
+      sessionId?: string;
+      extendData?: string;
+    },
   ) {
     this.calls.push({ method: "answerCall", args: [callId, opts] });
     return { serverConfig: { callId, accepted: true, rtpaddr: "127.0.0.1:40002" } };
+  }
+
+  async answerAck(callId: string, calleeId: string) {
+    this.calls.push({ method: "answerAck", args: [callId, calleeId] });
+    return { ok: true };
+  }
+
+  async cancelCall(callId: string, opts: { peerId: string; media: "voice" | "video" }) {
+    this.calls.push({ method: "cancelCall", args: [callId, opts] });
+    return { ok: true };
   }
 
   async rejectCall(

@@ -53,7 +53,7 @@ export function redactValue(value: unknown, depth = 0): unknown {
     return {
       name: value.name,
       message: redactString(value.message),
-      code: typeof code === "string" ? code : undefined,
+      code: typeof code === "string" || typeof code === "number" ? code : undefined,
     };
   }
   if (Array.isArray(value)) {

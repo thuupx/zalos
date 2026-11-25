@@ -13,6 +13,7 @@ services:
     command: ["zalos", "serve", "--local"]
     ports:
       - "${ZALOS_BIND_HOST:-127.0.0.1}:${ZALOS_PORT:-7443}:7443"
+      - "${ZALOS_BIND_HOST:-127.0.0.1}:40000-40050:40000-40050/udp"
     environment:
       ZALOS_DATA_DIR: /var/lib/zalos
       ZALOS_UPLOAD_TMP_DIR: /tmp/zalos-uploads
@@ -21,6 +22,8 @@ services:
       ZALOS_PORT: "7443"
       ZALOS_PUBLIC_HOST: ${ZALOS_PUBLIC_HOST:-127.0.0.1}
       ZALOS_PUBLIC_PORT: ${ZALOS_PUBLIC_PORT:-7443}
+      ZALOS_RTC_PORT_MIN: "40000"
+      ZALOS_RTC_PORT_MAX: "40050"
       TZ: ${TZ:-Asia/Ho_Chi_Minh}
     volumes:
       - zalos-data-local:/var/lib/zalos

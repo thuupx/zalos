@@ -215,6 +215,7 @@ class RealAccountSession implements AccountSession {
   final Map<String, _MessageList> _lists = {};
   final StreamController<TypingEvent> _typing = StreamController<TypingEvent>.broadcast();
   final StreamController<BoardUpdateEvent> _boardUpdates = StreamController<BoardUpdateEvent>.broadcast();
+  final StreamController<Map<String, dynamic>> _callMediaIce = StreamController<Map<String, dynamic>>.broadcast();
   final ValueNotifier<ActiveCall?> _activeCall = ValueNotifier<ActiveCall?>(null);
   final MediaCache _media = MediaCache();
   final Map<String, Future<Uint8List>> _mediaInFlight = {};
@@ -247,6 +248,9 @@ class RealAccountSession implements AccountSession {
 
   @override
   ValueListenable<ActiveCall?> get activeCall => _activeCall;
+
+  @override
+  Stream<Map<String, dynamic>> get callMediaIceEvents => _callMediaIce.stream;
 
   int get lastSeq => _lastSeq;
 
@@ -420,6 +424,8 @@ class RealAccountSession implements AccountSession {
         if (call.callId.isNotEmpty) {
           _activeCall.value = call;
         }
+      case 'call.media.ice':
+        if (!_callMediaIce.isClosed) _callMediaIce.add(asJson(event.data));
       case 'call.answeredElsewhere':
       case 'call.ended':
         final callId = '${event.data['callId'] ?? ''}';
@@ -1624,6 +1630,39 @@ class RealAccountSession implements AccountSession {
   }
 
   @override
+  Future<List<Map<String, dynamic>>> callMediaIceServers() async {
+    try {
+      final res = asJson(
+        await _channel.use((channel) => channel.request('calls.media.config', const {})),
+      );
+      final raw = res['iceServers'];
+      if (raw is! List) return const [];
+      return [
+        for (final entry in raw)
+          if (entry is Map) asJson(entry),
+      ];
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> callMediaOffer(String callId, String sdp) async {
+    return asJson(
+      await _channel.use(
+        (channel) => channel.request('calls.media.offer', {'callId': callId, 'sdp': sdp}),
+      ),
+    );
+  }
+
+  @override
+  Future<void> callMediaIce(String callId, Map<String, dynamic> candidate) async {
+    await _channel.use(
+      (channel) => channel.request('calls.media.ice', {'callId': callId, 'candidate': candidate}),
+    );
+  }
+
+  @override
   Future<Map<String, dynamic>> groupCallState(String groupId) async {
     return asJson(
       await _channel.use((channel) => channel.request('calls.groupState', {'groupId': groupId})),
@@ -2170,6 +2209,7 @@ class RealAccountSession implements AccountSession {
     _mediaQueue.clear();
     unawaited(_typing.close());
     unawaited(_boardUpdates.close());
+    unawaited(_callMediaIce.close());
     _activeCall.dispose();
     _media.clear();
     _threadsLoad.dispose();

@@ -9,7 +9,12 @@ import {
   type TestEnv,
 } from "./support/helpers.ts";
 import type { FakeGateway } from "../src/gateway/fake.ts";
-import type { ActiveCall } from "../src/gateway/types.ts";
+import type { ActiveCall, ZaloGateway } from "../src/gateway/types.ts";
+import { CallManager } from "../src/accounts/call_manager.ts";
+import { CallMediaGateway } from "../src/accounts/call_media_gateway.ts";
+import type { ZrtcRelaySession } from "../src/accounts/zrtc_session.ts";
+import type { Store } from "../src/store/db.ts";
+import type { TunnelServer } from "../src/tunnel/server.ts";
 
 let env: TestEnv;
 let devA: PairedDevice;
@@ -181,4 +186,216 @@ test("outgoing start, groupState, and zaloSignal RPCs", async () => {
   } finally {
     client.close();
   }
+});
+
+test("calls.media.config RPC returns configured iceServers", async () => {
+  const client = await accountClient(env, devA, slot);
+  try {
+    const cfg = (await client.request("calls.media.config", {})) as {
+      iceServers: Array<{ urls: string | string[] }>;
+    };
+    expect(Array.isArray(cfg.iceServers)).toBe(true);
+    expect(cfg.iceServers.length).toBeGreaterThan(0);
+  } finally {
+    client.close();
+  }
+});
+
+test("CallManager cleans up and broadcasts relay_failed when outgoing ZRTC connect fails", async () => {
+  const broadcasts: Array<{ event: string; data: unknown }> = [];
+  const invites: unknown[] = [];
+  const cancels: unknown[] = [];
+  let attempts = 0;
+
+  const mockGw = {
+    self: { uid: "1001", displayName: "Me", avatarUrl: "" },
+    startCall: async () => ({
+      callId: "9001",
+      serverConfig: {
+        sessId: "s-9001",
+        servers: [{ rtpaddr: "171.244.25.89:4200", rtcpaddr: "171.244.25.89:4004" }],
+      },
+    }),
+    sendCallInvite: async (_callId: string, opts: unknown) => {
+      invites.push(opts);
+    },
+    cancelCall: async (callId: string, opts: unknown) => {
+      cancels.push({ callId, opts });
+    },
+  } as unknown as ZaloGateway;
+
+  let endedResolve!: () => void;
+  const endedPromise = new Promise<void>((r) => {
+    endedResolve = r;
+  });
+
+  const tunnel = {
+    broadcastAccount: (_slot: string, event: string, data: unknown) => {
+      broadcasts.push({ event, data });
+      if (event === "call.ended") endedResolve();
+    },
+    accountChannels: () => [],
+  } as unknown as TunnelServer;
+
+  const store = {
+    getProfile: () => null,
+  } as unknown as Store;
+
+  const mediaGateway = new CallMediaGateway();
+  const mgr = new CallManager(() => mockGw, tunnel, store, mediaGateway, {
+    maxAttempts: 2,
+    timeoutMs: 20,
+    factory: () =>
+      ({
+        connect: async () => {
+          attempts++;
+          throw new Error("relay timeout");
+        },
+        close: () => {},
+      }) as unknown as ZrtcRelaySession,
+  });
+
+  await mgr.start("main", "2002", "user", "voice", "dev-1");
+  await endedPromise;
+
+  expect(attempts).toBe(2);
+  expect(invites).toHaveLength(0);
+  expect(cancels).toHaveLength(1);
+  expect(mgr.activeCalls("main")).toHaveLength(0);
+  expect(mediaGateway.getBridge("main", "9001")).toBeUndefined();
+  expect(broadcasts.some((b) => b.event === "call.ended")).toBe(true);
+  const ended = broadcasts.find((b) => b.event === "call.ended")!.data as {
+    callId: string;
+    reason: string;
+  };
+  expect(ended).toEqual({ callId: "9001", reason: "relay_failed" });
+});
+
+test("CallManager retries outgoing ZRTC connect and attaches relay when retry succeeds", async () => {
+  const invites: Array<{ rtpAddress: string; rtcpAddress: string }> = [];
+  let attempts = 0;
+  let inviteResolve!: () => void;
+  const invitePromise = new Promise<void>((r) => {
+    inviteResolve = r;
+  });
+
+  const mockGw = {
+    self: { uid: "1001", displayName: "Me", avatarUrl: "" },
+    startCall: async () => ({
+      callId: "9002",
+      serverConfig: {
+        sessId: "s-9002",
+        servers: [{ rtpaddr: "171.244.25.89:4200", rtcpaddr: "171.244.25.89:4004" }],
+      },
+    }),
+    sendCallInvite: async (_callId: string, opts: { rtpAddress: string; rtcpAddress: string }) => {
+      invites.push(opts);
+      inviteResolve();
+    },
+  } as unknown as ZaloGateway;
+
+  const tunnel = {
+    broadcastAccount: () => {},
+    accountChannels: () => [],
+  } as unknown as TunnelServer;
+  const store = { getProfile: () => null } as unknown as Store;
+  const mediaGateway = new CallMediaGateway();
+  const mgr = new CallManager(() => mockGw, tunnel, store, mediaGateway, {
+    maxAttempts: 2,
+    timeoutMs: 20,
+    factory: () =>
+      ({
+        connect: async () => {
+          attempts++;
+          if (attempts === 1) throw new Error("transient timeout");
+          return {
+            token: 555,
+            rtpAddress: "171.244.25.89:4200",
+            rtcpAddress: "171.244.25.89:4004",
+            transport: "udp" as const,
+          };
+        },
+        close: () => {},
+      }) as unknown as ZrtcRelaySession,
+  });
+
+  await mgr.start("main-slot", "2002", "user", "voice", "dev-1");
+  await invitePromise;
+
+  expect(attempts).toBe(2);
+  expect(invites).toHaveLength(1);
+  expect(invites[0]!.rtpAddress).toBe("171.244.25.89:4200");
+  expect(mediaGateway.getBridge("main-slot", "9002")?.zrtc).toBeDefined();
+  await mediaGateway.closeCall("main-slot", "9002");
+});
+
+test("CallManager.accept rejects with relay_failed and does not enter active without ZRTC", async () => {
+  const answers: unknown[] = [];
+  const mockGw = {
+    self: { uid: "2002", displayName: "Callee", avatarUrl: "" },
+    answerCall: async (_callId: string, opts: unknown) => {
+      answers.push(opts);
+      return {};
+    },
+    sendRingRing: async () => {},
+  } as unknown as ZaloGateway;
+
+  const tunnel = {
+    broadcastAccount: () => {},
+    accountChannels: () => [],
+  } as unknown as TunnelServer;
+  const store = { getProfile: () => null } as unknown as Store;
+
+  let shouldFail = true;
+  const mediaGateway = new CallMediaGateway();
+  const mgr = new CallManager(() => mockGw, tunnel, store, mediaGateway, {
+    maxAttempts: 2,
+    timeoutMs: 20,
+    factory: () =>
+      ({
+        connect: async () => {
+          if (shouldFail) throw new Error("callee relay timeout");
+          return {
+            token: 777,
+            rtpAddress: "171.244.25.89:4200",
+            rtcpAddress: "171.244.25.89:4004",
+            transport: "udp" as const,
+          };
+        },
+        close: () => {},
+      }) as unknown as ZrtcRelaySession,
+  });
+
+  mgr.onVoipEvent("s1", {
+    act: "request",
+    ts: Date.now(),
+    callerId: "1001",
+    inCallStatus: null,
+    data: {
+      callId: "9003",
+      session: "sess-9003",
+      rtpAddress: "171.244.25.89:4200",
+      rtcpAddress: "171.244.25.89:4004",
+    },
+  });
+
+  let caught: unknown;
+  try {
+    await mgr.accept("s1", "9003", "dev-1");
+  } catch (e) {
+    caught = e;
+  }
+  expect(caught).toMatchObject({ code: "relay_failed" });
+  expect(answers).toHaveLength(0);
+  const afterFail = mgr.activeCalls("s1")[0]!;
+  expect(afterFail.status).toBe("ringing");
+  expect(afterFail.answeredByDeviceId).toBeUndefined();
+  expect(mediaGateway.getBridge("s1", "9003")).toBeUndefined();
+
+  shouldFail = false;
+  const accepted = await mgr.accept("s1", "9003", "dev-1");
+  expect(accepted.call.status).toBe("active");
+  expect(answers).toHaveLength(1);
+  expect(mediaGateway.getBridge("s1", "9003")?.zrtc).toBeDefined();
+  await mediaGateway.closeCall("s1", "9003");
 });

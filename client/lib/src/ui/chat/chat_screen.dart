@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/protocol/noise_channel.dart';
 import '../../domain/models.dart';
 import '../../domain/services.dart';
 import '../components/avatar.dart';
@@ -433,6 +434,10 @@ class ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObser
   Future<void> _guard(Future<void> Function() action, {String failKey = 'actionFailed'}) async {
     try {
       await action();
+    } on RpcException catch (e) {
+      if (!mounted) return;
+      final msg = e.message.trim();
+      zToast(context, msg.isNotEmpty ? msg : context.tr(failKey));
     } catch (_) {
       _toast(failKey);
     }

@@ -7,6 +7,70 @@ import type { ZCallServerConfig } from "../models/events.ts";
 
 const LOG_END_CALL_RETRY_MS = [1000, 1000, 2000, 3000, 5000, 8000, 13000];
 
+/**
+ * Default ZRTC audio codec descriptor expected by Zalo `/api/voicecall/requestcall`
+ * and `/api/voicecall/request` (matches `zcall_mac.node` `getActiveAudioCodecs()`).
+ */
+export const DEFAULT_ZRTC_AUDIO_CODECS = JSON.stringify([
+  { name: "opus/16000/1", payload: 111, frmPtime: 20, dynamicFptime: 1 },
+]);
+
+/**
+ * Generates a positive signed 32-bit integer call ID in `[1, 0x7fffffff]`.
+ * Zalo's call backend and native `zrtc::CallController` reject 64-bit timestamps.
+ */
+export function generateCallId(): number {
+  const buf = new Uint32Array(1);
+  crypto.getRandomValues(buf);
+  const id = buf[0]! & 0x7fffffff;
+  return id === 0 ? 1 : id;
+}
+
+/**
+ * Builds the `extendData` JSON string matching `zrtc::CallController::getExtendData()`.
+ */
+export function buildZrtcExtendData(opts: {
+  isVideo: boolean;
+  rtpAddress?: string;
+  rtcpAddress?: string;
+}): string {
+  const payload: Record<string, unknown> = {
+    p2p: 0,
+    video: opts.isVideo ? 1 : 0,
+    callType: opts.isVideo ? 3 : 1,
+    newZrtc: 1,
+    supportCallBusy: 1,
+    srtpMode: 0,
+    srtcp: 0,
+  };
+  if (opts.isVideo) {
+    payload.codec = [{ name: "H264", payload: 102 }];
+  }
+  if (opts.rtpAddress || opts.rtcpAddress) {
+    payload.serverAddr = {
+      rtp: opts.rtpAddress ?? "",
+      rtcp: opts.rtcpAddress ?? "",
+    };
+  }
+  return JSON.stringify(payload);
+}
+
+function normalizeCallId(callId: string | number): string | number {
+  if (typeof callId === "number") {
+    if (!Number.isFinite(callId) || callId <= 0) return generateCallId();
+    return Math.trunc(callId) >>> 0;
+  }
+  const trimmed = callId.trim();
+  if (/^\d+$/.test(trimmed)) {
+    const n = Number(trimmed);
+    if (Number.isSafeInteger(n) && n > 0 && n <= 0xffffffff) {
+      return n;
+    }
+    return generateCallId();
+  }
+  return trimmed;
+}
+
 export interface RequestCallParams {
   calleeId: string;
   callId: string | number;
@@ -84,8 +148,8 @@ export class CallApi {
   requestCall(params: RequestCallParams): Promise<ZCallServerConfig> {
     return this.getCall<ZCallServerConfig>("/api/voicecall/requestcall", {
       calleeId: params.calleeId,
-      callId: params.callId,
-      codec: params.codec ?? "[]",
+      callId: normalizeCallId(params.callId),
+      codec: params.codec ?? DEFAULT_ZRTC_AUDIO_CODECS,
       typeRequest: params.typeRequest,
       imei: this.ctx.imei,
     });
@@ -99,7 +163,7 @@ export class CallApi {
       rtpAddress: params.rtpAddress,
       codec: params.codec,
       session: params.session,
-      callId: params.callId,
+      callId: normalizeCallId(params.callId),
       imei: this.ctx.imei,
       ...(params.extendData !== undefined
         ? { extendData: params.extendData, subCommand: 3 }
@@ -111,7 +175,7 @@ export class CallApi {
   sendRingRing(callerId: string, callId: string | number, status = 0): Promise<unknown> {
     return this.getCall("/api/voicecall/ringring", {
       callerId,
-      callId,
+      callId: normalizeCallId(callId),
       status,
       imei: this.ctx.imei,
     });
@@ -121,7 +185,7 @@ export class CallApi {
   answerCall(params: AnswerCallParams): Promise<unknown> {
     return this.getCall("/api/voicecall/answer", {
       callerId: params.callerId,
-      callId: params.callId,
+      callId: normalizeCallId(params.callId),
       status: params.status,
       codec: params.codec || "",
       rtcpAddress: params.rtcpAddress,
@@ -137,7 +201,7 @@ export class CallApi {
   answerAck(calleeId: string, callId: string | number, status = 0): Promise<unknown> {
     return this.getCall("/api/voicecall/answerack", {
       calleeId,
-      callId,
+      callId: normalizeCallId(callId),
       status,
       imei: this.ctx.imei,
     });
@@ -147,7 +211,7 @@ export class CallApi {
   cancelCall(toId: string, callId: string | number, callType = 1, status = 0): Promise<unknown> {
     return this.getCall("/api/voicecall/cancel", {
       callerId: toId,
-      callId,
+      callId: normalizeCallId(callId),
       callType,
       status,
       imei: this.ctx.imei,
@@ -158,7 +222,7 @@ export class CallApi {
   endCall(toId: string, callId: string | number, status = 3): Promise<unknown> {
     return this.getCall("/api/voicecall/endcall", {
       uidTo: toId,
-      callId,
+      callId: normalizeCallId(callId),
       status,
       imei: this.ctx.imei,
     });
@@ -217,7 +281,7 @@ export class CallApi {
   }): Promise<unknown> {
     return this.getCall("/api/voicecall/conf", {
       calleeId: params.calleeId,
-      callId: params.callId,
+      callId: normalizeCallId(params.callId),
       isOnCam: params.isOnCam,
       isOnMic: params.isOnMic,
       data: params.data ?? {},
@@ -244,7 +308,13 @@ export class CallApi {
     data?: unknown;
     partners?: unknown[];
   }): Promise<unknown> {
-    return this.getCall("/api/voicecall/group/requestcall", params);
+    return this.getCall("/api/voicecall/group/requestcall", {
+      groupId: params.groupId,
+      callId: normalizeCallId(params.callId),
+      typeRequest: params.typeRequest,
+      data: params.data ?? {},
+      partners: params.partners ?? [],
+    });
   }
 
   /** Cmd `12434` — `GET {voice_call[0]}/api/voicecall/group/request`. */

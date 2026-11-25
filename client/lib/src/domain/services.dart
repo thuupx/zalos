@@ -395,10 +395,14 @@ abstract class AccountSession {
   // ---- Voice & Video Calls ----
 
   ValueListenable<ActiveCall?> get activeCall;
+  Stream<Map<String, dynamic>> get callMediaIceEvents;
   Future<ActiveCall> startCall(String threadId, ThreadType type, CallMediaKind media);
   Future<void> acceptCall(String callId);
   Future<void> rejectCall(String callId, {bool localOnly = false});
   Future<void> hangupCall(String callId);
+  Future<Map<String, dynamic>> callMediaOffer(String callId, String sdp);
+  Future<List<Map<String, dynamic>>> callMediaIceServers() async => const [];
+  Future<void> callMediaIce(String callId, Map<String, dynamic> candidate);
   Future<Map<String, dynamic>> groupCallState(String groupId);
   Future<void> callHold(String callId, {required String peerId, required bool hold});
   Future<void> callSwitchMedia(String callId, {required String peerId});

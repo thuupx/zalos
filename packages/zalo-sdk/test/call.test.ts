@@ -11,7 +11,7 @@ import { ZaloCookieJar } from "../src/core/cookies.ts";
 import { decodeAES, decodeZCallIpc, encodeAES, encodeZCallIpc } from "../src/core/crypto.ts";
 import { ZaloHttpClient } from "../src/core/http.ts";
 import { CallMakeType } from "../src/models/enums.ts";
-import { CallApi } from "../src/apis/call.ts";
+import { CallApi, buildZrtcExtendData } from "../src/apis/call.ts";
 
 interface RecordedCall {
   path: string;
@@ -205,16 +205,50 @@ describe("Voice, Video & Group Call REST + ZCallV2Bridge", () => {
       const sig = await signalP;
       expect(sig).toEqual({ command: 401, data: { calleeId: "u2" } });
 
-      // Test chunk helper directly
-      const split = buildZCallChunkMessages("f".repeat(8500), 100, 5000);
-      expect(split.chunks).toHaveLength(3);
-      expect(split.chunks[0]).toMatch(/#5000#3#0#\$$/);
-      expect(split.chunks[2]).toMatch(/#5002#3#2#\$$/);
-    } finally {
-      recvClient?.destroy();
-      sendClient?.destroy();
-      await bridge.stop();
-      rmSync(dir, { recursive: true, force: true });
-    }
+    // Test chunk helper directly
+    const split = buildZCallChunkMessages("f".repeat(8500), 100, 5000);
+    expect(split.chunks).toHaveLength(3);
+    expect(split.chunks[0]).toMatch(/#5000#3#0#\$$/);
+    expect(split.chunks[2]).toMatch(/#5002#3#2#\$$/);
+  } finally {
+    recvClient?.destroy();
+    sendClient?.destroy();
+    await bridge.stop();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("buildZrtcExtendData explicitly disables SRTP/SRTCP for voice and video calls", () => {
+  const voice = JSON.parse(
+    buildZrtcExtendData({
+      isVideo: false,
+      rtpAddress: "171.244.25.89:4200",
+      rtcpAddress: "171.244.25.89:4004",
+    }),
+  ) as Record<string, unknown>;
+  expect(voice).toMatchObject({
+    p2p: 0,
+    video: 0,
+    callType: 1,
+    newZrtc: 1,
+    supportCallBusy: 1,
+    srtpMode: 0,
+    srtcp: 0,
+    serverAddr: {
+      rtp: "171.244.25.89:4200",
+      rtcp: "171.244.25.89:4004",
+    },
   });
+  expect(voice.codec).toBeUndefined();
+
+  const video = JSON.parse(buildZrtcExtendData({ isVideo: true })) as Record<string, unknown>;
+  expect(video).toMatchObject({
+    video: 1,
+    callType: 3,
+    srtpMode: 0,
+    srtcp: 0,
+    codec: [{ name: "H264", payload: 102 }],
+  });
+  expect(video.serverAddr).toBeUndefined();
+});
 });

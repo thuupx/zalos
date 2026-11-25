@@ -47,6 +47,8 @@ services:
       ZALOS_UPLOAD_TMP_DIR: /tmp/zalos-uploads
       ZALOS_TAILSCALE_SOCKET: /var/run/tailscale/tailscaled.sock
       ZALOS_PORT: ${ZALOS_PORT:-7443}
+      ZALOS_RTC_PORT_MIN: "40000"
+      ZALOS_RTC_PORT_MAX: "40050"
       TZ: ${TZ:-Asia/Ho_Chi_Minh}
     volumes:
       - zalos-data:/var/lib/zalos

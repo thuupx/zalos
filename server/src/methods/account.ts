@@ -1472,6 +1472,41 @@ export function registerAccountMethods(
       );
     },
 
+    "calls.media.config": async (ctx: ChannelContext) => {
+      slotOf(ctx);
+      return ctx.accounts.calls.mediaConfig();
+    },
+
+    "calls.media.offer": async (ctx: ChannelContext, params) => {
+      return ctx.accounts.calls.handleMediaOffer(
+        slotOf(ctx),
+        requiredString(params.callId, "callId"),
+        ctx.channel.deviceId ?? "",
+        requiredString(params.sdp, "sdp"),
+      );
+    },
+
+    "calls.media.ice": async (ctx: ChannelContext, params) => {
+      const candidate =
+        params.candidate !== null &&
+        typeof params.candidate === "object" &&
+        !Array.isArray(params.candidate)
+          ? (params.candidate as {
+              candidate: string;
+              sdpMid?: string | null;
+              sdpMLineIndex?: number | null;
+            })
+          : null;
+      if (!candidate || typeof candidate.candidate !== "string") {
+        throw new RpcError("bad_request", "candidate.candidate is required");
+      }
+      return ctx.accounts.calls.handleMediaIce(
+        slotOf(ctx),
+        requiredString(params.callId, "callId"),
+        candidate,
+      );
+    },
+
     "calls.groupState": async (ctx: ChannelContext, params) => {
       return ctx.accounts.calls.groupState(
         slotOf(ctx),

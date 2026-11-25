@@ -7,6 +7,7 @@ import {
   BinBankCard,
   ChatTTL,
   CloseReason,
+  DEFAULT_ZRTC_AUDIO_CODECS,
   DestType,
   FriendRecommendationsType,
   LoginQRCallbackEventType,
@@ -18,6 +19,8 @@ import {
   ThreadType as ZThreadType,
   Urgency as ZcaUrgency,
   ZaloApiError,
+  buildZrtcExtendData,
+  generateCallId,
   type API,
   type GetAliasListResponse,
   type GetCloseFriendsResponse,
@@ -4440,55 +4443,174 @@ export class ZcaGateway implements ZaloGateway {
   }> {
     const api = this.requireApi();
     return this.call(async () => {
-      const callId = String(Date.now());
+      const numericCallId = generateCallId();
+      const callId = String(numericCallId);
       if (threadType === "group") {
-        const res = (await api.call.groupRequestCall({
-          groupId: threadId,
-          callId,
-          typeRequest: media === "video" ? 6 : 5,
-        })) as Record<string, unknown>;
+        let partners: string[] = [];
+        try {
+          const info = await api.getGroupInfo([threadId]);
+          const g = info.gridInfoMap?.[threadId];
+          const rawMems = Array.isArray(g?.memberIds)
+            ? g.memberIds
+            : Array.isArray(g?.memVerList)
+              ? g.memVerList
+              : [];
+          partners = rawMems
+            .map((m) => String(m).replace(/_0$/, ""))
+            .filter((uid) => uid.length > 0 && uid !== this.self.uid)
+            .slice(0, 10);
+        } catch {
+          partners = [];
+        }
+        try {
+          const res = (await api.call.groupRequestCall({
+            groupId: threadId,
+            callId: numericCallId,
+            typeRequest: media === "video" ? 6 : 5,
+            data: {},
+            partners,
+          })) as Record<string, unknown>;
+          return {
+            callId,
+            groupCallId: String(res?.groupCallId ?? callId),
+            serverConfig: res,
+          };
+        } catch (e) {
+          throw zaloRpcError(e, "calls.start");
+        }
+      }
+      try {
+        const res = await api.call.requestCall({
+          calleeId: threadId,
+          callId: numericCallId,
+          codec: DEFAULT_ZRTC_AUDIO_CODECS,
+          typeRequest: media === "video" ? 3 : 1,
+        });
         return {
           callId,
-          groupCallId: String(res?.groupCallId ?? callId),
-          serverConfig: res,
+          serverConfig: res as Record<string, unknown>,
         };
+      } catch (e) {
+        throw zaloRpcError(e, "calls.start");
       }
-      const res = await api.call.requestCall({
-        calleeId: threadId,
-        callId,
-        typeRequest: media === "video" ? 3 : 1,
-      });
-      return {
-        callId: String(res?.sessId ?? callId),
-        serverConfig: res as Record<string, unknown>,
-      };
+    });
+  }
+
+  sendCallInvite(
+    callId: string,
+    opts: {
+      calleeId: string;
+      rtpAddress: string;
+      rtcpAddress: string;
+      codec: string;
+      session: string;
+      extendData?: string;
+    },
+  ): Promise<unknown> {
+    const api = this.requireApi();
+    return this.call(async () => {
+      try {
+        return await api.call.sendCallInvite({
+          calleeId: opts.calleeId,
+          callId,
+          rtpAddress: opts.rtpAddress,
+          rtcpAddress: opts.rtcpAddress,
+          codec: opts.codec,
+          session: opts.session,
+          ...(opts.extendData !== undefined ? { extendData: opts.extendData } : {}),
+        });
+      } catch (e) {
+        throw zaloRpcError(e, "calls.invite");
+      }
+    });
+  }
+
+  sendRingRing(callId: string, callerId: string): Promise<unknown> {
+    const api = this.requireApi();
+    return this.call(async () => {
+      try {
+        return await api.call.sendRingRing(callerId, callId, 0);
+      } catch (e) {
+        throw zaloRpcError(e, "calls.ringring");
+      }
     });
   }
 
   answerCall(
     callId: string,
-    opts: { callerId?: string; groupId?: string; media: "voice" | "video" },
+    opts: {
+      callerId?: string;
+      groupId?: string;
+      media: "voice" | "video";
+      rtpAddress?: string;
+      rtcpAddress?: string;
+      codec?: string;
+      sessionId?: string;
+      extendData?: string;
+    },
   ): Promise<{ serverConfig?: Record<string, unknown> }> {
     const api = this.requireApi();
     return this.call(async () => {
-      if (opts.groupId) {
-        const res = (await api.call.groupAnswer({
+      try {
+        if (opts.groupId) {
+          const res = (await api.call.groupAnswer({
+            callId,
+            callType: opts.media === "video" ? 6 : 5,
+            groupId: opts.groupId,
+            hostCall: opts.callerId,
+          })) as Record<string, unknown>;
+          return { serverConfig: res };
+        }
+        const res = (await api.call.answerCall({
+          callerId: opts.callerId ?? "",
           callId,
-          callType: opts.media === "video" ? 6 : 5,
-          groupId: opts.groupId,
-          hostCall: opts.callerId,
+          status: 1,
+          codec: opts.codec ?? DEFAULT_ZRTC_AUDIO_CODECS,
+          rtcpAddress: opts.rtcpAddress ?? "",
+          rtpAddress: opts.rtpAddress ?? "",
+          session_id: opts.sessionId ?? callId,
+          extendData:
+            opts.extendData ??
+            buildZrtcExtendData({
+              isVideo: opts.media === "video",
+              rtpAddress: opts.rtpAddress,
+              rtcpAddress: opts.rtcpAddress,
+            }),
         })) as Record<string, unknown>;
         return { serverConfig: res };
+      } catch (e) {
+        throw zaloRpcError(e, "calls.accept");
       }
-      const res = (await api.call.answerCall({
-        callerId: opts.callerId ?? "",
-        callId,
-        status: 1,
-        rtcpAddress: "",
-        rtpAddress: "",
-        session_id: callId,
-      })) as Record<string, unknown>;
-      return { serverConfig: res };
+    });
+  }
+
+  answerAck(callId: string, calleeId: string): Promise<unknown> {
+    const api = this.requireApi();
+    return this.call(async () => {
+      try {
+        return await api.call.answerAck(calleeId, callId, 0);
+      } catch (e) {
+        throw zaloRpcError(e, "calls.answerAck");
+      }
+    });
+  }
+
+  cancelCall(
+    callId: string,
+    opts: { peerId: string; media: "voice" | "video" },
+  ): Promise<unknown> {
+    const api = this.requireApi();
+    return this.call(async () => {
+      try {
+        return await api.call.cancelCall(
+          opts.peerId,
+          callId,
+          opts.media === "video" ? 3 : 1,
+          0,
+        );
+      } catch (e) {
+        throw zaloRpcError(e, "calls.cancel");
+      }
     });
   }
 
@@ -4498,23 +4620,27 @@ export class ZcaGateway implements ZaloGateway {
   ): Promise<void> {
     const api = this.requireApi();
     return this.call(async () => {
-      if (opts.groupId) {
-        await api.call.groupCancel({
+      try {
+        if (opts.groupId) {
+          await api.call.groupCancel({
+            callId,
+            callType: 5,
+            groupId: opts.groupId,
+            hostCall: opts.callerId,
+          });
+          return;
+        }
+        await api.call.answerCall({
+          callerId: opts.callerId ?? "",
           callId,
-          callType: 5,
-          groupId: opts.groupId,
-          hostCall: opts.callerId,
+          status: opts.reason ?? 3,
+          rtcpAddress: "",
+          rtpAddress: "",
+          session_id: callId,
         });
-        return;
+      } catch (e) {
+        throw zaloRpcError(e, "calls.reject");
       }
-      await api.call.answerCall({
-        callerId: opts.callerId ?? "",
-        callId,
-        status: opts.reason ?? 3,
-        rtcpAddress: "",
-        rtpAddress: "",
-        session_id: callId,
-      });
     });
   }
 
@@ -4529,16 +4655,20 @@ export class ZcaGateway implements ZaloGateway {
   ): Promise<void> {
     const api = this.requireApi();
     return this.call(async () => {
-      if (opts.groupId) {
-        await api.call.groupEndCall({
-          callId,
-          callType: 5,
-          groupId: opts.groupId,
-          hostCall: opts.peerId,
-        });
-        return;
+      try {
+        if (opts.groupId) {
+          await api.call.groupEndCall({
+            callId,
+            callType: 5,
+            groupId: opts.groupId,
+            hostCall: opts.peerId,
+          });
+          return;
+        }
+        await api.call.endCall(opts.peerId ?? "", callId, opts.reason ?? 3);
+      } catch (e) {
+        throw zaloRpcError(e, "calls.hangup");
       }
-      await api.call.endCall(opts.peerId ?? "", callId, opts.reason ?? 3);
     });
   }
 
