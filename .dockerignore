@@ -4,6 +4,8 @@ crates
 rust
 docs
 scripts
+packages/*/node_modules
+packages/*/test
 server/node_modules
 server/data
 server/spike

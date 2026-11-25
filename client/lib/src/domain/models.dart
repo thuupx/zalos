@@ -73,6 +73,83 @@ enum AccountCapability {
   polls,
   notes,
   reminders,
+  voiceCall,
+  videoCall,
+  groupManage,
+  profileSettings,
+  businessTools,
+  mediaStore,
+  e2ee,
+}
+
+enum CallMediaKind { voice, video }
+
+enum CallDirection { incoming, outgoing }
+
+enum CallStatus { ringing, connecting, active, ended }
+
+class ActiveCall {
+  const ActiveCall({
+    required this.callId,
+    required this.threadId,
+    required this.threadType,
+    required this.peerId,
+    required this.peerName,
+    this.peerAvatarUrl,
+    required this.media,
+    required this.direction,
+    required this.status,
+    required this.startedAt,
+    this.answeredAt,
+    this.answeredByDeviceId,
+    this.isGroup = false,
+    this.groupCallId,
+    this.participants = const [],
+    this.signalingData = const {},
+  });
+
+  final String callId;
+  final String threadId;
+  final ThreadType threadType;
+  final String peerId;
+  final String peerName;
+  final String? peerAvatarUrl;
+  final CallMediaKind media;
+  final CallDirection direction;
+  final CallStatus status;
+  final int startedAt;
+  final int? answeredAt;
+  final String? answeredByDeviceId;
+  final bool isGroup;
+  final String? groupCallId;
+  final List<String> participants;
+  final Map<String, dynamic> signalingData;
+
+  ActiveCall copyWith({
+    CallStatus? status,
+    int? answeredAt,
+    String? answeredByDeviceId,
+    List<String>? participants,
+    Map<String, dynamic>? signalingData,
+  }) =>
+      ActiveCall(
+        callId: callId,
+        threadId: threadId,
+        threadType: threadType,
+        peerId: peerId,
+        peerName: peerName,
+        peerAvatarUrl: peerAvatarUrl,
+        media: media,
+        direction: direction,
+        status: status ?? this.status,
+        startedAt: startedAt,
+        answeredAt: answeredAt ?? this.answeredAt,
+        answeredByDeviceId: answeredByDeviceId ?? this.answeredByDeviceId,
+        isGroup: isGroup,
+        groupCallId: groupCallId,
+        participants: participants ?? this.participants,
+        signalingData: signalingData ?? this.signalingData,
+      );
 }
 
 enum LinkState { disconnected, connecting, connected, unauthorized }
@@ -1069,4 +1146,93 @@ class OaCredentials {
   final String appSecret;
   final String accessToken;
   final String refreshToken;
+}
+
+class GroupLinkDetail {
+  const GroupLinkDetail({this.link, this.expirationDate, required this.enabled});
+  final String? link;
+  final int? expirationDate;
+  final bool enabled;
+}
+
+class GroupInviteBoxItem {
+  const GroupInviteBoxItem({required this.groupId, required this.name, this.memberCount = 0});
+  final String groupId;
+  final String name;
+  final int memberCount;
+}
+
+class ProfileInfo {
+  const ProfileInfo({
+    required this.uid,
+    required this.displayName,
+    this.avatarUrl = '',
+    this.dob = '',
+    this.gender = 0,
+    this.bio = '',
+  });
+  final String uid;
+  final String displayName;
+  final String avatarUrl;
+  final String dob;
+  final int gender;
+  final String bio;
+}
+
+class AutoReplyRule {
+  const AutoReplyRule({
+    required this.id,
+    required this.enabled,
+    required this.content,
+    required this.startTime,
+    required this.endTime,
+    required this.scope,
+  });
+  final int id;
+  final bool enabled;
+  final String content;
+  final int startTime;
+  final int endTime;
+  final int scope;
+}
+
+class CatalogItem {
+  const CatalogItem({required this.catalogId, required this.catalogName, this.catalogPhoto = ''});
+  final String catalogId;
+  final String catalogName;
+  final String catalogPhoto;
+}
+
+class CatalogProduct {
+  const CatalogProduct({
+    required this.productId,
+    required this.catalogId,
+    required this.productName,
+    required this.price,
+    required this.description,
+    this.currencyUnit = '₫',
+  });
+  final String productId;
+  final String catalogId;
+  final String productName;
+  final String price;
+  final String description;
+  final String currencyUnit;
+}
+
+class MediaStoreEntry {
+  const MediaStoreEntry({
+    required this.id,
+    required this.mediaType,
+    required this.url,
+    this.thumbUrl = '',
+    this.name = '',
+    this.ts = 0,
+  });
+  final String id;
+  final String mediaType;
+  final String url;
+  final String thumbUrl;
+  final String name;
+  final int ts;
 }

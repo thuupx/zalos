@@ -2,7 +2,7 @@ import { test, expect } from "bun:test";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { ThreadType, Urgency as ZcaUrgency } from "zca-js";
+import { ThreadType, Urgency as ZcaUrgency } from "@zalos/zalo-sdk";
 import { ZcaGateway } from "../src/gateway/zca.ts";
 import { OaGateway } from "../src/gateway/oa.ts";
 import type { Label } from "../src/gateway/types.ts";
@@ -205,7 +205,7 @@ function stubApi() {
       version: 5,
     }),
     updateQuickMessage: async (
-      payload: { keyword: string; title: string; media?: string },
+      payload: { keyword: string; title: string; media?: unknown },
       itemId: number,
     ) => {
       quickUpdates.push({ payload, itemId });
@@ -213,7 +213,7 @@ function stubApi() {
         item: {
           id: itemId,
           keyword: payload.keyword,
-          type: 0,
+          type: Array.isArray(payload.media) && payload.media.length > 0 ? 1 : 0,
           createdTime: 3,
           lastModified: 4,
           message: { title: payload.title, params: null },
@@ -875,13 +875,15 @@ test("quick message text edits keep the stored photoId", async () => {
     title: "Đã sửa",
   });
   expect(updated.version).toBe(6);
-  // The raw update carried the existing media item instead of type 0.
-  expect(api.quickCustomParams).toHaveLength(1);
-  expect(api.quickCustomParams[0]).toMatchObject({
+  // Direct SDK updateQuickMessage carries the existing media item array.
+  expect(api.quickUpdates).toHaveLength(1);
+  expect(api.quickUpdates[0]).toMatchObject({
     itemId: 2,
-    keyword: "sua",
-    type: 1,
-    media: { items: [{ photoId: 9001, normalUrl: "https://qm/n.jpg" }] },
+    payload: {
+      keyword: "sua",
+      title: "Đã sửa",
+      media: [{ photoId: 9001, normalUrl: "https://qm/n.jpg" }],
+    },
   });
   // A sparse Zalo response must not hand the client an item without media.
   expect(updated.item.media).toEqual([
@@ -899,8 +901,6 @@ test("quick message text edits keep the stored photoId", async () => {
     },
   ]);
   expect(updated.item.type).toBe(1);
-  // No public updateQuickMessage call: it would send type 0.
-  expect(api.quickUpdates).toHaveLength(0);
   await gw.stop();
 });
 

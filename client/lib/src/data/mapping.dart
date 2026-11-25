@@ -752,6 +752,45 @@ TypingEvent typingEventFromJson(Json json) => TypingEvent(
       userId: _string(json['userId']),
     );
 
+CallMediaKind callMediaKindFromWire(Object? value) => value == 'video' ? CallMediaKind.video : CallMediaKind.voice;
+
+String callMediaKindToWire(CallMediaKind media) => media == CallMediaKind.video ? 'video' : 'voice';
+
+CallDirection callDirectionFromWire(Object? value) =>
+    value == 'outgoing' ? CallDirection.outgoing : CallDirection.incoming;
+
+CallStatus callStatusFromWire(Object? value) {
+  switch (value) {
+    case 'connecting':
+      return CallStatus.connecting;
+    case 'active':
+      return CallStatus.active;
+    case 'ended':
+      return CallStatus.ended;
+    default:
+      return CallStatus.ringing;
+  }
+}
+
+ActiveCall activeCallFromJson(Json json) => ActiveCall(
+      callId: _string(json['callId']),
+      threadId: _string(json['threadId']),
+      threadType: threadTypeFromWire(json['threadType']),
+      peerId: _string(json['peerId']),
+      peerName: _string(json['peerName']),
+      peerAvatarUrl: _stringOrNull(json['peerAvatarUrl']),
+      media: callMediaKindFromWire(json['media']),
+      direction: callDirectionFromWire(json['direction']),
+      status: callStatusFromWire(json['status']),
+      startedAt: _int(json['startedAt']),
+      answeredAt: _intOrNull(json['answeredAt']),
+      answeredByDeviceId: _stringOrNull(json['answeredByDeviceId']),
+      isGroup: _bool(json['isGroup']),
+      groupCallId: _stringOrNull(json['groupCallId']),
+      participants: _stringList(json['participants']),
+      signalingData: asJson(json['signalingData']),
+    );
+
 /// Sentinel for [copyMessage]'s [sendErrorCode]: keep the current code.
 const Object _keepSendError = Object();
 

@@ -7,9 +7,7 @@ import {
   loginEncrypt,
   loginDecrypt,
 } from "../../mock/gateway/src/crypto.ts";
-// Relative path on purpose: zca-js's exports map only exposes the
-// package root, and we want its real primitives for the round-trip.
-import { decodeAES, encodeAES } from "../node_modules/zca-js/dist/utils.js";
+import { decodeAES, encodeAES } from "@zalos/zalo-sdk";
 
 describe("mock fetch rewrite", () => {
   const realFetch = globalThis.fetch;

@@ -3,7 +3,7 @@
 // must bound redirects and body size, and receipt listeners must survive
 // payloads with missing uid arrays.
 import { test, expect } from "bun:test";
-import { ThreadType } from "zca-js";
+import { ThreadType } from "@zalos/zalo-sdk";
 import { ZcaGateway } from "../src/gateway/zca.ts";
 import { RpcError } from "../src/tunnel/rpc.ts";
 import {

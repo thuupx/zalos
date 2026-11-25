@@ -5,8 +5,10 @@
 FROM tailscale/tailscale:v1.104.4@sha256:ed6480b33c6eb67c9cbd203ed42b9fb57e361986725b6856def71b7a3d9e276c AS tailscale
 
 FROM oven/bun:1.4.4@sha256:1d22548f177f4ff38e0c15baa3c2c46c6c2060ba2d1bc573bb4720b407548f1d AS deps
-WORKDIR /src
-COPY server/package.json server/bun.lock ./
+WORKDIR /build
+COPY packages/zalo-sdk ./packages/zalo-sdk
+COPY server/package.json server/bun.lock ./server/
+WORKDIR /build/server
 RUN bun install --frozen-lockfile --production
 
 FROM oven/bun:1.4.4@sha256:1d22548f177f4ff38e0c15baa3c2c46c6c2060ba2d1bc573bb4720b407548f1d
@@ -17,8 +19,9 @@ ENV ZALOS_CONTAINER=1 \
 RUN groupadd -g 10001 zalos \
     && useradd -u 10001 -g zalos -d /var/lib/zalos -s /usr/sbin/nologin zalos
 
+COPY --from=deps /build/packages/zalo-sdk /opt/packages/zalo-sdk
 WORKDIR /opt/zalos
-COPY --from=deps /src/node_modules ./node_modules
+COPY --from=deps /build/server/node_modules ./node_modules
 COPY server/package.json server/bun.lock ./
 COPY server/src ./src
 COPY server/vendor ./vendor

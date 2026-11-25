@@ -1,5 +1,6 @@
 // In-memory fake gateway for tests and --fake dev mode.
 import { RpcError } from "../tunnel/rpc.ts";
+import { createFakeExtendedMethods } from "./fake_extended.ts";
 import { AUTO_DELETE_TTLS } from "./types.ts";
 import type {
   AccountStatus,
@@ -71,6 +72,7 @@ export class FakeGateway implements ZaloGateway {
       avatarUrl: self?.avatarUrl ?? "https://example.com/avatar.png",
     };
     this.linkedDevicesValue = { masterId: this.self.uid, companions: [] };
+    Object.assign(this, createFakeExtendedMethods(this));
   }
 
   // ---- seedable friend state for tests ----
@@ -217,6 +219,13 @@ export class FakeGateway implements ZaloGateway {
       "polls",
       "notes",
       "reminders",
+      "voiceCall",
+      "videoCall",
+      "groupManage",
+      "profileSettings",
+      "businessTools",
+      "mediaStore",
+      "e2ee",
     ];
   }
 
@@ -1365,6 +1374,87 @@ export class FakeGateway implements ZaloGateway {
     });
     this.emit("message", msg);
     return msg;
+  }
+
+  // ---- Voice & Video Calls ----
+
+  private callSeq = 1;
+  groupCallStates = new Map<string, Record<string, unknown>>();
+
+  async startCall(
+    threadId: string,
+    threadType: ThreadType,
+    media: "voice" | "video",
+  ) {
+    const callId = `fake-call-${this.callSeq++}`;
+    this.calls.push({ method: "startCall", args: [threadId, threadType, media] });
+    return {
+      callId,
+      ...(threadType === "group" ? { groupCallId: `grp-call-${callId}` } : {}),
+      serverConfig: { callId, media, rtpaddr: "127.0.0.1:40000" },
+    };
+  }
+
+  async answerCall(
+    callId: string,
+    opts: { callerId?: string; groupId?: string; media: "voice" | "video" },
+  ) {
+    this.calls.push({ method: "answerCall", args: [callId, opts] });
+    return { serverConfig: { callId, accepted: true, rtpaddr: "127.0.0.1:40002" } };
+  }
+
+  async rejectCall(
+    callId: string,
+    opts: { callerId?: string; groupId?: string; reason?: number },
+  ) {
+    this.calls.push({ method: "rejectCall", args: [callId, opts] });
+  }
+
+  async endCall(
+    callId: string,
+    opts: {
+      peerId?: string;
+      groupId?: string;
+      durationSec?: number;
+      reason?: number;
+    },
+  ) {
+    this.calls.push({ method: "endCall", args: [callId, opts] });
+  }
+
+  async getGroupCallState(groupId: string) {
+    this.calls.push({ method: "getGroupCallState", args: [groupId] });
+    return this.groupCallStates.get(groupId) ?? { groupId, active: false, members: [] };
+  }
+
+  async sendCallSignal(action: string, payload: Record<string, unknown>) {
+    this.calls.push({ method: "sendCallSignal", args: [action, payload] });
+    return { ok: true, action, payload };
+  }
+
+  simulateIncomingCall(opts: {
+    callId: string;
+    callerId: string;
+    callerName?: string;
+    groupId?: string;
+    media?: "voice" | "video";
+  }) {
+    const isGroup = opts.groupId !== undefined;
+    const media = opts.media ?? "voice";
+    this.emit("voip", {
+      act: isGroup ? "group_request" : "request",
+      ts: Date.now(),
+      conversationId: opts.groupId ?? opts.callerId,
+      callerId: opts.callerId,
+      ...(opts.groupId ? { groupId: opts.groupId } : {}),
+      inCallStatus: null,
+      data: {
+        callId: opts.callId,
+        callerId: opts.callerId,
+        ...(opts.callerName ? { callerName: opts.callerName } : {}),
+        calltype: media === "video" ? (isGroup ? 6 : 3) : isGroup ? 5 : 1,
+      },
+    });
   }
 }
 

@@ -166,7 +166,8 @@ class _Account {
   String name;
   AccountStatus status;
   final AccountKind kind;
-  Set<AccountCapability> get capabilities => kind == AccountKind.oa ? const {} : AccountCapability.values.toSet();
+  Set<AccountCapability>? customCapabilities;
+  Set<AccountCapability> get capabilities => customCapabilities ?? (kind == AccountKind.oa ? const {} : AccountCapability.values.toSet());
   String get uid => 'self-$slot';
 }
 
@@ -229,6 +230,11 @@ class FakeServerLink implements ServerLink {
 
   void setStatus(String slot, AccountStatus status) {
     _accounts.firstWhere((a) => a.slot == slot).status = status;
+    publish();
+  }
+
+  void setCapabilities(String slot, Set<AccountCapability> capabilities) {
+    _accounts.firstWhere((a) => a.slot == slot).customCapabilities = Set.of(capabilities);
     publish();
   }
 
@@ -2020,14 +2026,17 @@ class FakeSession implements AccountSession {
   /// Total member count by group id, for groups whose member list is only a
   /// page. Absent means the list length is the total.
   final Map<String, int> groupMemberCounts = {};
+  late final List<({String id, String name, List<String> members})> _mutableGroups = [
+    for (final g in fakeGroups) (id: g.id, name: g.name, members: List.of(g.members)),
+  ];
 
-  GroupInfo _info(FakeGroup g) => GroupInfo(
+  GroupInfo _info(({String id, String name, List<String> members}) g) => GroupInfo(
         id: g.id,
         name: g.name,
         avatarUrl: '',
         memberIds: [selfUid, ...g.members],
         memberCount: groupMemberCounts[g.id],
-        ownerId: g.members.first,
+        ownerId: g.members.isNotEmpty ? g.members.first : selfUid,
         adminIds: groupAdminIds[g.id] ?? const [],
       );
 
@@ -2036,14 +2045,14 @@ class FakeSession implements AccountSession {
     await _wait();
     if (_flags.failGroups) throw StateError('groups unavailable');
     if (fakeLink.app.empty) return const [];
-    return [for (final g in fakeGroups) _info(g)];
+    return [for (final g in _mutableGroups) _info(g)];
   }
 
   @override
   Future<GroupInfo> groupInfo(String groupId) async {
     await _wait();
     if (_flags.failGroups) throw StateError('group unavailable');
-    return _info(fakeGroups.firstWhere((g) => g.id == groupId));
+    return _info(_mutableGroups.firstWhere((g) => g.id == groupId));
   }
 
   final Map<String, Uint8List> _media = {};
@@ -2058,8 +2067,547 @@ class FakeSession implements AccountSession {
     return _media.putIfAbsent(url, () => fakePng(url, width: photo ? 160 : 48, height: photo ? 120 : 48));
   }
 
+  // ---- Voice & Video Calls ----
+
+  final ValueNotifier<ActiveCall?> _activeCall = ValueNotifier<ActiveCall?>(null);
+  int _callSeq = 1;
+  final List<({String threadId, ThreadType type, CallMediaKind media})> callsStarted = [];
+  final List<String> callsAccepted = [];
+  final List<({String callId, bool localOnly})> callsRejected = [];
+  final List<String> callsHungUp = [];
+
+  @override
+  ValueListenable<ActiveCall?> get activeCall => _activeCall;
+
+  void simulateIncomingCall(ActiveCall call) {
+    if (_disposed) return;
+    _activeCall.value = call;
+  }
+
+  @override
+  Future<ActiveCall> startCall(String threadId, ThreadType type, CallMediaKind media) async {
+    await _wait();
+    callsStarted.add((threadId: threadId, type: type, media: media));
+    final match = threads.value.where((t) => t.id == threadId && t.type == type).firstOrNull;
+    final call = ActiveCall(
+      callId: 'fake-call-${_callSeq++}',
+      threadId: threadId,
+      threadType: type,
+      peerId: threadId,
+      peerName: match?.name ?? threadId,
+      peerAvatarUrl: match?.avatarUrl,
+      media: media,
+      direction: CallDirection.outgoing,
+      status: CallStatus.ringing,
+      startedAt: DateTime.now().millisecondsSinceEpoch,
+      answeredByDeviceId: 'fake-device',
+      isGroup: type == ThreadType.group,
+    );
+    _activeCall.value = call;
+    return call;
+  }
+
+  @override
+  Future<void> acceptCall(String callId) async {
+    await _wait();
+    callsAccepted.add(callId);
+    final cur = _activeCall.value;
+    if (cur != null && cur.callId == callId) {
+      _activeCall.value = cur.copyWith(
+        status: CallStatus.active,
+        answeredAt: DateTime.now().millisecondsSinceEpoch,
+        answeredByDeviceId: 'fake-device',
+      );
+    }
+  }
+
+  @override
+  Future<void> rejectCall(String callId, {bool localOnly = false}) async {
+    await _wait();
+    callsRejected.add((callId: callId, localOnly: localOnly));
+    if (_activeCall.value?.callId == callId) {
+      _activeCall.value = null;
+    }
+  }
+
+  @override
+  Future<void> hangupCall(String callId) async {
+    await _wait();
+    callsHungUp.add(callId);
+    if (_activeCall.value?.callId == callId) {
+      _activeCall.value = null;
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> groupCallState(String groupId) async {
+    await _wait();
+    return {'groupId': groupId, 'active': false, 'members': const <String>[]};
+  }
+
+  @override
+  Future<void> callHold(String callId, {required String peerId, required bool hold}) async {
+    await _wait();
+    rawRpcCalls.add(('calls.hold', {'callId': callId, 'peerId': peerId, 'hold': hold}));
+  }
+
+  @override
+  Future<void> callSwitchMedia(String callId, {required String peerId}) async {
+    await _wait();
+    rawRpcCalls.add(('calls.switchMedia', {'callId': callId, 'peerId': peerId}));
+  }
+
+  // ---- Extended SDK state for tests & demo ----
+  final List<(String, Map<String, dynamic>)> rawRpcCalls = [];
+  int _extSeq = 1;
+  final Map<String, bool> _groupLinks = {};
+  final Map<String, Map<String, dynamic>> _groupSettings = {};
+  final List<GroupInviteBoxItem> _inviteBox = [const GroupInviteBoxItem(groupId: 'inv-g01', name: 'Nhóm Cộng đồng Zalos', memberCount: 28)];
+  ProfileInfo _profile = const ProfileInfo(uid: 'self-main', displayName: 'Phạm Minh Thư', avatarUrl: '', dob: '1997-04-12', gender: 1, bio: 'Xin chào!');
+  final List<({String photoId, String url})> _avatars = [(photoId: 'av-1', url: 'https://example.com/av1.jpg')];
+  final Map<String, dynamic> _zaloSettings = {'show_online_status': 1, 'allow_find_phone': 1, 'display_seen_status': 1};
+  bool _activeStatus = true;
+  String _zaloLang = 'vi';
+  final Set<String> _feedBlocked = {};
+  final List<CatalogItem> _catalogs = [const CatalogItem(catalogId: 'cat-1', catalogName: 'Sản phẩm nổi bật')];
+  final Map<String, List<CatalogProduct>> _products = {
+    'cat-1': [const CatalogProduct(productId: 'prod-1', catalogId: 'cat-1', productName: 'Bó hoa hướng dương', price: '350000', description: 'Tặng kèm thiệp')],
+  };
+  final List<AutoReplyRule> _autoReplies = [
+    const AutoReplyRule(id: 1, enabled: true, content: 'Mình sẽ phản hồi bạn sớm nhất!', startTime: 0, endTime: 86400000, scope: 0),
+  ];
+  final List<MediaStoreEntry> _mediaStore = [
+    const MediaStoreEntry(id: 'ms-1', mediaType: 'image', url: 'https://photo/1.jpg', thumbUrl: 'https://photo/1-t.jpg', name: 'hoa.jpg', ts: 1700000000000),
+  ];
+  final Set<String> _e2eeThreads = {};
+
+  @override
+  Future<Map<String, dynamic>> rawRpc(String method, [Map<String, dynamic> params = const {}]) async {
+    await _wait();
+    rawRpcCalls.add((method, params));
+    return {'ok': true, 'method': method};
+  }
+
+  @override
+  Future<String> createGroup({String? name, required List<String> members}) async {
+    await _wait();
+    final id = 'g-new-${_extSeq++}';
+    final gName = name != null && name.trim().isNotEmpty ? name.trim() : 'Nhóm mới $_extSeq';
+    _mutableGroups.add((id: id, name: gName, members: List.of(members)));
+    _threadMap[id] = Thread(
+      id: id,
+      type: ThreadType.group,
+      name: gName,
+      avatarUrl: '',
+      lastMessage: null,
+      lastTs: DateTime.now().millisecondsSinceEpoch,
+      unread: 0,
+      pinned: false,
+      muted: false,
+    );
+    _publish();
+    return id;
+  }
+
+  @override
+  Future<void> renameGroup(String groupId, String name) async {
+    await _wait();
+    final idx = _mutableGroups.indexWhere((g) => g.id == groupId);
+    if (idx >= 0) {
+      final old = _mutableGroups[idx];
+      _mutableGroups[idx] = (id: old.id, name: name, members: old.members);
+    }
+    final oldT = _threadMap[groupId];
+    if (oldT != null) {
+      _threadMap[groupId] = Thread(
+        id: oldT.id,
+        type: oldT.type,
+        name: name,
+        avatarUrl: oldT.avatarUrl,
+        lastMessage: oldT.lastMessage,
+        lastTs: oldT.lastTs,
+        unread: oldT.unread,
+        pinned: oldT.pinned,
+        muted: oldT.muted,
+        hidden: oldT.hidden,
+        archived: oldT.archived,
+        autoDeleteTtl: oldT.autoDeleteTtl,
+      );
+      _publish();
+    }
+  }
+
+  @override
+  Future<void> changeGroupAvatar(String groupId, OutgoingFile file) async {
+    await _wait();
+  }
+
+  @override
+  Future<void> addGroupMembers(String groupId, List<String> memberIds) async {
+    await _wait();
+    final idx = _mutableGroups.indexWhere((g) => g.id == groupId);
+    if (idx >= 0) {
+      for (final m in memberIds) {
+        if (!_mutableGroups[idx].members.contains(m)) _mutableGroups[idx].members.add(m);
+      }
+    }
+  }
+
+  @override
+  Future<void> inviteUserToGroups(String userId, List<String> groupIds) async {
+    await _wait();
+    for (final gid in groupIds) {
+      await addGroupMembers(gid, [userId]);
+    }
+  }
+
+  @override
+  Future<void> removeGroupMembers(String groupId, List<String> memberIds) async {
+    await _wait();
+    final idx = _mutableGroups.indexWhere((g) => g.id == groupId);
+    if (idx >= 0) _mutableGroups[idx].members.removeWhere(memberIds.contains);
+  }
+
+  @override
+  Future<void> leaveGroup(String groupId, {bool silent = false}) async {
+    await _wait();
+    _mutableGroups.removeWhere((g) => g.id == groupId);
+    _threadMap.remove(groupId);
+    _publish();
+  }
+
+  @override
+  Future<void> disperseGroup(String groupId) => leaveGroup(groupId);
+
+  @override
+  Future<void> changeGroupOwner(String groupId, String newOwnerId) async {
+    await _wait();
+    final idx = _mutableGroups.indexWhere((g) => g.id == groupId);
+    if (idx >= 0 && _mutableGroups[idx].members.remove(newOwnerId)) {
+      _mutableGroups[idx].members.insert(0, newOwnerId);
+    }
+  }
+
+  @override
+  Future<void> addGroupDeputy(String groupId, List<String> memberIds) async {
+    await _wait();
+    final cur = List<String>.of(groupAdminIds[groupId] ?? const []);
+    for (final m in memberIds) {
+      if (!cur.contains(m)) cur.add(m);
+    }
+    groupAdminIds[groupId] = cur;
+  }
+
+  @override
+  Future<void> removeGroupDeputy(String groupId, List<String> memberIds) async {
+    await _wait();
+    final cur = List<String>.of(groupAdminIds[groupId] ?? const []);
+    cur.removeWhere(memberIds.contains);
+    groupAdminIds[groupId] = cur;
+  }
+
+  @override
+  Future<void> updateGroupSettings(String groupId, Map<String, dynamic> settings) async {
+    await _wait();
+    _groupSettings[groupId] = {...?_groupSettings[groupId], ...settings};
+  }
+
+  @override
+  Future<List<Contact>> pendingGroupMembers(String groupId) async {
+    await _wait();
+    return const [Contact(uid: 'u-pending-1', displayName: 'Trần Minh Khôi', avatarUrl: '')];
+  }
+
+  @override
+  Future<void> reviewPendingGroupMembers(String groupId, List<String> members, bool approve) async {
+    await _wait();
+  }
+
+  @override
+  Future<List<Contact>> blockedGroupMembers(String groupId) async {
+    await _wait();
+    return const [];
+  }
+
+  @override
+  Future<void> addBlockedGroupMembers(String groupId, List<String> memberIds) async {
+    await _wait();
+  }
+
+  @override
+  Future<void> removeBlockedGroupMembers(String groupId, List<String> memberIds) async {
+    await _wait();
+  }
+
+  @override
+  Future<GroupLinkDetail> groupLinkDetail(String groupId) async {
+    await _wait();
+    final en = _groupLinks[groupId] ?? true;
+    return GroupLinkDetail(enabled: en, link: en ? 'https://zalo.me/g/$groupId' : null);
+  }
+
+  @override
+  Future<GroupLinkDetail> enableGroupLink(String groupId) async {
+    await _wait();
+    _groupLinks[groupId] = true;
+    return GroupLinkDetail(enabled: true, link: 'https://zalo.me/g/$groupId');
+  }
+
+  @override
+  Future<void> disableGroupLink(String groupId) async {
+    await _wait();
+    _groupLinks[groupId] = false;
+  }
+
+  @override
+  Future<Map<String, dynamic>> groupLinkInfo(String link) async {
+    await _wait();
+    return {'name': 'Nhóm từ liên kết', 'link': link, 'totalMember': 12};
+  }
+
+  @override
+  Future<void> joinGroupLink(String link) async {
+    await _wait();
+  }
+
+  @override
+  Future<List<GroupInviteBoxItem>> groupInviteBoxList() async {
+    await _wait();
+    return List.of(_inviteBox);
+  }
+
+  @override
+  Future<void> joinGroupInviteBox(String groupId) async {
+    await _wait();
+    _inviteBox.removeWhere((i) => i.groupId == groupId);
+  }
+
+  @override
+  Future<void> deleteGroupInviteBox(List<String> groupIds) async {
+    await _wait();
+    _inviteBox.removeWhere((i) => groupIds.contains(i.groupId));
+  }
+
+  @override
+  Future<void> upgradeGroupToCommunity(String groupId) async {
+    await _wait();
+  }
+
+  @override
+  Future<ProfileInfo> fetchProfile() async {
+    await _wait();
+    return _profile;
+  }
+
+  @override
+  Future<void> updateProfile({required String name, required String dob, required int gender}) async {
+    await _wait();
+    _profile = ProfileInfo(uid: _profile.uid, displayName: name, avatarUrl: _profile.avatarUrl, dob: dob, gender: gender, bio: _profile.bio);
+  }
+
+  @override
+  Future<void> updateProfileBio(String bio) async {
+    await _wait();
+    _profile = ProfileInfo(uid: _profile.uid, displayName: _profile.displayName, avatarUrl: _profile.avatarUrl, dob: _profile.dob, gender: _profile.gender, bio: bio);
+  }
+
+  @override
+  Future<void> changeAccountAvatar(OutgoingFile file) async {
+    await _wait();
+  }
+
+  @override
+  Future<List<({String photoId, String url})>> avatarList() async {
+    await _wait();
+    return List.of(_avatars);
+  }
+
+  @override
+  Future<void> reuseAvatar(String photoId) async {
+    await _wait();
+  }
+
+  @override
+  Future<void> deleteAvatars(List<String> photoIds) async {
+    await _wait();
+    _avatars.removeWhere((a) => photoIds.contains(a.photoId));
+  }
+
+  @override
+  Future<Map<String, dynamic>> zaloSettings() async {
+    await _wait();
+    return {..._zaloSettings, 'activeStatus': _activeStatus, 'language': _zaloLang};
+  }
+
+  @override
+  Future<void> updateZaloSetting(String type, int value) async {
+    await _wait();
+    _zaloSettings[type] = value;
+  }
+
+  @override
+  Future<void> updateActiveStatus(bool active) async {
+    await _wait();
+    _activeStatus = active;
+  }
+
+  @override
+  Future<void> updateZaloLang(String language) async {
+    await _wait();
+    _zaloLang = language;
+  }
+
+  @override
+  Future<void> setCloseFriend(List<String> uids, bool add) async {
+    await _wait();
+    for (final u in uids) {
+      _patchContact(u, (c) => Contact(uid: c.uid, displayName: c.displayName, avatarUrl: c.avatarUrl, alias: c.alias, closeFriend: add));
+    }
+  }
+
+  @override
+  Future<List<Contact>> blockList() async {
+    await _wait();
+    return [for (final u in blocked) Contact(uid: u, displayName: u, avatarUrl: '')];
+  }
+
+  @override
+  Future<void> blockViewFeed(String uid, bool blocked) async {
+    await _wait();
+    if (blocked) {
+      _feedBlocked.add(uid);
+    } else {
+      _feedBlocked.remove(uid);
+    }
+  }
+
+  @override
+  Future<Map<String, String>> userQr(List<String> uids) async {
+    await _wait();
+    return {for (final u in uids) u: 'https://zalo.me/qr/$u'};
+  }
+
+  @override
+  Future<void> removeNote(String groupId, String topicId) async {
+    await _wait();
+    _pins['group:$groupId']?.removeWhere((p) => p.id == topicId);
+    if (!_boardUpdates.isClosed) _boardUpdates.add(BoardUpdateEvent(groupId, ThreadType.group));
+  }
+
+  @override
+  Future<List<CatalogItem>> catalogs() async {
+    await _wait();
+    return List.of(_catalogs);
+  }
+
+  @override
+  Future<CatalogItem> createCatalog(String name) async {
+    await _wait();
+    final item = CatalogItem(catalogId: 'cat-${++_extSeq}', catalogName: name);
+    _catalogs.add(item);
+    _products[item.catalogId] = [];
+    return item;
+  }
+
+  @override
+  Future<void> deleteCatalog(String catalogId) async {
+    await _wait();
+    _catalogs.removeWhere((c) => c.catalogId == catalogId);
+    _products.remove(catalogId);
+  }
+
+  @override
+  Future<List<CatalogProduct>> catalogProducts(String catalogId) async {
+    await _wait();
+    return List.of(_products[catalogId] ?? const []);
+  }
+
+  @override
+  Future<CatalogProduct> createCatalogProduct(String catalogId, {required String name, required String price, required String description}) async {
+    await _wait();
+    final item = CatalogProduct(productId: 'prod-${++_extSeq}', catalogId: catalogId, productName: name, price: price, description: description);
+    _products.putIfAbsent(catalogId, () => []).add(item);
+    return item;
+  }
+
+  @override
+  Future<void> deleteCatalogProduct(String catalogId, List<String> productIds) async {
+    await _wait();
+    _products[catalogId]?.removeWhere((p) => productIds.contains(p.productId));
+  }
+
+  @override
+  Future<List<AutoReplyRule>> autoReplies() async {
+    await _wait();
+    return List.of(_autoReplies);
+  }
+
+  @override
+  Future<AutoReplyRule> createAutoReply({required bool enabled, required String content, int startTime = 0, int endTime = 86400000, int scope = 0}) async {
+    await _wait();
+    final rule = AutoReplyRule(id: ++_extSeq, enabled: enabled, content: content, startTime: startTime, endTime: endTime, scope: scope);
+    _autoReplies.add(rule);
+    return rule;
+  }
+
+  @override
+  Future<AutoReplyRule> updateAutoReply(AutoReplyRule rule) async {
+    await _wait();
+    final idx = _autoReplies.indexWhere((r) => r.id == rule.id);
+    if (idx >= 0) _autoReplies[idx] = rule;
+    return rule;
+  }
+
+  @override
+  Future<void> deleteAutoReply(int id) async {
+    await _wait();
+    _autoReplies.removeWhere((r) => r.id == id);
+  }
+
+  @override
+  Future<void> createBankAccount({required int bin, required String accountNumber, required String holderName}) async {
+    await _wait();
+    final id = 'ba-${++_extSeq}';
+    bankAccountList.add(BankAccount(id: id, bin: bin, accountNumber: accountNumber, holderName: holderName.toUpperCase(), isDefault: false, accountId: _extSeq, createdAt: 1700000000000, updatedAt: 1700000000000));
+  }
+
+  @override
+  Future<void> deleteBankAccount(String accountId, {bool isDefault = false}) async {
+    await _wait();
+    bankAccountList.removeWhere((b) => b.id == accountId);
+  }
+
+  @override
+  Future<List<MediaStoreEntry>> mediaStoreList(String threadId, ThreadType type, String mediaType) async {
+    await _wait();
+    return _mediaStore.where((m) => m.mediaType == mediaType).toList();
+  }
+
+  @override
+  Future<void> mediaStoreRemove(String threadId, ThreadType type, String mediaType, String mediaId) async {
+    await _wait();
+    _mediaStore.removeWhere((m) => m.id == mediaId);
+  }
+
+  @override
+  Future<bool> e2eeCheckCompatible(String threadId, ThreadType type) async {
+    await _wait();
+    return _e2eeThreads.contains(threadId);
+  }
+
+  @override
+  Future<void> e2eeEnable(String threadId, ThreadType type, bool enable) async {
+    await _wait();
+    if (enable) {
+      _e2eeThreads.add(threadId);
+    } else {
+      _e2eeThreads.remove(threadId);
+    }
+  }
+
   void dispose() {
     _disposed = true;
+    _activeCall.dispose();
     _typing.close();
   }
 }

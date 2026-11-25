@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { ThreadType } from "zca-js";
+import { ThreadType } from "@zalos/zalo-sdk";
 import { ZcaGateway } from "../src/gateway/zca.ts";
 import { OaGateway } from "../src/gateway/oa.ts";
 

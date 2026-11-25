@@ -51,6 +51,7 @@ export async function makeMockEnv(dir?: string): Promise<MockEnv> {
     dataDir,
     fake: false,
     mockUrl: MOCK_URL,
+    allowDev: true,
   });
   const port = await server.tunnel.listen(0, "127.0.0.1");
   await server.ready;

@@ -1,6 +1,5 @@
-// zca-js implementation of ZaloGateway. Every call here is grounded in the
-// shipped source under zca-js/dist; field names follow TMessage/TReaction/
-// SendSeenEventMessageParams etc. exactly.
+// @zalos/zalo-sdk implementation of ZaloGateway; field names follow TMessage /
+// TReaction / SendSeenEventMessageParams etc.
 import { EventEmitter } from "node:events";
 import {
   Zalo,
@@ -11,6 +10,8 @@ import {
   DestType,
   FriendRecommendationsType,
   LoginQRCallbackEventType,
+  MuteAction,
+  MuteDuration,
   Reactions,
   ReportReason as ZcaReportReason,
   TextStyle as ZcaTextStyle,
@@ -40,9 +41,12 @@ import {
   type TQuote,
   type Typing,
   type Undo,
-} from "zca-js";
+} from "@zalos/zalo-sdk";
 import { imageSize } from "image-size";
-import { MuteAction, MuteDuration } from "zca-js";
+import {
+  createZcaExtendedMethods,
+  dispatchExtendedCallSignal,
+} from "./zca_extended.ts";
 import {
   statSync,
   mkdtempSync,
@@ -1034,72 +1038,6 @@ function quickMessagesOf(res: unknown): QuickMessages {
   };
 }
 
-// zca-js updateQuickMessage sends type 0 whenever the payload has no media,
-// which asks Zalo to drop the stored photo. Its payload only accepts a
-// replacement file, so a text-only edit re-sends the existing media items
-// (photoId and urls intact) through the same endpoint via api.custom, where
-// zca-js hands the request utils already bound to the session.
-type QuickMessageUpdate = {
-  itemId: number;
-  keyword: string;
-  title: string;
-  media: QuickMessageMedia[];
-};
-
-type QuickMessageUpdateCall = (
-  payload: QuickMessageUpdate,
-) => Promise<{ item?: unknown; version?: number }>;
-
-const QUICK_MESSAGE_UPDATE = "zalosQuickMessageUpdate";
-const quickUpdateInstalled = new WeakSet<API>();
-
-function installQuickMessageUpdate(api: API): void {
-  if (quickUpdateInstalled.has(api)) return;
-  api.custom<unknown, QuickMessageUpdate>(
-    QUICK_MESSAGE_UPDATE,
-    async ({ utils, props }) => {
-      const serviceURL = utils.makeURL(
-        `${api.zpwServiceMap.quick_message[0]}/api/quickmessage/update`,
-      );
-      const encrypted = utils.encodeAES(
-        JSON.stringify({
-          itemId: props.itemId,
-          keyword: props.keyword,
-          message: { title: props.title, params: "" },
-          type: 1,
-          media: {
-            items: props.media.map((m) => ({
-              type: m.type,
-              photoId: m.photoId,
-              title: m.title,
-              width: m.width,
-              height: m.height,
-              previewThumb: m.previewThumb,
-              rawUrl: m.rawUrl,
-              thumbUrl: m.thumbUrl,
-              normalUrl: m.normalUrl,
-              hdUrl: m.hdUrl,
-            })),
-          },
-        }),
-      );
-      if (!encrypted) throw new ZaloApiError("Failed to encrypt params");
-      const response = await utils.request(
-        utils.makeURL(serviceURL, { params: encrypted }),
-        { method: "GET" },
-      );
-      return utils.resolve(response);
-    },
-  );
-  quickUpdateInstalled.add(api);
-}
-
-function quickMessageUpdateCall(api: API): QuickMessageUpdateCall {
-  return (
-    api as unknown as Record<string, QuickMessageUpdateCall>
-  )[QUICK_MESSAGE_UPDATE];
-}
-
 const REPORT_REASON: Record<
   Exclude<ReportReason, "other">,
   Exclude<ZcaReportReason, ZcaReportReason.Other>
@@ -1607,6 +1545,13 @@ export class ZcaGateway implements ZaloGateway {
       "polls",
       "notes",
       "reminders",
+      "voiceCall",
+      "videoCall",
+      "groupManage",
+      "profileSettings",
+      "businessTools",
+      "mediaStore",
+      "e2ee",
     ];
   }
   private retryTimer: ReturnType<typeof setTimeout> | null = null;
@@ -1629,6 +1574,22 @@ export class ZcaGateway implements ZaloGateway {
     this.self = self;
     this.factory = login;
     this.http = http ?? fetch;
+    Object.assign(
+      this,
+      createZcaExtendedMethods(
+        (fn) => this.call(() => fn(this.requireApi())),
+        (patch) => {
+          if (patch.displayName !== undefined) {
+            (this.self as { displayName: string }).displayName =
+              patch.displayName;
+          }
+          if (patch.avatarUrl !== undefined) {
+            (this.self as { avatarUrl: string }).avatarUrl = patch.avatarUrl;
+          }
+          this.emit("self", this.self);
+        },
+      ),
+    );
   }
 
   on<E extends keyof GatewayEvents>(
@@ -1714,7 +1675,6 @@ export class ZcaGateway implements ZaloGateway {
         }
       }
       this.bindListener(api);
-      this.registerCustomBoardApis(api);
       this.backoffMs = 5000;
       this.checkCookies(api);
       this.setStatus("online");
@@ -1904,6 +1864,17 @@ export class ZcaGateway implements ZaloGateway {
     });
     l.on("friend_event", (e) => this.emit("friendEvent", e));
     l.on("group_event", (e) => this.emit("groupEvent", e));
+    l.on("voip_control", (evt) =>
+      this.emit("voip", {
+        act: evt.act,
+        ts: evt.ts,
+        conversationId: evt.conversationId,
+        callerId: evt.callerId,
+        groupId: evt.groupId,
+        inCallStatus: evt.inCallStatus,
+        data: evt.data,
+      }),
+    );
     l.start();
   }
 
@@ -2348,13 +2319,14 @@ export class ZcaGateway implements ZaloGateway {
           ).items.find((i) => i.id === id);
           if (existing !== undefined && existing.media.length > 0) {
             keptMedia = existing.media;
-            installQuickMessageUpdate(api);
-            res = await quickMessageUpdateCall(api)({
-              itemId: id,
-              keyword: draft.keyword,
-              title: draft.title,
-              media: existing.media,
-            });
+            res = await api.updateQuickMessage(
+              {
+                keyword: draft.keyword,
+                title: draft.title,
+                media: existing.media,
+              },
+              id,
+            );
           } else {
             res = await api.updateQuickMessage(
               { keyword: draft.keyword, title: draft.title },
@@ -2557,168 +2529,11 @@ export class ZcaGateway implements ZaloGateway {
   }
 
   // ---- Zalo Board, Pin Message, Polls, Notes & Reminders ----
-  // Conversation pin board, poll, note, and reminder endpoints:
-  //   TEXT_TOPIC=0, LINK_TOPIC=1, MSG_TOPIC=2, POLL_TOPIC=3, REMINDER_TOPIC=4
-  //   CLI_MSG_TYPE: text=1, voice=31, photo=32, sticker=36, doodle=37,
-  //                 contact=38, location=43, video=44, file=46, gif=49.
-  private registerCustomBoardApis(api: API) {
-    const custom = (api as unknown as {
-      custom?: (
-        name: string,
-        fn: (arg: {
-          ctx: { imei: string; uid?: string };
-          utils: {
-            makeURL: (u: string, p?: Record<string, unknown>) => string;
-            encodeAES: (s: string) => string | null;
-            request: (u: string, init?: RequestInit) => Promise<Response>;
-            resolve: (res: Response, cb?: (r: { data: unknown }) => unknown) => Promise<unknown>;
-          };
-          props: Record<string, unknown>;
-        }) => Promise<unknown>,
-      ) => void;
-    }).custom;
-    if (typeof custom !== "function") return;
-    const gBoard = () => api.zpwServiceMap.group_board?.[0] ?? "";
-    const fBoard = () => api.zpwServiceMap.friend_board?.[0] ?? "";
-
-    custom("_pinListGroup", async ({ ctx, utils, props }) => {
-      const base = gBoard();
-      if (!base) throw new RpcError("error", "group board service unavailable");
-      const url = utils.makeURL(`${base}/api/board/pin/list`);
-      const params = {
-        groupId: String(props.groupId ?? ""),
-        boardVersion: Number(props.boardVersion ?? 0),
-        imei: ctx.imei,
-      };
-      const enc = utils.encodeAES(JSON.stringify(params));
-      if (!enc) throw new RpcError("error", "failed to encrypt params");
-      const res = await utils.request(utils.makeURL(url, { params: enc }), {
-        method: "GET",
-      });
-      return utils.resolve(res);
-    });
-
-    custom("_pinCreateGroupMsg", async ({ ctx, utils, props }) => {
-      const base = gBoard();
-      if (!base) throw new RpcError("error", "group board service unavailable");
-      const url = utils.makeURL(`${base}/api/board/topic/createv2`);
-      const params = {
-        grid: String(props.groupId ?? ""),
-        type: 2, // MSG_TOPIC
-        color: -16777216,
-        emoji: "",
-        startTime: -1,
-        duration: -1,
-        params: JSON.stringify(props.topicParams ?? {}),
-        repeat: 0,
-        src: 1,
-        imei: ctx.imei,
-        pinAct: 1,
-      };
-      const enc = utils.encodeAES(JSON.stringify(params));
-      if (!enc) throw new RpcError("error", "failed to encrypt params");
-      const res = await utils.request(url, {
-        method: "POST",
-        body: new URLSearchParams({ params: enc }),
-      });
-      return utils.resolve(res);
-    });
-
-    custom("_pinBoardItemGroup", async ({ utils, props }) => {
-      const base = gBoard();
-      if (!base) throw new RpcError("error", "group board service unavailable");
-      const url = utils.makeURL(`${base}/api/board/pinv2`);
-      const params = {
-        grid: String(props.groupId ?? ""),
-        topicId: props.topicId,
-        type: Number(props.topicType ?? 3),
-      };
-      const enc = utils.encodeAES(JSON.stringify(params));
-      if (!enc) throw new RpcError("error", "failed to encrypt params");
-      const res = await utils.request(utils.makeURL(url, { params: enc }), {
-        method: "GET",
-      });
-      return utils.resolve(res);
-    });
-
-    custom("_unpinGroupTopic", async ({ ctx, utils, props }) => {
-      const base = gBoard();
-      if (!base) throw new RpcError("error", "group board service unavailable");
-      const url = utils.makeURL(`${base}/api/board/unpinv2`);
-      const params = {
-        grid: String(props.groupId ?? ""),
-        topic: {
-          topicId: props.topicId,
-          topicType: Number(props.topicType ?? 2),
-        },
-        boardVersion: Number(props.boardVersion ?? 0),
-        imei: ctx.imei,
-      };
-      const enc = utils.encodeAES(JSON.stringify(params));
-      if (!enc) throw new RpcError("error", "failed to encrypt params");
-      const res = await utils.request(utils.makeURL(url, { params: enc }), {
-        method: "GET",
-      });
-      return utils.resolve(res);
-    });
-
-    custom("_pinCreateFriend", async ({ utils, props }) => {
-      const base = fBoard();
-      if (!base) throw new RpcError("error", "friend board service unavailable");
-      const url = utils.makeURL(`${base}/api/friendboard/create`);
-      const params = {
-        conversationId: String(props.conversationId ?? ""),
-        topic: {
-          color: -16777216,
-          duration: -1,
-          emoji: "",
-          params: JSON.stringify(props.topicParams ?? {}),
-          repeat: 0,
-          startTime: -1,
-          type: 2, // MSG_TOPIC
-          src: -1,
-          pinAct: 1,
-        },
-        version: Number(props.version ?? 0),
-        lang: "vi",
-      };
-      const enc = utils.encodeAES(JSON.stringify(params));
-      if (!enc) throw new RpcError("error", "failed to encrypt params");
-      const res = await utils.request(utils.makeURL(url, { params: enc }), {
-        method: "GET",
-      });
-      return utils.resolve(res);
-    });
-
-    custom("_unpinFriendTopics", async ({ utils, props }) => {
-      const base = fBoard();
-      if (!base) throw new RpcError("error", "friend board service unavailable");
-      const url = utils.makeURL(`${base}/api/friendboard/multi_unpin`);
-      const params = {
-        conversationId: String(props.conversationId ?? ""),
-        topics: props.topics ?? [],
-        version: Number(props.version ?? 0),
-        lang: "vi",
-      };
-      const enc = utils.encodeAES(JSON.stringify(params));
-      if (!enc) throw new RpcError("error", "failed to encrypt params");
-      const res = await utils.request(utils.makeURL(url, { params: enc }), {
-        method: "GET",
-      });
-      return utils.resolve(res);
-    });
-  }
-
-  private customCall<T = unknown>(
-    api: API,
-    name: string,
-    props: Record<string, unknown>,
-  ): Promise<T> {
-    const fn = (api as unknown as Record<string, unknown>)[name];
-    if (typeof fn !== "function") {
-      throw new RpcError("not_supported", `${name} unavailable`);
+  private requireBoard(api: API) {
+    if (!api.board) {
+      throw new RpcError("not_supported", "board API unavailable");
     }
-    return (fn as (p: Record<string, unknown>) => Promise<T>)(props);
+    return api.board;
   }
 
   private cliMsgTypeOf(kind: MessageKind): number {
@@ -2928,11 +2743,10 @@ export class ZcaGateway implements ZaloGateway {
     return this.call(async () => {
       try {
         if (threadType === "group") {
-          const res = await this.customCall<Record<string, unknown>>(
-            api,
-            "_pinListGroup",
-            { groupId: threadId, boardVersion: 0 },
-          );
+          const res = (await this.requireBoard(api).listGroupPins(
+            threadId,
+            0,
+          )) as Record<string, unknown>;
           const rawList = Array.isArray(res?.topics)
             ? res.topics
             : Array.isArray(res?.items)
@@ -3017,15 +2831,12 @@ export class ZcaGateway implements ZaloGateway {
           ...(payload.href ? { href: payload.href } : {}),
         };
         if (threadType === "group") {
-          await this.customCall(api, "_pinCreateGroupMsg", {
-            groupId: threadId,
-            topicParams,
-          });
-          const refreshed = await this.customCall<Record<string, unknown>>(
-            api,
-            "_pinListGroup",
-            { groupId: threadId, boardVersion: 0 },
-          );
+          const board = this.requireBoard(api);
+          await board.pinGroupMessage(threadId, topicParams);
+          const refreshed = (await board.listGroupPins(
+            threadId,
+            0,
+          )) as Record<string, unknown>;
           const rawList = Array.isArray(refreshed?.topics)
             ? refreshed.topics
             : [];
@@ -3040,11 +2851,11 @@ export class ZcaGateway implements ZaloGateway {
           threadId,
         )) as unknown as Record<string, unknown>;
         const version = intOf(current?.version) ?? 0;
-        const created = await this.customCall<Record<string, unknown>>(
-          api,
-          "_pinCreateFriend",
-          { conversationId: threadId, topicParams, version },
-        );
+        const created = (await this.requireBoard(api).createFriendPin(
+          threadId,
+          topicParams,
+          version,
+        )) as Record<string, unknown>;
         const rawList = Array.isArray(created?.topics)
           ? created.topics
           : Array.isArray(created?.data)
@@ -3083,11 +2894,11 @@ export class ZcaGateway implements ZaloGateway {
     return this.call(async () => {
       try {
         const parsedId = /^\d+$/.test(topicId) ? Number(topicId) : topicId;
-        await this.customCall(api, "_pinBoardItemGroup", {
+        await this.requireBoard(api).pinGroupBoardItem(
           groupId,
-          topicId: parsedId,
+          parsedId,
           topicType,
-        });
+        );
       } catch (e) {
         throw zaloRpcError(e, "pin item");
       }
@@ -3105,23 +2916,22 @@ export class ZcaGateway implements ZaloGateway {
       try {
         const parsedId = /^\d+$/.test(topicId) ? Number(topicId) : topicId;
         if (threadType === "group") {
-          const cur = await this.customCall<Record<string, unknown>>(
-            api,
-            "_pinListGroup",
-            { groupId: threadId, boardVersion: 0 },
-          );
+          const board = this.requireBoard(api);
+          const cur = (await board.listGroupPins(
+            threadId,
+            0,
+          )) as Record<string, unknown>;
           const boardVersion = intOf(cur?.boardVersion ?? cur?.version) ?? 0;
-          await this.customCall(api, "_unpinGroupTopic", {
-            groupId: threadId,
-            topicId: parsedId,
+          await board.unpinGroupTopic(
+            threadId,
+            parsedId,
             topicType,
             boardVersion,
-          });
-          const next = await this.customCall<Record<string, unknown>>(
-            api,
-            "_pinListGroup",
-            { groupId: threadId, boardVersion: 0 },
           );
+          const next = (await board.listGroupPins(
+            threadId,
+            0,
+          )) as Record<string, unknown>;
           const rawList = Array.isArray(next?.topics) ? next.topics : [];
           return {
             items: rawList
@@ -3134,11 +2944,11 @@ export class ZcaGateway implements ZaloGateway {
           threadId,
         )) as unknown as Record<string, unknown>;
         const version = intOf(cur?.version) ?? 0;
-        await this.customCall(api, "_unpinFriendTopics", {
-          conversationId: threadId,
-          topics: [{ topicId: parsedId, topicType }],
+        await this.requireBoard(api).unpinFriendTopics(
+          threadId,
+          [{ topicId: parsedId, topicType }],
           version,
-        });
+        );
         const next = (await api.getFriendBoardList(
           threadId,
         )) as unknown as Record<string, unknown>;
@@ -3186,11 +2996,11 @@ export class ZcaGateway implements ZaloGateway {
         const detail = this.normalizePollDetail(res, groupId);
         if (opts.pin && detail.id > 0) {
           try {
-            await this.customCall(api, "_pinBoardItemGroup", {
+            await this.requireBoard(api).pinGroupBoardItem(
               groupId,
-              topicId: detail.id,
-              topicType: 3, // POLL_TOPIC
-            });
+              detail.id,
+              3, // POLL_TOPIC
+            );
           } catch {
             // Poll was already created; pin failure shouldn't fail creation.
           }
@@ -4615,6 +4425,164 @@ export class ZcaGateway implements ZaloGateway {
       contentType:
         res.headers.get("content-type") ?? "application/octet-stream",
     };
+  }
+
+  // ---- Voice & Video Calls ----
+
+  startCall(
+    threadId: string,
+    threadType: ThreadType,
+    media: "voice" | "video",
+  ): Promise<{
+    callId: string;
+    serverConfig?: Record<string, unknown>;
+    groupCallId?: string;
+  }> {
+    const api = this.requireApi();
+    return this.call(async () => {
+      const callId = String(Date.now());
+      if (threadType === "group") {
+        const res = (await api.call.groupRequestCall({
+          groupId: threadId,
+          callId,
+          typeRequest: media === "video" ? 6 : 5,
+        })) as Record<string, unknown>;
+        return {
+          callId,
+          groupCallId: String(res?.groupCallId ?? callId),
+          serverConfig: res,
+        };
+      }
+      const res = await api.call.requestCall({
+        calleeId: threadId,
+        callId,
+        typeRequest: media === "video" ? 3 : 1,
+      });
+      return {
+        callId: String(res?.sessId ?? callId),
+        serverConfig: res as Record<string, unknown>,
+      };
+    });
+  }
+
+  answerCall(
+    callId: string,
+    opts: { callerId?: string; groupId?: string; media: "voice" | "video" },
+  ): Promise<{ serverConfig?: Record<string, unknown> }> {
+    const api = this.requireApi();
+    return this.call(async () => {
+      if (opts.groupId) {
+        const res = (await api.call.groupAnswer({
+          callId,
+          callType: opts.media === "video" ? 6 : 5,
+          groupId: opts.groupId,
+          hostCall: opts.callerId,
+        })) as Record<string, unknown>;
+        return { serverConfig: res };
+      }
+      const res = (await api.call.answerCall({
+        callerId: opts.callerId ?? "",
+        callId,
+        status: 1,
+        rtcpAddress: "",
+        rtpAddress: "",
+        session_id: callId,
+      })) as Record<string, unknown>;
+      return { serverConfig: res };
+    });
+  }
+
+  rejectCall(
+    callId: string,
+    opts: { callerId?: string; groupId?: string; reason?: number },
+  ): Promise<void> {
+    const api = this.requireApi();
+    return this.call(async () => {
+      if (opts.groupId) {
+        await api.call.groupCancel({
+          callId,
+          callType: 5,
+          groupId: opts.groupId,
+          hostCall: opts.callerId,
+        });
+        return;
+      }
+      await api.call.answerCall({
+        callerId: opts.callerId ?? "",
+        callId,
+        status: opts.reason ?? 3,
+        rtcpAddress: "",
+        rtpAddress: "",
+        session_id: callId,
+      });
+    });
+  }
+
+  endCall(
+    callId: string,
+    opts: {
+      peerId?: string;
+      groupId?: string;
+      durationSec?: number;
+      reason?: number;
+    },
+  ): Promise<void> {
+    const api = this.requireApi();
+    return this.call(async () => {
+      if (opts.groupId) {
+        await api.call.groupEndCall({
+          callId,
+          callType: 5,
+          groupId: opts.groupId,
+          hostCall: opts.peerId,
+        });
+        return;
+      }
+      await api.call.endCall(opts.peerId ?? "", callId, opts.reason ?? 3);
+    });
+  }
+
+  getGroupCallState(groupId: string): Promise<Record<string, unknown>> {
+    const api = this.requireApi();
+    return this.call(async () => {
+      const res = (await api.call.groupState({
+        callId: groupId,
+        hostCall: this.self.uid,
+        callType: 5,
+      })) as Record<string, unknown>;
+      return res ?? {};
+    });
+  }
+
+  sendCallSignal(
+    action: string,
+    payload: Record<string, unknown>,
+  ): Promise<unknown> {
+    const api = this.requireApi();
+    return this.call(async () => {
+      if (/^\d+$/.test(action)) {
+        return api.call.dispatchNativeSignal(Number(action), payload);
+      }
+      if (action === "conf") {
+        return api.call.updateCallConfig({
+          calleeId: String(payload.calleeId ?? ""),
+          callId: String(payload.callId ?? ""),
+          isOnCam: payload.isOnCam ? 1 : 0,
+          isOnMic: payload.isOnMic ? 1 : 0,
+          data: payload.data,
+        });
+      }
+      if (action === "ringring") {
+        return api.call.sendRingRing(
+          String(payload.callerId ?? ""),
+          String(payload.callId ?? ""),
+          Number(payload.status ?? 0),
+        );
+      }
+      const ext = dispatchExtendedCallSignal(api, action, payload);
+      if (ext !== null) return ext;
+      throw new RpcError("bad_request", `unknown call signal action: ${action}`);
+    });
   }
 }
 

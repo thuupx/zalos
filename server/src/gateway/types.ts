@@ -608,6 +608,39 @@ export type OaHooks = {
   clientConnected(): boolean;
 };
 
+export type CallMediaKind = "voice" | "video";
+export type CallDirection = "incoming" | "outgoing";
+export type CallStatus = "ringing" | "connecting" | "active" | "ended";
+
+export type ActiveCall = {
+  callId: string;
+  threadId: string;
+  threadType: ThreadType;
+  peerId: string;
+  peerName: string;
+  peerAvatarUrl?: string;
+  media: CallMediaKind;
+  direction: CallDirection;
+  status: CallStatus;
+  startedAt: number;
+  answeredAt?: number;
+  answeredByDeviceId?: string;
+  isGroup: boolean;
+  groupCallId?: string;
+  participants?: string[];
+  signalingData?: Record<string, unknown>;
+};
+
+export type GatewayVoipEvent = {
+  act: string;
+  ts: number;
+  conversationId?: string;
+  callerId?: string;
+  groupId?: string;
+  inCallStatus: "zalo" | null;
+  data: Record<string, unknown>;
+};
+
 export type GatewayEvents = {
   message: [message: Message];
   typing: [t: { threadId: string; threadType: ThreadType; userId: string }];
@@ -643,6 +676,7 @@ export type GatewayEvents = {
   credentials: [creds: Credentials];
   friendEvent: [t: unknown];
   groupEvent: [t: unknown];
+  voip: [evt: GatewayVoipEvent];
 };
 
 export type OutgoingFile = {
@@ -966,7 +1000,363 @@ export interface ZaloGateway {
     url: string,
     outPath: string,
   ): Promise<{ size: number; contentType: string }>;
+  // ---- voice & video calls (personal accounts) ----
+  startCall?(
+    threadId: string,
+    threadType: ThreadType,
+    media: CallMediaKind,
+  ): Promise<{
+    callId: string;
+    serverConfig?: Record<string, unknown>;
+    groupCallId?: string;
+  }>;
+  answerCall?(
+    callId: string,
+    opts: { callerId?: string; groupId?: string; media: CallMediaKind },
+  ): Promise<{ serverConfig?: Record<string, unknown> }>;
+  rejectCall?(
+    callId: string,
+    opts: { callerId?: string; groupId?: string; reason?: number },
+  ): Promise<void>;
+  endCall?(
+    callId: string,
+    opts: {
+      peerId?: string;
+      groupId?: string;
+      durationSec?: number;
+      reason?: number;
+    },
+  ): Promise<void>;
+  getGroupCallState?(groupId: string): Promise<Record<string, unknown>>;
+  sendCallSignal?(
+    action: string,
+    payload: Record<string, unknown>,
+  ): Promise<unknown>;
+  // ---- extended SDK APIs (groups, profile, business, media store, extras, e2ee) ----
+  createGroup?(opts: {
+    name?: string;
+    members: string[];
+    avatarPath?: string;
+  }): Promise<{ groupId: string; raw?: unknown }>;
+  renameGroup?(groupId: string, name: string): Promise<void>;
+  changeGroupAvatar?(groupId: string, file: OutgoingFile): Promise<void>;
+  addGroupMembers?(groupId: string, memberIds: string[]): Promise<unknown>;
+  inviteUserToGroups?(userId: string, groupIds: string[]): Promise<unknown>;
+  removeGroupMembers?(groupId: string, memberIds: string[]): Promise<unknown>;
+  leaveGroup?(groupId: string, silent?: boolean): Promise<void>;
+  disperseGroup?(groupId: string): Promise<void>;
+  changeGroupOwner?(groupId: string, newOwnerId: string): Promise<void>;
+  addGroupDeputy?(groupId: string, memberIds: string[]): Promise<void>;
+  removeGroupDeputy?(groupId: string, memberIds: string[]): Promise<void>;
+  updateGroupSettings?(
+    groupId: string,
+    settings: Record<string, unknown>,
+  ): Promise<void>;
+  pendingGroupMembers?(groupId: string): Promise<unknown>;
+  reviewPendingGroupMembers?(
+    groupId: string,
+    members: string[],
+    isApprove: boolean,
+  ): Promise<unknown>;
+  blockedGroupMembers?(
+    groupId: string,
+    page?: number,
+    count?: number,
+  ): Promise<unknown>;
+  addBlockedGroupMembers?(groupId: string, memberIds: string[]): Promise<void>;
+  removeBlockedGroupMembers?(groupId: string, memberIds: string[]): Promise<void>;
+  groupLinkDetail?(
+    groupId: string,
+  ): Promise<{ link?: string; expirationDate?: number; enabled: boolean }>;
+  enableGroupLink?(groupId: string): Promise<unknown>;
+  disableGroupLink?(groupId: string): Promise<void>;
+  groupLinkInfo?(link: string, memberPage?: number): Promise<unknown>;
+  joinGroupLink?(link: string): Promise<unknown>;
+  groupInviteBoxList?(opts?: {
+    page?: number;
+    mpage?: number;
+    invPerPage?: number;
+    mcount?: number;
+    lastGroupId?: string | null;
+  }): Promise<unknown>;
+  groupInviteBoxInfo?(
+    groupId: string,
+    mcount?: number,
+    mpage?: number,
+  ): Promise<unknown>;
+  joinGroupInviteBox?(groupId: string): Promise<unknown>;
+  deleteGroupInviteBox?(groupIds: string[]): Promise<unknown>;
+  upgradeGroupToCommunity?(groupId: string): Promise<void>;
+  relatedFriendGroups?(friendIds: string[]): Promise<unknown>;
+
+  fetchAccountInfo?(): Promise<Record<string, unknown>>;
+  updateProfile?(opts: {
+    name: string;
+    dob: string;
+    gender: number;
+    language?: string;
+  }): Promise<unknown>;
+  updateProfileBio?(bio: string): Promise<void>;
+  changeAccountAvatar?(file: OutgoingFile): Promise<unknown>;
+  avatarList?(albumId?: string): Promise<unknown>;
+  reuseAvatar?(photoId: string, isPostSocial?: boolean): Promise<unknown>;
+  deleteAvatar?(photoIds: string[]): Promise<unknown>;
+  zaloSettings?(): Promise<Record<string, unknown>>;
+  updateZaloSetting?(type: string, value: number): Promise<unknown>;
+  updateActiveStatus?(active: boolean): Promise<void>;
+  updateLang?(language: string): Promise<void>;
+  lostFocus?(): Promise<void>;
+
+  setCloseFriend?(uids: string[], add: boolean): Promise<void>;
+  findUsersByPhones?(phones: string[]): Promise<unknown>;
+  blockList?(page?: number, count?: number): Promise<unknown>;
+  blockViewFeed?(uid: string, blocked: boolean): Promise<void>;
+  userQr?(uids: string[]): Promise<Record<string, string>>;
+
+  removeNote?(groupId: string, topicId: string): Promise<void>;
+  reminderDetail?(reminderId: string): Promise<unknown>;
+  reminderResponses?(reminderId: string): Promise<unknown>;
+  reorderPins?(
+    threadId: string,
+    threadType: ThreadType,
+    topics: unknown[],
+    version?: number,
+  ): Promise<unknown>;
+  multiUnpinGroup?(
+    groupId: string,
+    topics: Record<string, unknown>[],
+    version?: number,
+  ): Promise<unknown>;
+
+  bizAccount?(uid?: string): Promise<unknown>;
+  catalogList?(opts?: {
+    versionListCatalog?: number;
+    limit?: number;
+    lastProductId?: number;
+    page?: number;
+  }): Promise<unknown>;
+  createCatalog?(catalogName: string, catalogPhoto?: string): Promise<unknown>;
+  updateCatalog?(opts: {
+    catalogId: string;
+    catalogName: string;
+    catalogPhoto?: string;
+  }): Promise<unknown>;
+  deleteCatalog?(catalogId: string): Promise<void>;
+  registerCatalog?(enable: boolean): Promise<unknown>;
+  productCatalogList?(opts: {
+    catalogId: string;
+    limit?: number;
+    versionCatalog?: number;
+    lastProductId?: number;
+    page?: number;
+  }): Promise<unknown>;
+  createProductCatalog?(opts: {
+    catalogId: string;
+    productName: string;
+    price: string | number;
+    description: string;
+    productPhotos?: string[];
+    currencyUnit?: string;
+  }): Promise<unknown>;
+  updateProductCatalog?(opts: {
+    catalogId: string;
+    productId: string;
+    productName: string;
+    price: string | number;
+    description: string;
+    productPhotos?: string[];
+    currencyUnit?: string;
+  }): Promise<unknown>;
+  deleteProductCatalog?(
+    catalogId: string,
+    productIds: string[],
+  ): Promise<unknown>;
+  uploadProductPhoto?(file: OutgoingFile): Promise<unknown>;
+  autoReplyList?(): Promise<unknown>;
+  createAutoReply?(opts: {
+    isEnable: boolean;
+    content: string;
+    startTime: number;
+    endTime: number;
+    scope: number;
+    uids?: string[];
+  }): Promise<unknown>;
+  updateAutoReply?(opts: {
+    id: number;
+    isEnable: boolean;
+    content: string;
+    startTime: number;
+    endTime: number;
+    scope: number;
+    uids?: string[];
+  }): Promise<unknown>;
+  deleteAutoReply?(id: number): Promise<void>;
+  createBankAccount?(opts: {
+    binBank: number | string;
+    numAccBank: string;
+    nameAccBank: string;
+  }): Promise<unknown>;
+  updateBankAccount?(opts: {
+    accountId: string;
+    binBank: number | string;
+    numAccBank: string;
+    nameAccBank: string;
+  }): Promise<unknown>;
+  deleteBankAccount?(accountId: string, isDefault: boolean): Promise<void>;
+
+  unreadMarks?(): Promise<unknown>;
+  scanUrl?(url: string): Promise<unknown>;
+  cloudMessages?(opts: {
+    groupId: string;
+    globalMsgId?: string;
+    count?: number;
+    msgIds?: string[];
+    isOA?: boolean;
+    src?: number;
+  }): Promise<unknown>;
+  preloadLastMessages?(
+    threadIdLocalMsgId: Record<string, unknown>,
+  ): Promise<unknown>;
+  preloadLastSeen?(group?: unknown[], oneone?: unknown[]): Promise<unknown>;
+  lastDeliverSeen?(oneone?: unknown[], group?: unknown[]): Promise<unknown>;
+  emojiStatusFriends?(): Promise<unknown>;
+  emojiStatusConfig?(): Promise<unknown>;
+
+  mediaStoreList?(
+    groupId: string,
+    mediaType: string,
+    opts?: { limit?: number; lastId?: string | number; lastFetchId?: number },
+  ): Promise<unknown>;
+  mediaStorePreview?(groupId: string, limit?: number): Promise<unknown>;
+  mediaStoreRemove?(
+    groupId: string,
+    mediaType: string,
+    mediaId: string | string[],
+  ): Promise<unknown>;
+  oneOneMediaList?(
+    mediaType: string,
+    opts?: { limit?: number; lastId?: string | number; lastFetchId?: number },
+  ): Promise<unknown>;
+  oneOneMediaPreview?(limit?: number): Promise<unknown>;
+  oneOneMediaRemove?(
+    mediaType: string,
+    mediaId: string | string[],
+  ): Promise<unknown>;
+  cloudViewerKey?(): Promise<unknown>;
+  familyViewerKey?(): Promise<unknown>;
+  recentSearch?(version?: number): Promise<unknown>;
+  updateRecentSearch?(
+    listRecent: unknown[],
+    version: number,
+    listKeyword?: string[],
+  ): Promise<unknown>;
+  encryptGroupId?(noiseUids: string[]): Promise<unknown>;
+  decryptGroupId?(globalUids: string[]): Promise<unknown>;
+  extrasCommand?(
+    command: string,
+    payload?: Record<string, unknown>,
+  ): Promise<unknown>;
+  e2eeCommand?(
+    command: string,
+    payload?: Record<string, unknown>,
+  ): Promise<unknown>;
 }
+
+export type ZaloExtendedGateway = Required<
+  Pick<
+    ZaloGateway,
+    | "createGroup"
+    | "renameGroup"
+    | "changeGroupAvatar"
+    | "addGroupMembers"
+    | "inviteUserToGroups"
+    | "removeGroupMembers"
+    | "leaveGroup"
+    | "disperseGroup"
+    | "changeGroupOwner"
+    | "addGroupDeputy"
+    | "removeGroupDeputy"
+    | "updateGroupSettings"
+    | "pendingGroupMembers"
+    | "reviewPendingGroupMembers"
+    | "blockedGroupMembers"
+    | "addBlockedGroupMembers"
+    | "removeBlockedGroupMembers"
+    | "groupLinkDetail"
+    | "enableGroupLink"
+    | "disableGroupLink"
+    | "groupLinkInfo"
+    | "joinGroupLink"
+    | "groupInviteBoxList"
+    | "groupInviteBoxInfo"
+    | "joinGroupInviteBox"
+    | "deleteGroupInviteBox"
+    | "upgradeGroupToCommunity"
+    | "relatedFriendGroups"
+    | "fetchAccountInfo"
+    | "updateProfile"
+    | "updateProfileBio"
+    | "changeAccountAvatar"
+    | "avatarList"
+    | "reuseAvatar"
+    | "deleteAvatar"
+    | "zaloSettings"
+    | "updateZaloSetting"
+    | "updateActiveStatus"
+    | "updateLang"
+    | "lostFocus"
+    | "setCloseFriend"
+    | "findUsersByPhones"
+    | "blockList"
+    | "blockViewFeed"
+    | "userQr"
+    | "removeNote"
+    | "reminderDetail"
+    | "reminderResponses"
+    | "reorderPins"
+    | "multiUnpinGroup"
+    | "bizAccount"
+    | "catalogList"
+    | "createCatalog"
+    | "updateCatalog"
+    | "deleteCatalog"
+    | "registerCatalog"
+    | "productCatalogList"
+    | "createProductCatalog"
+    | "updateProductCatalog"
+    | "deleteProductCatalog"
+    | "uploadProductPhoto"
+    | "autoReplyList"
+    | "createAutoReply"
+    | "updateAutoReply"
+    | "deleteAutoReply"
+    | "createBankAccount"
+    | "updateBankAccount"
+    | "deleteBankAccount"
+    | "unreadMarks"
+    | "scanUrl"
+    | "cloudMessages"
+    | "preloadLastMessages"
+    | "preloadLastSeen"
+    | "lastDeliverSeen"
+    | "emojiStatusFriends"
+    | "emojiStatusConfig"
+    | "mediaStoreList"
+    | "mediaStorePreview"
+    | "mediaStoreRemove"
+    | "oneOneMediaList"
+    | "oneOneMediaPreview"
+    | "oneOneMediaRemove"
+    | "cloudViewerKey"
+    | "familyViewerKey"
+    | "recentSearch"
+    | "updateRecentSearch"
+    | "encryptGroupId"
+    | "decryptGroupId"
+    | "extrasCommand"
+    | "e2eeCommand"
+  >
+>;
 
 export type LoginQrCallbacks = {
   onQr(pngBytes: Uint8Array): void;

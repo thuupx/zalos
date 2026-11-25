@@ -22,6 +22,8 @@ String _threadKey(String id, ThreadType type) => '${type.name}:$id';
 
 int _intOf(Object? value) => value is num ? value.toInt() : 0;
 
+String _strOf(Object? value) => value is String ? value : (value?.toString() ?? '');
+
 class _MessageList {
   _MessageList(this.threadId, this.type);
 
@@ -213,6 +215,7 @@ class RealAccountSession implements AccountSession {
   final Map<String, _MessageList> _lists = {};
   final StreamController<TypingEvent> _typing = StreamController<TypingEvent>.broadcast();
   final StreamController<BoardUpdateEvent> _boardUpdates = StreamController<BoardUpdateEvent>.broadcast();
+  final ValueNotifier<ActiveCall?> _activeCall = ValueNotifier<ActiveCall?>(null);
   final MediaCache _media = MediaCache();
   final Map<String, Future<Uint8List>> _mediaInFlight = {};
   final List<Completer<void>> _mediaQueue = [];
@@ -241,6 +244,9 @@ class RealAccountSession implements AccountSession {
 
   @override
   Stream<BoardUpdateEvent> get boardUpdates => _boardUpdates.stream;
+
+  @override
+  ValueListenable<ActiveCall?> get activeCall => _activeCall;
 
   int get lastSeq => _lastSeq;
 
@@ -302,6 +308,18 @@ class RealAccountSession implements AccountSession {
     _flush();
     for (final list in _lists.values) {
       if (reset || !list.loaded) _ensureLoaded(list, force: true);
+    }
+    unawaited(_refreshActiveCalls(channel));
+  }
+
+  Future<void> _refreshActiveCalls(NoiseChannel channel) async {
+    try {
+      final result = asJson(await channel.request('calls.active', const {}));
+      final list = asJsonList(result['calls']);
+      if (_disposed) return;
+      _activeCall.value = list.isEmpty ? null : activeCallFromJson(list.first);
+    } catch (_) {
+      // Best-effort sync on reconnect; live tunnel events keep calls updated.
     }
   }
 
@@ -396,6 +414,19 @@ class RealAccountSession implements AccountSession {
         if (!_typing.isClosed) _typing.add(typingEventFromJson(event.data));
       case 'board.updated':
         if (!_boardUpdates.isClosed) _boardUpdates.add(boardUpdateEventFromJson(event.data));
+      case 'call.incoming':
+      case 'call.state':
+        final call = activeCallFromJson(asJson(event.data['call']));
+        if (call.callId.isNotEmpty) {
+          _activeCall.value = call;
+        }
+      case 'call.answeredElsewhere':
+      case 'call.ended':
+        final callId = '${event.data['callId'] ?? ''}';
+        final current = _activeCall.value;
+        if (current != null && (callId.isEmpty || current.callId == callId)) {
+          _activeCall.value = null;
+        }
     }
   }
 
@@ -1540,6 +1571,539 @@ class RealAccountSession implements AccountSession {
     return groupInfoFromJson(asJson(result['group']));
   }
 
+  // ---- voice & video calls ----
+
+  @override
+  Future<ActiveCall> startCall(String threadId, ThreadType type, CallMediaKind media) async {
+    final result = asJson(
+      await _channel.use(
+        (channel) => channel.request('calls.start', {
+          'threadId': threadId,
+          'threadType': threadTypeToWire(type),
+          'media': callMediaKindToWire(media),
+        }),
+      ),
+    );
+    final call = activeCallFromJson(asJson(result['call']));
+    if (!_disposed && call.callId.isNotEmpty) {
+      _activeCall.value = call;
+    }
+    return call;
+  }
+
+  @override
+  Future<void> acceptCall(String callId) async {
+    final result = asJson(
+      await _channel.use((channel) => channel.request('calls.accept', {'callId': callId})),
+    );
+    final call = activeCallFromJson(asJson(result['call']));
+    if (!_disposed && call.callId.isNotEmpty) {
+      _activeCall.value = call;
+    }
+  }
+
+  @override
+  Future<void> rejectCall(String callId, {bool localOnly = false}) async {
+    await _channel.use(
+      (channel) => channel.request('calls.reject', {
+        'callId': callId,
+        'scope': localOnly ? 'local' : 'global',
+      }),
+    );
+    if (!_disposed && _activeCall.value?.callId == callId) {
+      _activeCall.value = null;
+    }
+  }
+
+  @override
+  Future<void> hangupCall(String callId) async {
+    await _channel.use((channel) => channel.request('calls.hangup', {'callId': callId}));
+    if (!_disposed && _activeCall.value?.callId == callId) {
+      _activeCall.value = null;
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> groupCallState(String groupId) async {
+    return asJson(
+      await _channel.use((channel) => channel.request('calls.groupState', {'groupId': groupId})),
+    );
+  }
+
+  @override
+  Future<void> callHold(String callId, {required String peerId, required bool hold}) async {
+    await _channel.request('calls.hold', {'callId': callId, 'peerId': peerId, 'hold': hold});
+  }
+
+  @override
+  Future<void> callSwitchMedia(String callId, {required String peerId}) async {
+    await _channel.request('calls.switchMedia', {'callId': callId, 'peerId': peerId});
+  }
+
+  // ---- Extended SDK APIs ----
+
+  Future<Map<String, dynamic>> _uploadAndRpc(String method, Map<String, dynamic> params, OutgoingFile file) async {
+    return asJson(await _channel.use((channel) {
+      return channel.request(method, {...params, 'stream': channel.sendBlob(file.bytes), 'name': file.name}, _mediaTimeout);
+    }));
+  }
+
+  @override
+  Future<Map<String, dynamic>> rawRpc(String method, [Map<String, dynamic> params = const {}]) async {
+    final res = await _channel.request(method, params);
+    return res is Map ? asJson(res) : <String, dynamic>{'result': res};
+  }
+
+  @override
+  Future<String> createGroup({String? name, required List<String> members}) async {
+    final res = asJson(await _channel.request('groups.create', {if (name != null && name.trim().isNotEmpty) 'name': name.trim(), 'members': members}));
+    return _strOf(res['groupId']);
+  }
+
+  @override
+  Future<void> renameGroup(String groupId, String name) async {
+    await _channel.request('groups.rename', {'groupId': groupId, 'name': name});
+  }
+
+  @override
+  Future<void> changeGroupAvatar(String groupId, OutgoingFile file) async {
+    await _uploadAndRpc('groups.changeAvatar', {'groupId': groupId}, file);
+  }
+
+  @override
+  Future<void> addGroupMembers(String groupId, List<String> memberIds) async {
+    await _channel.request('groups.addMembers', {'groupId': groupId, 'memberIds': memberIds});
+  }
+
+  @override
+  Future<void> inviteUserToGroups(String userId, List<String> groupIds) async {
+    await _channel.request('groups.inviteToGroups', {'userId': userId, 'groupIds': groupIds});
+  }
+
+  @override
+  Future<void> removeGroupMembers(String groupId, List<String> memberIds) async {
+    await _channel.request('groups.removeMembers', {'groupId': groupId, 'memberIds': memberIds});
+  }
+
+  @override
+  Future<void> leaveGroup(String groupId, {bool silent = false}) async {
+    await _channel.request('groups.leave', {'groupId': groupId, 'silent': silent});
+  }
+
+  @override
+  Future<void> disperseGroup(String groupId) async {
+    await _channel.request('groups.disperse', {'groupId': groupId});
+  }
+
+  @override
+  Future<void> changeGroupOwner(String groupId, String newOwnerId) async {
+    await _channel.request('groups.changeOwner', {'groupId': groupId, 'newOwnerId': newOwnerId});
+  }
+
+  @override
+  Future<void> addGroupDeputy(String groupId, List<String> memberIds) async {
+    await _channel.request('groups.addDeputy', {'groupId': groupId, 'memberIds': memberIds});
+  }
+
+  @override
+  Future<void> removeGroupDeputy(String groupId, List<String> memberIds) async {
+    await _channel.request('groups.removeDeputy', {'groupId': groupId, 'memberIds': memberIds});
+  }
+
+  @override
+  Future<void> updateGroupSettings(String groupId, Map<String, dynamic> settings) async {
+    await _channel.request('groups.updateSettings', {'groupId': groupId, 'settings': settings});
+  }
+
+  List<Contact> _contactsFromList(Object? raw) {
+    if (raw is! List) return const [];
+    return [
+      for (final item in raw)
+        if (item is Map)
+          Contact(
+            uid: _strOf(item['uid'] ?? item['id'] ?? item['userId']),
+            displayName: _strOf(item['displayName'] ?? item['dName'] ?? item['name']),
+            avatarUrl: _strOf(item['avatarUrl'] ?? item['avatar']),
+          ),
+    ];
+  }
+
+  @override
+  Future<List<Contact>> pendingGroupMembers(String groupId) async {
+    final res = asJson(await _channel.request('groups.pendingMembers', {'groupId': groupId}));
+    return _contactsFromList(res['users']);
+  }
+
+  @override
+  Future<void> reviewPendingGroupMembers(String groupId, List<String> members, bool approve) async {
+    await _channel.request('groups.reviewPending', {'groupId': groupId, 'members': members, 'isApprove': approve});
+  }
+
+  @override
+  Future<List<Contact>> blockedGroupMembers(String groupId) async {
+    final res = asJson(await _channel.request('groups.blockedMembers', {'groupId': groupId}));
+    return _contactsFromList(res['blocked_members'] ?? res['users']);
+  }
+
+  @override
+  Future<void> addBlockedGroupMembers(String groupId, List<String> memberIds) async {
+    await _channel.request('groups.blockMembers', {'groupId': groupId, 'memberIds': memberIds});
+  }
+
+  @override
+  Future<void> removeBlockedGroupMembers(String groupId, List<String> memberIds) async {
+    await _channel.request('groups.unblockMembers', {'groupId': groupId, 'memberIds': memberIds});
+  }
+
+  @override
+  Future<GroupLinkDetail> groupLinkDetail(String groupId) async {
+    final res = asJson(await _channel.request('groups.linkDetail', {'groupId': groupId}));
+    return GroupLinkDetail(
+      link: res['link']?.toString(),
+      expirationDate: (res['expirationDate'] as num?)?.toInt(),
+      enabled: res['enabled'] == true || res['enabled'] == 1,
+    );
+  }
+
+  @override
+  Future<GroupLinkDetail> enableGroupLink(String groupId) async {
+    final res = asJson(await _channel.request('groups.enableLink', {'groupId': groupId}));
+    return GroupLinkDetail(link: res['link']?.toString(), enabled: true);
+  }
+
+  @override
+  Future<void> disableGroupLink(String groupId) async {
+    await _channel.request('groups.disableLink', {'groupId': groupId});
+  }
+
+  @override
+  Future<Map<String, dynamic>> groupLinkInfo(String link) async =>
+      asJson(await _channel.request('groups.linkInfo', {'link': link}));
+
+  @override
+  Future<void> joinGroupLink(String link) async {
+    await _channel.request('groups.joinLink', {'link': link});
+  }
+
+  @override
+  Future<List<GroupInviteBoxItem>> groupInviteBoxList() async {
+    final res = asJson(await _channel.request('groups.inviteBoxList', {}));
+    final list = res['invitations'];
+    if (list is! List) return const [];
+    return [
+      for (final item in list)
+        if (item is Map)
+          GroupInviteBoxItem(
+            groupId: _strOf(item['groupId'] ?? item['grid']),
+            name: _strOf(item['name'] ?? item['gname']),
+            memberCount: (item['totalMember'] as num?)?.toInt() ?? 0,
+          ),
+    ];
+  }
+
+  @override
+  Future<void> joinGroupInviteBox(String groupId) async {
+    await _channel.request('groups.inviteBoxJoin', {'groupId': groupId});
+  }
+
+  @override
+  Future<void> deleteGroupInviteBox(List<String> groupIds) async {
+    await _channel.request('groups.inviteBoxDelete', {'groupIds': groupIds});
+  }
+
+  @override
+  Future<void> upgradeGroupToCommunity(String groupId) async {
+    await _channel.request('groups.upgradeCommunity', {'groupId': groupId});
+  }
+
+  @override
+  Future<ProfileInfo> fetchProfile() async {
+    final res = asJson(await _channel.request('profile.me', {}));
+    final p = res['profile'] is Map ? asJson(res['profile']) : res;
+    return ProfileInfo(
+      uid: _strOf(p['uid'] ?? p['userId']),
+      displayName: _strOf(p['displayName'] ?? p['zaloName']),
+      avatarUrl: _strOf(p['avatar'] ?? p['avatarUrl']),
+      dob: _strOf(p['sdob'] ?? p['dob']),
+      gender: (p['gender'] as num?)?.toInt() ?? 0,
+      bio: _strOf(p['status'] ?? p['bio']),
+    );
+  }
+
+  @override
+  Future<void> updateProfile({required String name, required String dob, required int gender}) async {
+    await _channel.request('profile.update', {'name': name, 'dob': dob, 'gender': gender});
+  }
+
+  @override
+  Future<void> updateProfileBio(String bio) async {
+    await _channel.request('profile.updateBio', {'bio': bio});
+  }
+
+  @override
+  Future<void> changeAccountAvatar(OutgoingFile file) async {
+    await _uploadAndRpc('profile.changeAvatar', {}, file);
+  }
+
+  @override
+  Future<List<({String photoId, String url})>> avatarList() async {
+    final res = asJson(await _channel.request('profile.avatarList', {}));
+    final raw = res['photos'] ?? res['data'];
+    if (raw is! List) return const [];
+    return [
+      for (final p in raw)
+        if (p is Map) (photoId: _strOf(p['photoId'] ?? p['id']), url: _strOf(p['url'] ?? p['thumbnail'])),
+    ];
+  }
+
+  @override
+  Future<void> reuseAvatar(String photoId) async {
+    await _channel.request('profile.reuseAvatar', {'photoId': photoId});
+  }
+
+  @override
+  Future<void> deleteAvatars(List<String> photoIds) async {
+    await _channel.request('profile.deleteAvatar', {'photoIds': photoIds});
+  }
+
+  @override
+  Future<Map<String, dynamic>> zaloSettings() async => asJson(await _channel.request('profile.settings', {}));
+
+  @override
+  Future<void> updateZaloSetting(String type, int value) async {
+    await _channel.request('profile.updateSettings', {'type': type, 'value': value});
+  }
+
+  @override
+  Future<void> updateActiveStatus(bool active) async {
+    await _channel.request('profile.updateActiveStatus', {'active': active});
+  }
+
+  @override
+  Future<void> updateZaloLang(String language) async {
+    await _channel.request('profile.updateLang', {'language': language});
+  }
+
+  @override
+  Future<void> setCloseFriend(List<String> uids, bool add) async {
+    await _channel.request('contacts.setCloseFriend', {'uids': uids, 'add': add});
+  }
+
+  @override
+  Future<List<Contact>> blockList() async {
+    final res = asJson(await _channel.request('contacts.blockList', {}));
+    return _contactsFromList(res['users'] ?? res['data']);
+  }
+
+  @override
+  Future<void> blockViewFeed(String uid, bool blocked) async {
+    await _channel.request('contacts.blockFeed', {'uid': uid, 'blocked': blocked});
+  }
+
+  @override
+  Future<Map<String, String>> userQr(List<String> uids) async {
+    final res = asJson(await _channel.request('contacts.qr', {'uids': uids}));
+    final raw = res['qr'];
+    if (raw is! Map) return const {};
+    return {for (final e in raw.entries) e.key.toString(): e.value?.toString() ?? ''};
+  }
+
+  @override
+  Future<void> removeNote(String groupId, String topicId) async {
+    await _channel.request('notes.remove', {'groupId': groupId, 'topicId': topicId});
+  }
+
+  @override
+  Future<List<CatalogItem>> catalogs() async {
+    final res = asJson(await _channel.request('catalogs.list', {}));
+    final list = res['catalogs'] ?? res['items'];
+    if (list is! List) return const [];
+    return [
+      for (final c in list)
+        if (c is Map)
+          CatalogItem(
+            catalogId: _strOf(c['catalogId'] ?? c['catalog_id']),
+            catalogName: _strOf(c['catalogName'] ?? c['catalog_name']),
+            catalogPhoto: _strOf(c['catalogPhoto'] ?? c['catalog_photo']),
+          ),
+    ];
+  }
+
+  @override
+  Future<CatalogItem> createCatalog(String name) async {
+    final res = asJson(await _channel.request('catalogs.create', {'catalogName': name}));
+    final c = res['catalog'] is Map ? asJson(res['catalog']) : res;
+    return CatalogItem(catalogId: _strOf(c['catalogId'] ?? c['catalog_id']), catalogName: name);
+  }
+
+  @override
+  Future<void> deleteCatalog(String catalogId) async {
+    await _channel.request('catalogs.delete', {'catalogId': catalogId});
+  }
+
+  @override
+  Future<List<CatalogProduct>> catalogProducts(String catalogId) async {
+    final res = asJson(await _channel.request('catalogs.products.list', {'catalogId': catalogId}));
+    final list = res['products'] ?? res['items'];
+    if (list is! List) return const [];
+    return [
+      for (final p in list)
+        if (p is Map)
+          CatalogProduct(
+            productId: _strOf(p['productId'] ?? p['product_id']),
+            catalogId: catalogId,
+            productName: _strOf(p['productName'] ?? p['product_name']),
+            price: _strOf(p['price']),
+            description: _strOf(p['description']),
+            currencyUnit: _strOf(p['currencyUnit'] ?? p['currency_unit']),
+          ),
+    ];
+  }
+
+  @override
+  Future<CatalogProduct> createCatalogProduct(
+    String catalogId, {
+    required String name,
+    required String price,
+    required String description,
+  }) async {
+    final res = asJson(await _channel.request('catalogs.products.create', {
+      'catalogId': catalogId,
+      'productName': name,
+      'price': price,
+      'description': description,
+    }));
+    final p = res['product'] is Map ? asJson(res['product']) : res;
+    return CatalogProduct(
+      productId: _strOf(p['productId'] ?? p['product_id']),
+      catalogId: catalogId,
+      productName: name,
+      price: price,
+      description: description,
+    );
+  }
+
+  @override
+  Future<void> deleteCatalogProduct(String catalogId, List<String> productIds) async {
+    await _channel.request('catalogs.products.delete', {'catalogId': catalogId, 'productIds': productIds});
+  }
+
+  @override
+  Future<List<AutoReplyRule>> autoReplies() async {
+    final res = asJson(await _channel.request('autoReply.list', {}));
+    final list = res['item'];
+    if (list is! List) return const [];
+    return [
+      for (final a in list)
+        if (a is Map)
+          AutoReplyRule(
+            id: (a['id'] as num?)?.toInt() ?? 0,
+            enabled: a['enable'] == true,
+            content: _strOf(a['content']),
+            startTime: (a['startTime'] as num?)?.toInt() ?? 0,
+            endTime: (a['endTime'] as num?)?.toInt() ?? 0,
+            scope: (a['scope'] as num?)?.toInt() ?? 0,
+          ),
+    ];
+  }
+
+  @override
+  Future<AutoReplyRule> createAutoReply({
+    required bool enabled,
+    required String content,
+    int startTime = 0,
+    int endTime = 86400000,
+    int scope = 0,
+  }) async {
+    final res = asJson(await _channel.request('autoReply.create', {
+      'isEnable': enabled,
+      'content': content,
+      'startTime': startTime,
+      'endTime': endTime,
+      'scope': scope,
+    }));
+    final a = res['item'] is Map ? asJson(res['item']) : res;
+    return AutoReplyRule(
+      id: (a['id'] as num?)?.toInt() ?? 0,
+      enabled: enabled,
+      content: content,
+      startTime: startTime,
+      endTime: endTime,
+      scope: scope,
+    );
+  }
+
+  @override
+  Future<AutoReplyRule> updateAutoReply(AutoReplyRule rule) async {
+    await _channel.request('autoReply.update', {
+      'id': rule.id,
+      'isEnable': rule.enabled,
+      'content': rule.content,
+      'startTime': rule.startTime,
+      'endTime': rule.endTime,
+      'scope': rule.scope,
+    });
+    return rule;
+  }
+
+  @override
+  Future<void> deleteAutoReply(int id) async {
+    await _channel.request('autoReply.delete', {'id': id});
+  }
+
+  @override
+  Future<void> createBankAccount({required int bin, required String accountNumber, required String holderName}) async {
+    await _channel.request('banks.createAccount', {'binBank': bin, 'numAccBank': accountNumber, 'nameAccBank': holderName});
+  }
+
+  @override
+  Future<void> deleteBankAccount(String accountId, {bool isDefault = false}) async {
+    await _channel.request('banks.deleteAccount', {'accountId': accountId, 'isDefault': isDefault});
+  }
+
+  @override
+  Future<List<MediaStoreEntry>> mediaStoreList(String threadId, ThreadType type, String mediaType) async {
+    final res = type == ThreadType.group
+        ? asJson(await _channel.request('mediaStore.list', {'groupId': threadId, 'mediaType': mediaType}))
+        : asJson(await _channel.request('mediaStore.oneOneList', {'mediaType': mediaType}));
+    final list = res['items'] ?? res['data'];
+    if (list is! List) return const [];
+    return [
+      for (final m in list)
+        if (m is Map)
+          MediaStoreEntry(
+            id: _strOf(m['id'] ?? m['mediaId']),
+            mediaType: _strOf(m['mediaType']).isEmpty ? mediaType : _strOf(m['mediaType']),
+            url: _strOf(m['url']),
+            thumbUrl: _strOf(m['thumbUrl']),
+            name: _strOf(m['name']),
+            ts: (m['ts'] as num?)?.toInt() ?? 0,
+          ),
+    ];
+  }
+
+  @override
+  Future<void> mediaStoreRemove(String threadId, ThreadType type, String mediaType, String mediaId) async {
+    if (type == ThreadType.group) {
+      await _channel.request('mediaStore.remove', {'groupId': threadId, 'mediaType': mediaType, 'mediaId': mediaId});
+    } else {
+      await _channel.request('mediaStore.oneOneRemove', {'mediaType': mediaType, 'mediaId': mediaId});
+    }
+  }
+
+  @override
+  Future<bool> e2eeCheckCompatible(String threadId, ThreadType type) async {
+    final res = type == ThreadType.group
+        ? asJson(await _channel.request('e2ee.checkGroupCompatible', {'uids': const [], 'groupId': threadId}))
+        : asJson(await _channel.request('e2ee.checkCompatible', {'uids': [threadId]}));
+    return res['enabled'] == true || res['isE2ee'] == true;
+  }
+
+  @override
+  Future<void> e2eeEnable(String threadId, ThreadType type, bool enable) async {
+    await _channel.request(enable ? 'e2ee.enable' : 'e2ee.disable', {'threadId': threadId, 'isGroup': type == ThreadType.group});
+  }
+
   // ---- media ----
 
   @override
@@ -1606,6 +2170,7 @@ class RealAccountSession implements AccountSession {
     _mediaQueue.clear();
     unawaited(_typing.close());
     unawaited(_boardUpdates.close());
+    _activeCall.dispose();
     _media.clear();
     _threadsLoad.dispose();
     for (final list in _lists.values) {

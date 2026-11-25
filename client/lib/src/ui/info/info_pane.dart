@@ -8,6 +8,8 @@ import '../chat/media_viewer.dart';
 import '../chat/message_content.dart';
 import '../chat/report_dialog.dart';
 import '../components/avatar.dart';
+import '../groups/group_management_sheets.dart';
+import 'conversation_extras_sheets.dart';
 import '../components/basics.dart';
 import '../components/overlays.dart';
 import '../components/pressable.dart';
@@ -495,11 +497,31 @@ class _InfoPaneState extends ConsumerState<InfoPane> {
                             () {
                               final contact = resolveMember(id);
                               final isOwner = id == groupData?.ownerId;
+                              final isDeputy = groupData?.adminIds.contains(id) ?? false;
+                              final selfUid = activeAccount?.uid ?? '';
+                              final selfCanManage = caps.contains(AccountCapability.groupManage) &&
+                                  id != selfUid &&
+                                  (groupData?.ownerId == selfUid || (groupData?.adminIds.contains(selfUid) ?? false));
                               return _MemberRow(
                                 key: Key('member-$id'),
                                 session: session,
                                 contact: contact,
                                 owner: isOwner,
+                                trailing: selfCanManage
+                                    ? ZIconButton(
+                                        key: Key('memberManage-$id'),
+                                        icon: ZIcons.moreHoriz,
+                                        label: context.tr('memberActions'),
+                                        onPressed: () => showGroupMemberActionsSheet(
+                                          context,
+                                          session: session,
+                                          groupId: thread.id,
+                                          member: contact,
+                                          isTargetDeputy: isDeputy,
+                                          onChanged: () => ref.invalidate(groupInfoProvider((session, thread.id))),
+                                        ),
+                                      )
+                                    : null,
                                 onTap: contact.displayName.isEmpty
                                     ? null
                                     : () => _showProfile(contact, owner: isOwner),
@@ -635,6 +657,64 @@ class _InfoPaneState extends ConsumerState<InfoPane> {
                         ),
                       ),
                   ]),
+                if (group && groupData != null && caps.contains(AccountCapability.groupManage))
+                  ZRow(
+                    key: const Key('infoManageGroup'),
+                    icon: ZIcons.manageAccounts,
+                    title: context.tr('manageGroup'),
+                    trailing: Icon(ZIcons.chevronRight, color: z.textTertiary, size: 20),
+                    onTap: () => showGroupManageSheet(
+                      context,
+                      session: session,
+                      group: groupData,
+                      selfUid: activeAccount?.uid ?? '',
+                      onChanged: () => ref.invalidate(groupInfoProvider((session, thread.id))),
+                    ),
+                  ),
+                if (!group && caps.contains(AccountCapability.friends)) ...[
+                  ZRow(
+                    key: const Key('infoUserQr'),
+                    icon: ZIcons.qrCode,
+                    title: context.tr('viewQr'),
+                    trailing: Icon(ZIcons.chevronRight, color: z.textTertiary, size: 20),
+                    onTap: () => showUserQrSheet(context, session: session, uid: thread.id, name: name),
+                  ),
+                  ZRow(
+                    key: const Key('infoCloseFriend'),
+                    icon: ZIcons.star,
+                    title: context.tr('closeFriendToggle'),
+                    onTap: () async {
+                      await session.setCloseFriend([thread.id], true);
+                      if (context.mounted) zToast(context, context.tr('actionSaved'));
+                    },
+                  ),
+                ],
+                if (caps.contains(AccountCapability.mediaStore))
+                  ZRow(
+                    key: const Key('infoMediaStore'),
+                    icon: ZIcons.image,
+                    title: context.tr('mediaStore'),
+                    trailing: Icon(ZIcons.chevronRight, color: z.textTertiary, size: 20),
+                    onTap: () => showMediaStoreSheet(
+                      context,
+                      session: session,
+                      threadId: thread.id,
+                      threadType: thread.type,
+                    ),
+                  ),
+                if (caps.contains(AccountCapability.e2ee))
+                  ZRow(
+                    key: const Key('infoE2ee'),
+                    icon: ZIcons.encrypted,
+                    title: context.tr('e2ee'),
+                    trailing: Icon(ZIcons.chevronRight, color: z.textTertiary, size: 20),
+                    onTap: () => showE2eeStatusSheet(
+                      context,
+                      session: session,
+                      threadId: thread.id,
+                      threadType: thread.type,
+                    ),
+                  ),
                 if (caps.contains(AccountCapability.labels))
                   ZRow(
                     key: const Key('infoLabels'),
@@ -723,11 +803,12 @@ class _InfoPaneState extends ConsumerState<InfoPane> {
 }
 
 class _MemberRow extends StatelessWidget {
-  const _MemberRow({super.key, required this.session, required this.contact, required this.owner, required this.onTap});
+  const _MemberRow({super.key, required this.session, required this.contact, required this.owner, this.trailing, required this.onTap});
 
   final AccountSession session;
   final Contact contact;
   final bool owner;
+  final Widget? trailing;
   final VoidCallback? onTap;
 
   @override
@@ -763,6 +844,7 @@ class _MemberRow extends StatelessWidget {
                     label: context.tr('groupOwner'),
                     tone: ZTone.warning,
                     icon: ZIcons.key),
+              if (trailing != null) trailing!,
             ],
           ),
         ),

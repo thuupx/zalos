@@ -1,5 +1,5 @@
 import { test, expect, beforeAll, afterAll } from "bun:test";
-import type { GroupInfo as ZcaGroupInfo } from "zca-js";
+import type { GroupInfo as ZcaGroupInfo } from "@zalos/zalo-sdk";
 import {
   makeEnv,
   pairDevice,

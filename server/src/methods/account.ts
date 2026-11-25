@@ -18,6 +18,7 @@ import type {
 } from "../gateway/types.ts";
 import { fetchAndCache } from "../media.ts";
 import { isZaloHost } from "../gateway/mock.ts";
+import { extendedAccountMethods } from "./account_extended.ts";
 
 function slotOf(ctx: ChannelContext): string {
   const kind = ctx.channel.kind;
@@ -1421,5 +1422,78 @@ export function registerAccountMethods(
         sealed: hit.sealed,
       };
     },
+
+    // ---- voice & video calls ----
+
+    "calls.active": async (ctx: ChannelContext) => {
+      return { calls: ctx.accounts.calls.activeCalls(slotOf(ctx)) };
+    },
+
+    "calls.start": async (ctx: ChannelContext, params) => {
+      const media = params.media;
+      if (media !== "voice" && media !== "video") {
+        throw new RpcError("bad_request", "media must be voice|video");
+      }
+      return ctx.accounts.calls.start(
+        slotOf(ctx),
+        requiredString(params.threadId, "threadId"),
+        tt(params.threadType),
+        media,
+        ctx.channel.deviceId ?? "",
+      );
+    },
+
+    "calls.accept": async (ctx: ChannelContext, params) => {
+      return ctx.accounts.calls.accept(
+        slotOf(ctx),
+        requiredString(params.callId, "callId"),
+        ctx.channel.deviceId ?? "",
+      );
+    },
+
+    "calls.reject": async (ctx: ChannelContext, params) => {
+      const scope = params.scope ?? "global";
+      if (scope !== "local" && scope !== "global") {
+        throw new RpcError("bad_request", "scope must be local|global");
+      }
+      return ctx.accounts.calls.reject(
+        slotOf(ctx),
+        requiredString(params.callId, "callId"),
+        ctx.channel.deviceId ?? "",
+        scope,
+      );
+    },
+
+    "calls.hangup": async (ctx: ChannelContext, params) => {
+      return ctx.accounts.calls.hangup(
+        slotOf(ctx),
+        requiredString(params.callId, "callId"),
+        optionalString(params.reason),
+      );
+    },
+
+    "calls.groupState": async (ctx: ChannelContext, params) => {
+      return ctx.accounts.calls.groupState(
+        slotOf(ctx),
+        requiredString(params.groupId, "groupId"),
+      );
+    },
+
+    "calls.zaloSignal": async (ctx: ChannelContext, params) => {
+      const payload =
+        params.payload !== null &&
+        typeof params.payload === "object" &&
+        !Array.isArray(params.payload)
+          ? (params.payload as Record<string, unknown>)
+          : {};
+      return ctx.accounts.calls.zaloSignal(
+        slotOf(ctx),
+        requiredString(params.callId, "callId"),
+        requiredString(params.action, "action"),
+        payload,
+      );
+    },
+
+    ...extendedAccountMethods(),
   });
 }

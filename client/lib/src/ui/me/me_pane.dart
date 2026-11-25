@@ -19,8 +19,10 @@ import '../theme/tokens.dart';
 import '../theme/z_icons.dart';
 import '../util/haptics.dart';
 import '../vault/vault_screens.dart';
+import 'business_tools_sheet.dart';
 import 'login_qr_dialog.dart';
 import 'oa_dialog.dart';
+import 'profile_settings_sheets.dart';
 
 class MePane extends ConsumerWidget {
   const MePane({super.key, required this.link});
@@ -157,6 +159,47 @@ class MePane extends ConsumerWidget {
                     ),
                   ],
                 ),
+                if (activeSession != null &&
+                    (capsOf(activeAccount).contains(AccountCapability.profileSettings) ||
+                        capsOf(activeAccount).contains(AccountCapability.friends) ||
+                        capsOf(activeAccount).contains(AccountCapability.businessTools)))
+                  ZCard(
+                    title: context.tr('zaloAccountSection'),
+                    children: [
+                      if (capsOf(activeAccount).contains(AccountCapability.profileSettings)) ...[
+                        ZRow(
+                          key: const Key('meEditProfile'),
+                          icon: ZIcons.user,
+                          title: context.tr('editProfile'),
+                          trailing: Icon(ZIcons.chevronRight, color: z.textTertiary, size: 20),
+                          onTap: () => showEditProfileSheet(context, session: activeSession),
+                        ),
+                        ZRow(
+                          key: const Key('meZaloSettings'),
+                          icon: ZIcons.settings,
+                          title: context.tr('zaloSettings'),
+                          trailing: Icon(ZIcons.chevronRight, color: z.textTertiary, size: 20),
+                          onTap: () => showZaloSettingsSheet(context, session: activeSession),
+                        ),
+                      ],
+                      if (capsOf(activeAccount).contains(AccountCapability.friends))
+                        ZRow(
+                          key: const Key('meBlockedUsers'),
+                          icon: ZIcons.block,
+                          title: context.tr('blockedUsers'),
+                          trailing: Icon(ZIcons.chevronRight, color: z.textTertiary, size: 20),
+                          onTap: () => showBlockedUsersSheet(context, session: activeSession),
+                        ),
+                      if (capsOf(activeAccount).contains(AccountCapability.businessTools))
+                        ZRow(
+                          key: const Key('meBusinessTools'),
+                          icon: ZIcons.storefront,
+                          title: context.tr('businessTools'),
+                          trailing: Icon(ZIcons.chevronRight, color: z.textTertiary, size: 20),
+                          onTap: () => showBusinessToolsSheet(context, session: activeSession),
+                        ),
+                    ],
+                  ),
                 ZCard(
                   title: context.tr('security'),
                   children: [

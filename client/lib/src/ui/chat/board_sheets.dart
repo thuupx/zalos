@@ -410,7 +410,7 @@ class _PinnedBoardSheetState extends State<_PinnedBoardSheet> {
                             ),
                           ),
                         ),
-                        if (widget.canNotes && _isGroup && item.kind == BoardItemKind.note)
+                        if (widget.canNotes && _isGroup && item.kind == BoardItemKind.note) ...[
                           ZIconButton(
                             key: Key('editNote-${item.id}'),
                             icon: ZIcons.edit,
@@ -430,6 +430,26 @@ class _PinnedBoardSheetState extends State<_PinnedBoardSheet> {
                                     }
                                   },
                           ),
+                          ZIconButton(
+                            key: Key('deleteNote-${item.id}'),
+                            icon: ZIcons.delete,
+                            label: context.tr('deleteNote'),
+                            onPressed: _busy
+                                ? null
+                                : () async {
+                                    setState(() => _busy = true);
+                                    try {
+                                      await widget.session.removeNote(widget.threadId, item.id);
+                                      if (mounted) {
+                                        await _refresh();
+                                        widget.onChanged();
+                                      }
+                                    } finally {
+                                      if (mounted) setState(() => _busy = false);
+                                    }
+                                  },
+                          ),
+                        ],
                         if (widget.canPin && isPinned)
                           ZIconButton(
                             key: Key('unpinItem-${item.id}'),

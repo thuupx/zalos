@@ -1111,6 +1111,12 @@ class ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObser
                 memberCount: groupInfo?.memberCount ?? groupInfo?.memberIds.length,
                 isGroup: isGroup,
                 onBack: wide ? null : () => closeThread(ref),
+                onVoiceCall: caps.contains(AccountCapability.voiceCall)
+                    ? () => _guard(() => session.startCall(_thread.id, _thread.type, CallMediaKind.voice))
+                    : null,
+                onVideoCall: caps.contains(AccountCapability.videoCall)
+                    ? () => _guard(() => session.startCall(_thread.id, _thread.type, CallMediaKind.video))
+                    : null,
                 onSearch: _openSearch,
                 onInfo: () => ref.read(infoPaneOpenProvider.notifier).state = !ref.read(infoPaneOpenProvider),
                 infoOpen: ref.watch(infoPaneOpenProvider),
@@ -1314,6 +1320,8 @@ class _ChatHeader extends StatelessWidget {
     required this.memberCount,
     required this.isGroup,
     required this.onBack,
+    this.onVoiceCall,
+    this.onVideoCall,
     required this.onSearch,
     required this.onInfo,
     required this.infoOpen,
@@ -1328,6 +1336,8 @@ class _ChatHeader extends StatelessWidget {
   final int? memberCount;
   final bool isGroup;
   final VoidCallback? onBack;
+  final VoidCallback? onVoiceCall;
+  final VoidCallback? onVideoCall;
   final VoidCallback onSearch;
   final VoidCallback onInfo;
   final bool infoOpen;
@@ -1375,6 +1385,10 @@ class _ChatHeader extends StatelessWidget {
             ),
           ),
         ),
+        if (onVoiceCall != null)
+          ZIconButton(key: const Key('chatVoiceCall'), icon: ZIcons.call, label: context.tr('callVoice'), color: wide ? null : fg, hoverColor: wide ? null : z.headerField, onPressed: onVoiceCall),
+        if (onVideoCall != null)
+          ZIconButton(key: const Key('chatVideoCall'), icon: ZIcons.video, label: context.tr('callVideo'), color: wide ? null : fg, hoverColor: wide ? null : z.headerField, onPressed: onVideoCall),
         ZIconButton(key: const Key('chatSearch'), icon: ZIcons.search, label: context.tr('searchInChat'), color: wide ? null : fg, hoverColor: wide ? null : z.headerField, onPressed: onSearch),
         ZIconButton(
           key: const Key('chatInfo'),

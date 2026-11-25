@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models.dart';
 import '../../domain/services.dart';
+import '../call/call_overlay.dart';
 import '../chat/chat_screen.dart';
 import '../components/avatar.dart';
 import '../components/basics.dart';
@@ -205,6 +206,7 @@ class _CompactShell extends ConsumerWidget {
                     )
                   : null,
             ),
+            if (session != null) CallOverlay(session: session!),
           ],
         ),
       ),
@@ -616,69 +618,75 @@ class _WideShell extends ConsumerWidget {
     return Scaffold(
       key: const Key('wideShell'),
       backgroundColor: z.layer,
-      body: FocusTraversalGroup(
-        policy: OrderedTraversalPolicy(),
-        child: Row(
-          children: [
-            pane(0, AccountRail(link: link)),
-            Container(
-              width: expanded ? ZSizes.listExpanded : ZSizes.listMedium,
-              decoration: BoxDecoration(color: z.layer, border: Border(right: BorderSide(color: z.divider))),
-              child: SafeArea(right: false, child: pane(1, _tabBody(tab, link))),
-            ),
-            Expanded(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  pane(2, chatArea),
-                  ZPresence(
-                    child: expanded ? null : info,
-                    builder: (context, animation, info) => Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        FadeTransition(
-                          opacity: animation,
-                          child: Semantics(
-                            label: context.tr('close'),
-                            button: true,
-                            onTap: closeInfo,
-                            child: GestureDetector(onTap: closeInfo, child: ColoredBox(color: z.scrim.withValues(alpha: 0.3))),
-                          ),
-                        ),
-                        Positioned(
-                          top: 0,
-                          bottom: 0,
-                          right: 0,
-                          width: ZSizes.infoOverlay,
-                          child: _paneSlide(
-                            context,
-                            animation,
-                            Container(
-                              key: const Key('infoOverlay'),
-                              decoration: BoxDecoration(color: z.layer, boxShadow: z.shadowOverlay),
-                              child: pane(3, info),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          FocusTraversalGroup(
+            policy: OrderedTraversalPolicy(),
+            child: Row(
+              children: [
+                pane(0, AccountRail(link: link)),
+                Container(
+                  width: expanded ? ZSizes.listExpanded : ZSizes.listMedium,
+                  decoration: BoxDecoration(color: z.layer, border: Border(right: BorderSide(color: z.divider))),
+                  child: SafeArea(right: false, child: pane(1, _tabBody(tab, link))),
+                ),
+                Expanded(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      pane(2, chatArea),
+                      ZPresence(
+                        child: expanded ? null : info,
+                        builder: (context, animation, info) => Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            FadeTransition(
+                              opacity: animation,
+                              child: Semantics(
+                                label: context.tr('close'),
+                                button: true,
+                                onTap: closeInfo,
+                                child: GestureDetector(onTap: closeInfo, child: ColoredBox(color: z.scrim.withValues(alpha: 0.3))),
+                              ),
                             ),
-                          ),
+                            Positioned(
+                              top: 0,
+                              bottom: 0,
+                              right: 0,
+                              width: ZSizes.infoOverlay,
+                              child: _paneSlide(
+                                context,
+                                animation,
+                                Container(
+                                  key: const Key('infoOverlay'),
+                                  decoration: BoxDecoration(color: z.layer, boxShadow: z.shadowOverlay),
+                                  child: pane(3, info),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+                ),
+                ZPresence(
+                  child: expanded ? info : null,
+                  builder: (context, animation, info) => SizedBox(
+                    width: ZSizes.infoDocked,
+                    child: Container(
+                      key: const Key('infoDocked'),
+                      decoration: BoxDecoration(color: z.layer, border: Border(left: BorderSide(color: z.divider))),
+                      child: ClipRect(child: _paneSlide(context, animation, pane(3, info))),
                     ),
                   ),
-                ],
-              ),
-            ),
-            ZPresence(
-              child: expanded ? info : null,
-              builder: (context, animation, info) => SizedBox(
-                width: ZSizes.infoDocked,
-                child: Container(
-                  key: const Key('infoDocked'),
-                  decoration: BoxDecoration(color: z.layer, border: Border(left: BorderSide(color: z.divider))),
-                  child: ClipRect(child: _paneSlide(context, animation, pane(3, info))),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+          if (session != null) CallOverlay(session: session!),
+        ],
       ),
     );
   }

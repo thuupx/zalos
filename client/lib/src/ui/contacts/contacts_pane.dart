@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/models.dart';
 import '../../domain/services.dart';
 import '../components/avatar.dart';
+import '../groups/group_management_sheets.dart';
+import '../info/conversation_extras_sheets.dart';
 import '../components/basics.dart';
 import '../components/connection_banner.dart';
 import '../components/fields.dart';
@@ -288,6 +290,18 @@ class _ContactsPaneState extends ConsumerState<ContactsPane> {
               label: context.tr('shareContact'),
               icon: ZIcons.contactCard),
         ZMenuItem(
+            value: FriendAction.closeFriend,
+            label: context.tr('closeFriendToggle'),
+            icon: contact.closeFriend ? ZIcons.starFill : ZIcons.star),
+        ZMenuItem(
+            value: FriendAction.blockFeed,
+            label: context.tr('blockFeedToggle'),
+            icon: ZIcons.eyeOff),
+        ZMenuItem(
+            value: FriendAction.viewQr,
+            label: context.tr('viewQr'),
+            icon: ZIcons.qrCode),
+        ZMenuItem(
             value: FriendAction.block,
             label: context.tr(blocked ? 'unblock' : 'block'),
             icon: ZIcons.block),
@@ -316,6 +330,20 @@ class _ContactsPaneState extends ConsumerState<ContactsPane> {
         }
       case FriendAction.share:
         await _shareContact(contact, label);
+      case FriendAction.closeFriend:
+        final session = _session;
+        if (session == null) return;
+        await session.setCloseFriend([contact.uid], !contact.closeFriend);
+        await _refresh();
+      case FriendAction.blockFeed:
+        final session = _session;
+        if (session == null) return;
+        await session.blockViewFeed(contact.uid, true);
+        if (mounted) zToast(context, context.tr('actionSaved'));
+      case FriendAction.viewQr:
+        final session = _session;
+        if (session == null) return;
+        await showUserQrSheet(context, session: session, uid: contact.uid, name: label);
       case FriendAction.block:
         await _toggleBlock(contact);
       case FriendAction.unfriend:
@@ -761,16 +789,65 @@ class _ContactsPaneState extends ConsumerState<ContactsPane> {
     final z = context.z;
     final session = _session!;
     final wide = LayoutScope.wideOf(context);
+    final caps = ref.read(activeCapsProvider);
+    final canManage = caps.contains(AccountCapability.groupManage);
     final directory = ref.watch(directoryProvider(session));
     final items = [
       for (final g in all)
         if (_query.trim().isEmpty || foldContains(g.name, _query)) g,
     ]..sort((a, b) => foldVi(a.name).compareTo(foldVi(b.name)));
+    final actionBar = canManage
+        ? Padding(
+            padding: const EdgeInsets.symmetric(horizontal: ZSpace.s12, vertical: ZSpace.s8),
+            child: Wrap(
+              spacing: ZSpace.s8,
+              runSpacing: ZSpace.s4,
+              children: [
+                ZButton(
+                  key: const Key('createGroupButton'),
+                  label: context.tr('createGroup'),
+                  small: true,
+                  onPressed: () async {
+                    final gid = await showCreateGroupSheet(context, session: session);
+                    if (gid != null) await _refresh();
+                  },
+                ),
+                ZButton(
+                  key: const Key('joinGroupLinkButton'),
+                  label: context.tr('joinGroupLink'),
+                  small: true,
+                  variant: ZButtonVariant.secondary,
+                  onPressed: () async {
+                    await showJoinGroupLinkSheet(context, session: session);
+                    await _refresh();
+                  },
+                ),
+                ZButton(
+                  key: const Key('groupInvitesButton'),
+                  label: context.tr('groupInvites'),
+                  small: true,
+                  variant: ZButtonVariant.text,
+                  onPressed: () async {
+                    await showGroupInviteBoxSheet(context, session: session);
+                    await _refresh();
+                  },
+                ),
+              ],
+            ),
+          )
+        : const SizedBox.shrink();
     if (items.isEmpty) {
-      return ZEmptyState(
-        key: const Key('groupsEmpty'),
-        icon: _query.trim().isEmpty ? ZIcons.groups : ZIcons.searchOff,
-        title: context.tr(_query.trim().isEmpty ? 'noGroups' : 'noResults'),
+      return Column(
+        children: [
+          actionBar,
+          Expanded(
+            child: ZEmptyState(
+              key: const Key('groupsEmpty'),
+              icon: _query.trim().isEmpty ? ZIcons.groups : ZIcons.searchOff,
+              title: context.tr(_query.trim().isEmpty ? 'noGroups' : 'noResults'),
+            ),
+          ),
+        ],
       );
     }
     final list = ListView.builder(
@@ -817,7 +894,14 @@ class _ContactsPaneState extends ConsumerState<ContactsPane> {
         );
       },
     );
-    return wide ? list : RefreshIndicator(onRefresh: _refresh, color: z.brandText, backgroundColor: z.layer, child: list);
+    return Column(
+      children: [
+        actionBar,
+        Expanded(
+          child: wide ? list : RefreshIndicator(onRefresh: _refresh, color: z.brandText, backgroundColor: z.layer, child: list),
+        ),
+      ],
+    );
   }
 
   @override
@@ -991,7 +1075,7 @@ class _LetterIndex extends StatelessWidget {
   }
 }
 
-enum FriendAction { alias, removeAlias, share, block, unfriend }
+enum FriendAction { alias, removeAlias, share, closeFriend, blockFeed, viewQr, block, unfriend }
 
 class _AliasDialog extends StatefulWidget {
   const _AliasDialog({required this.contact, required this.label});

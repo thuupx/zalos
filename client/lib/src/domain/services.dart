@@ -391,6 +391,93 @@ abstract class AccountSession {
     int repeat = 0,
   });
   Future<void> removeReminder(String threadId, ThreadType type, String id);
+
+  // ---- Voice & Video Calls ----
+
+  ValueListenable<ActiveCall?> get activeCall;
+  Future<ActiveCall> startCall(String threadId, ThreadType type, CallMediaKind media);
+  Future<void> acceptCall(String callId);
+  Future<void> rejectCall(String callId, {bool localOnly = false});
+  Future<void> hangupCall(String callId);
+  Future<Map<String, dynamic>> groupCallState(String groupId);
+  Future<void> callHold(String callId, {required String peerId, required bool hold});
+  Future<void> callSwitchMedia(String callId, {required String peerId});
+
+  // ---- Extended SDK APIs ----
+  Future<String> createGroup({String? name, required List<String> members});
+  Future<void> renameGroup(String groupId, String name);
+  Future<void> changeGroupAvatar(String groupId, OutgoingFile file);
+  Future<void> addGroupMembers(String groupId, List<String> memberIds);
+  Future<void> inviteUserToGroups(String userId, List<String> groupIds);
+  Future<void> removeGroupMembers(String groupId, List<String> memberIds);
+  Future<void> leaveGroup(String groupId, {bool silent = false});
+  Future<void> disperseGroup(String groupId);
+  Future<void> changeGroupOwner(String groupId, String newOwnerId);
+  Future<void> addGroupDeputy(String groupId, List<String> memberIds);
+  Future<void> removeGroupDeputy(String groupId, List<String> memberIds);
+  Future<void> updateGroupSettings(String groupId, Map<String, dynamic> settings);
+  Future<List<Contact>> pendingGroupMembers(String groupId);
+  Future<void> reviewPendingGroupMembers(String groupId, List<String> members, bool approve);
+  Future<List<Contact>> blockedGroupMembers(String groupId);
+  Future<void> addBlockedGroupMembers(String groupId, List<String> memberIds);
+  Future<void> removeBlockedGroupMembers(String groupId, List<String> memberIds);
+  Future<GroupLinkDetail> groupLinkDetail(String groupId);
+  Future<GroupLinkDetail> enableGroupLink(String groupId);
+  Future<void> disableGroupLink(String groupId);
+  Future<Map<String, dynamic>> groupLinkInfo(String link);
+  Future<void> joinGroupLink(String link);
+  Future<List<GroupInviteBoxItem>> groupInviteBoxList();
+  Future<void> joinGroupInviteBox(String groupId);
+  Future<void> deleteGroupInviteBox(List<String> groupIds);
+  Future<void> upgradeGroupToCommunity(String groupId);
+
+  Future<ProfileInfo> fetchProfile();
+  Future<void> updateProfile({required String name, required String dob, required int gender});
+  Future<void> updateProfileBio(String bio);
+  Future<void> changeAccountAvatar(OutgoingFile file);
+  Future<List<({String photoId, String url})>> avatarList();
+  Future<void> reuseAvatar(String photoId);
+  Future<void> deleteAvatars(List<String> photoIds);
+  Future<Map<String, dynamic>> zaloSettings();
+  Future<void> updateZaloSetting(String type, int value);
+  Future<void> updateActiveStatus(bool active);
+  Future<void> updateZaloLang(String language);
+
+  Future<void> setCloseFriend(List<String> uids, bool add);
+  Future<List<Contact>> blockList();
+  Future<void> blockViewFeed(String uid, bool blocked);
+  Future<Map<String, String>> userQr(List<String> uids);
+  Future<void> removeNote(String groupId, String topicId);
+
+  Future<List<CatalogItem>> catalogs();
+  Future<CatalogItem> createCatalog(String name);
+  Future<void> deleteCatalog(String catalogId);
+  Future<List<CatalogProduct>> catalogProducts(String catalogId);
+  Future<CatalogProduct> createCatalogProduct(
+    String catalogId, {
+    required String name,
+    required String price,
+    required String description,
+  });
+  Future<void> deleteCatalogProduct(String catalogId, List<String> productIds);
+  Future<List<AutoReplyRule>> autoReplies();
+  Future<AutoReplyRule> createAutoReply({
+    required bool enabled,
+    required String content,
+    int startTime = 0,
+    int endTime = 86400000,
+    int scope = 0,
+  });
+  Future<AutoReplyRule> updateAutoReply(AutoReplyRule rule);
+  Future<void> deleteAutoReply(int id);
+  Future<void> createBankAccount({required int bin, required String accountNumber, required String holderName});
+  Future<void> deleteBankAccount(String accountId, {bool isDefault = false});
+
+  Future<List<MediaStoreEntry>> mediaStoreList(String threadId, ThreadType type, String mediaType);
+  Future<void> mediaStoreRemove(String threadId, ThreadType type, String mediaType, String mediaId);
+  Future<bool> e2eeCheckCompatible(String threadId, ThreadType type);
+  Future<void> e2eeEnable(String threadId, ThreadType type, bool enable);
+  Future<Map<String, dynamic>> rawRpc(String method, [Map<String, dynamic> params = const {}]);
 }
 
 /// Overridden in main() with the real or demo implementation.

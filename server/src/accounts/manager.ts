@@ -3,6 +3,7 @@
 // account channels of that slot.
 import type { Store } from "../store/db.ts";
 import { AUTO_DELETE_TTLS } from "../gateway/types.ts";
+import { CallManager } from "./call_manager.ts";
 import type {
   ArchivedChatList,
   AutoDeleteChat,
@@ -82,6 +83,7 @@ export class AccountManager {
     string,
     { hash: string; promise: Promise<{ msgId: string; cliId: string }> }
   >();
+  readonly calls: CallManager;
 
   constructor(
     private store: Store,
@@ -93,6 +95,7 @@ export class AccountManager {
     // Tests that disable the auto-delete timer disable both by default.
     this.ttlSweepMs =
       opts.messageTtlSweepMs ?? opts.autoDeleteSweepMs ?? 60_000;
+    this.calls = new CallManager((slot) => this.gateway(slot), tunnel, store);
     tunnel.onManifestChanged(() => {});
     // No media requests or gateways exist yet in this process. Finish any
     // interrupted vault publication before the server can accept new writes.
@@ -702,6 +705,9 @@ export class AccountManager {
       });
       this.tunnel.notifyManifestChanged();
     });
+    gw.on("voip", (evt) => {
+      this.calls.onVoipEvent(slot, evt);
+    });
   }
 
   async addAccount(opts: {
@@ -742,6 +748,7 @@ export class AccountManager {
     slot: string,
     opts: { credentials: Credentials; self: GatewaySelf },
   ): Promise<{ slot: string }> {
+    this.calls.clearSlot(slot);
     enableAccountMedia(this.store.dir, slot);
     const prev = this.gateways.get(slot);
     this.gateways.delete(slot);
@@ -773,6 +780,7 @@ export class AccountManager {
   }
 
   async removeAccount(slot: string) {
+    this.calls.clearSlot(slot);
     this.stopAutoDeleteSweeper(slot);
     this.stopTtlSweeper(slot);
     // A sweep queued before the timers stopped must finish before its rows
@@ -2128,6 +2136,9 @@ export class AccountManager {
         gw.stop().catch(() => {}),
       ),
     );
+    for (const slot of this.gateways.keys()) {
+      this.calls.clearSlot(slot);
+    }
     this.gateways.clear();
   }
 
