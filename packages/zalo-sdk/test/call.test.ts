@@ -218,7 +218,7 @@ describe("Voice, Video & Group Call REST + ZCallV2Bridge", () => {
   }
 });
 
-test("buildZrtcExtendData explicitly disables SRTP/SRTCP for voice and video calls", () => {
+test("buildZrtcExtendData matches the official desktop ZRTC schema", () => {
   const voice = JSON.parse(
     buildZrtcExtendData({
       isVideo: false,
@@ -226,29 +226,46 @@ test("buildZrtcExtendData explicitly disables SRTP/SRTCP for voice and video cal
       rtcpAddress: "171.244.25.89:4004",
     }),
   ) as Record<string, unknown>;
-  expect(voice).toMatchObject({
-    p2p: 0,
-    video: 0,
+  expect(voice).toEqual({
+    video: { codec: [{ name: "h264", payload: 97 }] },
+    callType: 0,
+    newZrtc: 1,
+    supportCallBusy: 1,
+    serverAddr: [{ rtp: "171.244.25.89:4200", rtcp: "171.244.25.89:4004" }],
+  });
+
+  const video = JSON.parse(buildZrtcExtendData({ isVideo: true })) as Record<string, unknown>;
+  expect(video).toEqual({
+    video: { codec: [{ name: "h264", payload: 97 }] },
     callType: 1,
     newZrtc: 1,
     supportCallBusy: 1,
-    srtpMode: 0,
-    srtcp: 0,
-    serverAddr: {
-      rtp: "171.244.25.89:4200",
-      rtcp: "171.244.25.89:4004",
-    },
-  });
-  expect(voice.codec).toBeUndefined();
-
-  const video = JSON.parse(buildZrtcExtendData({ isVideo: true })) as Record<string, unknown>;
-  expect(video).toMatchObject({
-    video: 1,
-    callType: 3,
-    srtpMode: 0,
-    srtcp: 0,
-    codec: [{ name: "H264", payload: 102 }],
   });
   expect(video.serverAddr).toBeUndefined();
+  expect(video.p2p).toBeUndefined();
+  expect(video.extraInfo).toBeUndefined();
+  expect(video.srtpMode).toBeUndefined();
+  expect(video.srtcp).toBeUndefined();
+});
+
+test("buildZrtcExtendData includes extraInfo and p2p only when real data exists", () => {
+  const parsed = JSON.parse(
+    buildZrtcExtendData({
+      isVideo: false,
+      rtpAddress: "171.244.25.89:4200",
+      extraInfo: { invitee: "u2" },
+      p2p: [{ ip: "192.0.2.1", port: 5000 }],
+    }),
+  ) as Record<string, unknown>;
+
+  expect(parsed.serverAddr).toBeUndefined();
+  expect(parsed.extraInfo).toEqual({ invitee: "u2" });
+  expect(parsed.p2p).toEqual([{ ip: "192.0.2.1", port: 5000 }]);
+
+  const empty = JSON.parse(
+    buildZrtcExtendData({ isVideo: false, extraInfo: {}, p2p: [] }),
+  ) as Record<string, unknown>;
+  expect(empty.extraInfo).toEqual({});
+  expect(empty.p2p).toBeUndefined();
 });
 });

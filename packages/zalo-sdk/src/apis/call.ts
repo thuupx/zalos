@@ -28,29 +28,35 @@ export function generateCallId(): number {
 
 /**
  * Builds the `extendData` JSON string matching `zrtc::CallController::getExtendData()`.
+ * The official desktop client advertises its h264 capability independently of
+ * whether the current call starts as audio or video.
  */
 export function buildZrtcExtendData(opts: {
   isVideo: boolean;
   rtpAddress?: string;
   rtcpAddress?: string;
+  extraInfo?: Record<string, unknown>;
+  p2p?: Record<string, unknown> | unknown[];
 }): string {
   const payload: Record<string, unknown> = {
-    p2p: 0,
-    video: opts.isVideo ? 1 : 0,
-    callType: opts.isVideo ? 3 : 1,
+    video: { codec: [{ name: "h264", payload: 97 }] },
+    callType: opts.isVideo ? 1 : 0,
     newZrtc: 1,
     supportCallBusy: 1,
-    srtpMode: 0,
-    srtcp: 0,
   };
-  if (opts.isVideo) {
-    payload.codec = [{ name: "H264", payload: 102 }];
+  if (
+    typeof opts.rtpAddress === "string" &&
+    opts.rtpAddress.trim() !== "" &&
+    typeof opts.rtcpAddress === "string" &&
+    opts.rtcpAddress.trim() !== ""
+  ) {
+    payload.serverAddr = [{ rtp: opts.rtpAddress, rtcp: opts.rtcpAddress }];
   }
-  if (opts.rtpAddress || opts.rtcpAddress) {
-    payload.serverAddr = {
-      rtp: opts.rtpAddress ?? "",
-      rtcp: opts.rtcpAddress ?? "",
-    };
+  if (opts.extraInfo !== undefined && opts.extraInfo !== null && !Array.isArray(opts.extraInfo)) {
+    payload.extraInfo = { ...opts.extraInfo };
+  }
+  if (Array.isArray(opts.p2p) ? opts.p2p.length > 0 : opts.p2p && Object.keys(opts.p2p).length > 0) {
+    payload.p2p = opts.p2p;
   }
   return JSON.stringify(payload);
 }

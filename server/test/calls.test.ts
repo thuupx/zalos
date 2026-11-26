@@ -272,7 +272,7 @@ test("CallManager cleans up and broadcasts relay_failed when outgoing ZRTC conne
 });
 
 test("CallManager retries outgoing ZRTC connect and attaches relay when retry succeeds", async () => {
-  const invites: Array<{ rtpAddress: string; rtcpAddress: string }> = [];
+  const invites: Array<{ rtpAddress: string; rtcpAddress: string; extendData?: string }> = [];
   let attempts = 0;
   let inviteResolve!: () => void;
   const invitePromise = new Promise<void>((r) => {
@@ -288,7 +288,10 @@ test("CallManager retries outgoing ZRTC connect and attaches relay when retry su
         servers: [{ rtpaddr: "171.244.25.89:4200", rtcpaddr: "171.244.25.89:4004" }],
       },
     }),
-    sendCallInvite: async (_callId: string, opts: { rtpAddress: string; rtcpAddress: string }) => {
+    sendCallInvite: async (
+      _callId: string,
+      opts: { rtpAddress: string; rtcpAddress: string; extendData?: string },
+    ) => {
       invites.push(opts);
       inviteResolve();
     },
@@ -325,6 +328,14 @@ test("CallManager retries outgoing ZRTC connect and attaches relay when retry su
   expect(attempts).toBe(2);
   expect(invites).toHaveLength(1);
   expect(invites[0]!.rtpAddress).toBe("171.244.25.89:4200");
+  const extendData = JSON.parse(invites[0]!.extendData ?? "{}") as Record<string, unknown>;
+  expect(extendData).toEqual({
+    video: { codec: [{ name: "h264", payload: 97 }] },
+    callType: 0,
+    newZrtc: 1,
+    supportCallBusy: 1,
+    serverAddr: [{ rtp: "171.244.25.89:4200", rtcp: "171.244.25.89:4004" }],
+  });
   expect(mediaGateway.getBridge("main-slot", "9002")?.zrtc).toBeDefined();
   await mediaGateway.closeCall("main-slot", "9002");
 });
