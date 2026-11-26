@@ -218,7 +218,7 @@ describe("Voice, Video & Group Call REST + ZCallV2Bridge", () => {
   }
 });
 
-test("buildZrtcExtendData matches the official desktop ZRTC schema", () => {
+test("buildZrtcExtendData matches the current official ZRTC schema", () => {
   const voice = JSON.parse(
     buildZrtcExtendData({
       isVideo: false,
@@ -227,45 +227,78 @@ test("buildZrtcExtendData matches the official desktop ZRTC schema", () => {
     }),
   ) as Record<string, unknown>;
   expect(voice).toEqual({
-    video: { codec: [{ name: "h264", payload: 97 }] },
     callType: 0,
+    fecTP: 0,
+    gccAudio: 0,
+    gccEarlyCall: 0,
+    gccMode: 0,
+    gccSVLR: 0,
+    maxFT: 120,
     newZrtc: 1,
-    supportCallBusy: 1,
-    serverAddr: [{ rtp: "171.244.25.89:4200", rtcp: "171.244.25.89:4004" }],
-  });
-
-  const video = JSON.parse(buildZrtcExtendData({ isVideo: true })) as Record<string, unknown>;
-  expect(video).toEqual({
+    packetMode: 2,
+    platform: 2,
+    sP2P: 0,
+    serverAddr: [
+      {
+        rtcp: "171.244.25.89:4004",
+        rtcpIPv6: "::FFFF:171.244.25.89:4004",
+        rtp: "171.244.25.89:4200",
+        rtpIPv6: "::FFFF:171.244.25.89:4200",
+        tpType: 0,
+      },
+    ],
+    spTcp: 0,
+    srtcp: 0,
+    srtpMode: 0,
+    supportCallBusy: 0,
+    supportHevcDecode: 0,
+    tpType: 0,
     video: { codec: [{ name: "h264", payload: 97 }] },
-    callType: 1,
-    newZrtc: 1,
-    supportCallBusy: 1,
+    rtcpDiff: 0,
+    rtcp: [{ ip: "171.244.25.89", port: 4004 }],
+    rtp: [{ ip: "171.244.25.89", port: 4200 }],
+    status: 0,
   });
-  expect(video.serverAddr).toBeUndefined();
-  expect(video.p2p).toBeUndefined();
-  expect(video.extraInfo).toBeUndefined();
-  expect(video.srtpMode).toBeUndefined();
-  expect(video.srtcp).toBeUndefined();
-});
 
-test("buildZrtcExtendData includes extraInfo and p2p only when real data exists", () => {
-  const parsed = JSON.parse(
+  const video = JSON.parse(
     buildZrtcExtendData({
-      isVideo: false,
+      isVideo: true,
       rtpAddress: "171.244.25.89:4200",
-      extraInfo: { invitee: "u2" },
-      p2p: [{ ip: "192.0.2.1", port: 5000 }],
+      rtcpAddress: "171.244.25.89:4004",
     }),
   ) as Record<string, unknown>;
-
-  expect(parsed.serverAddr).toBeUndefined();
-  expect(parsed.extraInfo).toEqual({ invitee: "u2" });
-  expect(parsed.p2p).toEqual([{ ip: "192.0.2.1", port: 5000 }]);
-
-  const empty = JSON.parse(
-    buildZrtcExtendData({ isVideo: false, extraInfo: {}, p2p: [] }),
-  ) as Record<string, unknown>;
-  expect(empty.extraInfo).toEqual({});
-  expect(empty.p2p).toBeUndefined();
+  expect(video).toEqual({ ...{
+    callType: 1,
+    fecTP: 0,
+    gccAudio: 0,
+    gccEarlyCall: 0,
+    gccMode: 0,
+    gccSVLR: 0,
+    maxFT: 120,
+    newZrtc: 1,
+    packetMode: 2,
+    platform: 2,
+    sP2P: 0,
+    serverAddr: [
+      {
+        rtcp: "171.244.25.89:4004",
+        rtcpIPv6: "::FFFF:171.244.25.89:4004",
+        rtp: "171.244.25.89:4200",
+        rtpIPv6: "::FFFF:171.244.25.89:4200",
+        tpType: 0,
+      },
+    ],
+    spTcp: 0,
+    srtcp: 0,
+    srtpMode: 0,
+    supportCallBusy: 0,
+    supportHevcDecode: 0,
+    tpType: 0,
+    video: { codec: [{ name: "h264", payload: 97 }] },
+    rtcpDiff: 0,
+    rtcp: [{ ip: "171.244.25.89", port: 4004 }],
+    rtp: [{ ip: "171.244.25.89", port: 4200 }],
+    status: 0,
+  } });
 });
 });

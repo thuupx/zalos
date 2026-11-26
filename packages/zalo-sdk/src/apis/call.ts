@@ -12,7 +12,7 @@ const LOG_END_CALL_RETRY_MS = [1000, 1000, 2000, 3000, 5000, 8000, 13000];
  * and `/api/voicecall/request` (matches `zcall_mac.node` `getActiveAudioCodecs()`).
  */
 export const DEFAULT_ZRTC_AUDIO_CODECS = JSON.stringify([
-  { name: "opus/16000/1", payload: 112, frmPtime: 20, dynamicFptime: 1 },
+  { name: "opus/16000/1", payload: 112, frmPtime: 20, dynamicFptime: 0 },
 ]);
 
 /**
@@ -35,28 +35,59 @@ export function buildZrtcExtendData(opts: {
   isVideo: boolean;
   rtpAddress?: string;
   rtcpAddress?: string;
-  extraInfo?: Record<string, unknown>;
-  p2p?: Record<string, unknown> | unknown[];
+  packetMode?: number;
+  platform?: number;
+  srtpMode?: number;
+  srtpKey?: string;
 }): string {
-  const payload: Record<string, unknown> = {
-    video: { codec: [{ name: "h264", payload: 97 }] },
-    callType: opts.isVideo ? 1 : 0,
-    newZrtc: 1,
-    supportCallBusy: 1,
+  const parseEndpoint = (addr?: string): { host: string; ip: string; port: number } => {
+    const value = typeof addr === "string" ? addr.trim() : "";
+    if (!value) return { host: "", ip: "0.0.0.0", port: 0 };
+    const idx = value.lastIndexOf(":");
+    if (idx < 0) return { host: value, ip: value, port: 0 };
+    return {
+      host: value,
+      ip: value.slice(0, idx),
+      port: Number.parseInt(value.slice(idx + 1), 10) || 0,
+    };
   };
-  if (
-    typeof opts.rtpAddress === "string" &&
-    opts.rtpAddress.trim() !== "" &&
-    typeof opts.rtcpAddress === "string" &&
-    opts.rtcpAddress.trim() !== ""
-  ) {
-    payload.serverAddr = [{ rtp: opts.rtpAddress, rtcp: opts.rtcpAddress }];
-  }
-  if (opts.extraInfo !== undefined && opts.extraInfo !== null && !Array.isArray(opts.extraInfo)) {
-    payload.extraInfo = { ...opts.extraInfo };
-  }
-  if (Array.isArray(opts.p2p) ? opts.p2p.length > 0 : opts.p2p && Object.keys(opts.p2p).length > 0) {
-    payload.p2p = opts.p2p;
+  const rtp = parseEndpoint(opts.rtpAddress);
+  const rtcp = parseEndpoint(opts.rtcpAddress || opts.rtpAddress);
+  const payload: Record<string, unknown> = {
+    callType: opts.isVideo ? 1 : 0,
+    fecTP: 0,
+    gccAudio: 0,
+    gccEarlyCall: 0,
+    gccMode: 0,
+    gccSVLR: 0,
+    maxFT: 120,
+    newZrtc: 1,
+    packetMode: opts.packetMode ?? 2,
+    platform: opts.platform ?? 2,
+    sP2P: 0,
+    serverAddr: [
+      {
+        rtcp: rtcp.host,
+        rtcpIPv6: `::FFFF:${rtcp.host}`,
+        rtp: rtp.host,
+        rtpIPv6: `::FFFF:${rtp.host}`,
+        tpType: 0,
+      },
+    ],
+    spTcp: 0,
+    srtcp: 0,
+    srtpMode: opts.srtpMode ?? 0,
+    supportCallBusy: 0,
+    supportHevcDecode: 0,
+    tpType: 0,
+    video: { codec: [{ name: "h264", payload: 97 }] },
+    rtcpDiff: 0,
+    rtcp: [{ ip: rtcp.ip, port: rtcp.port }],
+    rtp: [{ ip: rtp.ip, port: rtp.port }],
+    status: 0,
+  };
+  if (opts.srtpKey) {
+    payload.srtpKey = opts.srtpKey;
   }
   return JSON.stringify(payload);
 }

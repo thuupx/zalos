@@ -356,12 +356,13 @@ export class CallManager {
     sessionId: string,
     rtpAddress: string,
     rtcpAddress: string,
+    codec: string,
   ): Promise<void> {
     await gw.sendCallInvite?.(call.callId, {
       calleeId: call.peerId,
       rtpAddress,
       rtcpAddress,
-      codec: DEFAULT_ZRTC_AUDIO_CODECS,
+      codec,
       session: sessionId,
       extendData: buildZrtcExtendData({
         isVideo: call.media === "video",
@@ -475,12 +476,17 @@ export class CallManager {
         audioClockRate: parseZaloOpusClockRate(cfg.codec),
       });
       try {
+        const codec =
+          typeof cfg.codec === "string" && cfg.codec !== "" && cfg.codec !== "[]"
+            ? cfg.codec
+            : DEFAULT_ZRTC_AUDIO_CODECS;
         await this.sendInviteWithAddress(
           gw,
           call,
           sessionId,
           relay.rtpAddress,
           relay.rtcpAddress,
+          codec,
         );
         console.log(
           JSON.stringify({

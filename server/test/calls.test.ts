@@ -330,11 +330,37 @@ test("CallManager retries outgoing ZRTC connect and attaches relay when retry su
   expect(invites[0]!.rtpAddress).toBe("171.244.25.89:4200");
   const extendData = JSON.parse(invites[0]!.extendData ?? "{}") as Record<string, unknown>;
   expect(extendData).toEqual({
-    video: { codec: [{ name: "h264", payload: 97 }] },
     callType: 0,
+    fecTP: 0,
+    gccAudio: 0,
+    gccEarlyCall: 0,
+    gccMode: 0,
+    gccSVLR: 0,
+    maxFT: 120,
     newZrtc: 1,
-    supportCallBusy: 1,
-    serverAddr: [{ rtp: "171.244.25.89:4200", rtcp: "171.244.25.89:4004" }],
+    packetMode: 2,
+    platform: 2,
+    sP2P: 0,
+    serverAddr: [
+      {
+        rtcp: "171.244.25.89:4004",
+        rtcpIPv6: "::FFFF:171.244.25.89:4004",
+        rtp: "171.244.25.89:4200",
+        rtpIPv6: "::FFFF:171.244.25.89:4200",
+        tpType: 0,
+      },
+    ],
+    spTcp: 0,
+    srtcp: 0,
+    srtpMode: 0,
+    supportCallBusy: 0,
+    supportHevcDecode: 0,
+    tpType: 0,
+    video: { codec: [{ name: "h264", payload: 97 }] },
+    rtcpDiff: 0,
+    rtcp: [{ ip: "171.244.25.89", port: 4004 }],
+    rtp: [{ ip: "171.244.25.89", port: 4200 }],
+    status: 0,
   });
   expect(mediaGateway.getBridge("main-slot", "9002")?.zrtc).toBeDefined();
   await mediaGateway.closeCall("main-slot", "9002");
