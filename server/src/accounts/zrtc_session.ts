@@ -5,7 +5,9 @@ import {
   encodeAudioRtp,
   encodeEndCall,
   encodeInitCall,
-  encodePing,
+  encodePeerPing,
+  encodeRelayPing,
+  encodeRequestForwardWithPayload,
   encodeVideoRtcp,
   encodeVideoRtp,
   parseZrtpPacket,
@@ -72,6 +74,13 @@ export class ZrtcRelaySession {
   private chosenRtp: { host: string; port: number } | null = null;
   private chosenRtcp: { host: string; port: number } | null = null;
   private pingTimer: ReturnType<typeof setInterval> | null = null;
+  private controlTimer: ReturnType<typeof setInterval> | null = null;
+  private controlTimeouts: ReturnType<typeof setTimeout>[] = [];
+  private controlSeqId = 0;
+  private forwardPingSeqId = 0;
+  private peerPingSeq = 0;
+  private pingStartedAtMs = 0;
+  private isVideoCall = false;
   private seq = 1;
   private closed = false;
 
@@ -80,6 +89,7 @@ export class ZrtcRelaySession {
   rtcpAddress = "";
 
   private userId = 0;
+  private partnerId = 0;
   private callId = 0;
   private sessionId = "";
 
@@ -165,8 +175,10 @@ export class ZrtcRelaySession {
     }
 
     this.userId = params.userId >>> 0;
+    this.partnerId = params.partnerId >>> 0;
     this.callId = params.callId >>> 0;
     this.sessionId = params.sessionId;
+    this.isVideoCall = params.isVideo;
 
     const mode: "auto" | "udp" | "tcp" =
       params.transport ??
@@ -291,11 +303,10 @@ export class ZrtcRelaySession {
             } else {
               this.rtcpSock = udpRtcpSock;
               if (this.rtcpSock && this.token !== 0) {
-                const rtcpPing = encodePing({
+                const rtcpPing = encodeRelayPing({
                   userId: this.userId,
                   token: this.token,
                   sessionId: this.sessionId,
-                  seq: this.nextSeq(),
                 });
                 this.rtcpSock.send(rtcpPing, matched.rtcp.port, matched.rtcp.host);
               }
@@ -307,6 +318,7 @@ export class ZrtcRelaySession {
           cleanupTimers();
 
           this.startPingLoop();
+          this.startControlLoop();
           resolve({
             token: this.token,
             rtpAddress: this.rtpAddress,
@@ -381,26 +393,94 @@ export class ZrtcRelaySession {
 
   private startPingLoop(): void {
     if (this.pingTimer !== null) return;
-    this.pingTimer = setInterval(() => {
+    this.pingStartedAtMs = Date.now();
+    const sendPing = () => {
       if (this.closed || !this.rtpSock || !this.chosenRtp || this.token === 0) return;
-      const pkt = encodePing({
+      const elapsedMs = Math.max(1, Date.now() - this.pingStartedAtMs);
+      const relayPing = encodeRelayPing({
         userId: this.userId,
         token: this.token,
         sessionId: this.sessionId,
-        seq: this.nextSeq(),
       });
-      this.rtpSock.send(pkt, this.chosenRtp.port, this.chosenRtp.host);
+      this.rtpSock.send(relayPing, this.chosenRtp.port, this.chosenRtp.host);
+
+      this.peerPingSeq = (this.peerPingSeq + 1) >>> 0;
+      const peerPing = encodePeerPing({
+        userId: this.userId,
+        partnerId: this.partnerId,
+        callId: this.callId,
+        elapsedMs,
+        seqNum: this.peerPingSeq,
+      });
+      this.rtpSock.send(peerPing, this.chosenRtp.port, this.chosenRtp.host);
+
+      this.forwardPingSeqId = (this.forwardPingSeqId + 1) >>> 0;
+      const forwardPing = encodeRequestForwardWithPayload({
+        userId: this.userId,
+        token: this.token,
+        subCmd: 11,
+        payload: new TextEncoder().encode(String(elapsedMs)),
+        seqNum: 0,
+        seqId: this.forwardPingSeqId,
+      });
+      this.rtpSock.send(forwardPing, this.chosenRtp.port, this.chosenRtp.host);
+
       if (this.rtcpSock && this.rtcpSock !== this.rtpSock && this.chosenRtcp) {
-        const rtcpPkt = encodePing({
-          userId: this.userId,
-          token: this.token,
-          sessionId: this.sessionId,
-          seq: this.nextSeq(),
-        });
-        this.rtcpSock.send(rtcpPkt, this.chosenRtcp.port, this.chosenRtcp.host);
+        this.rtcpSock.send(relayPing, this.chosenRtcp.port, this.chosenRtcp.host);
       }
-    }, 3_000);
+    };
+    sendPing();
+    this.pingTimer = setInterval(sendPing, 1_000);
     this.pingTimer.unref?.();
+  }
+
+  private startControlLoop(): void {
+    if (this.controlTimer !== null) return;
+    const sendVideoControl = () => {
+      const payload = new Uint8Array(20);
+      const view = new DataView(payload.buffer, payload.byteOffset, payload.byteLength);
+      view.setInt32(0, this.isVideoCall ? 15 : 0, true);
+      view.setInt32(4, 0, true);
+      view.setInt32(8, 0, true);
+      view.setInt32(12, 50, true);
+      view.setInt32(16, this.isVideoCall ? 30 : 0, true);
+      this.sendRequestForward(10, payload);
+    };
+    this.sendMediaStateControls();
+    sendVideoControl();
+    this.controlTimer = setInterval(sendVideoControl, 1_000);
+    this.controlTimer.unref?.();
+  }
+
+  private sendMediaStateControls(): void {
+    const payload = new Uint8Array(4);
+    const sendStates = () => {
+      this.sendRequestForward(5, payload);
+      if (this.isVideoCall) this.sendRequestForward(7, payload);
+    };
+    sendStates();
+    for (const delayMs of [60, 150]) {
+      const timer = setTimeout(sendStates, delayMs);
+      timer.unref?.();
+      this.controlTimeouts.push(timer);
+    }
+  }
+
+  sendRequestForward(subCmd: number, payload: Uint8Array = new Uint8Array(0)): void {
+    if (this.closed || !this.rtpSock || !this.chosenRtp || this.token === 0) return;
+    this.controlSeqId = (this.controlSeqId + 1) >>> 0;
+    this.rtpSock.send(
+      encodeRequestForwardWithPayload({
+        userId: this.userId,
+        token: this.token,
+        subCmd,
+        payload,
+        seqNum: 0,
+        seqId: this.controlSeqId,
+      }),
+      this.chosenRtp.port,
+      this.chosenRtp.host,
+    );
   }
 
   sendAudioRtp(rtp: Uint8Array): void {
@@ -446,6 +526,12 @@ export class ZrtcRelaySession {
       clearInterval(this.pingTimer);
       this.pingTimer = null;
     }
+    if (this.controlTimer !== null) {
+      clearInterval(this.controlTimer);
+      this.controlTimer = null;
+    }
+    for (const timer of this.controlTimeouts) clearTimeout(timer);
+    this.controlTimeouts = [];
     if (this.rtpSock && this.chosenRtp && this.token !== 0) {
       try {
         const end = encodeEndCall({

@@ -14,6 +14,7 @@ export const ZRTP_PKT_TYPE = {
 
 export const ZRTP_CMD = {
   PING: 2,
+  PEER_PING: 5,
   END_CALL: 3,
   ECHO_ANON: 5,
   INIT_CALL_CALLER: 11,
@@ -132,6 +133,51 @@ export function encodePing(opts: {
   return buf;
 }
 
+export function encodeRelayPing(opts: {
+  userId: number;
+  token: number;
+  sessionId: string;
+}): Uint8Array {
+  const sessBytes = encoder.encode(opts.sessionId);
+  const buf = new Uint8Array(23 + sessBytes.length);
+  const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  view.setUint8(0, ZRTP_PKT_TYPE.REQUEST);
+  view.setUint8(1, 1);
+  view.setUint32(2, 0, true);
+  view.setUint32(6, 0, true);
+  view.setUint32(10, opts.userId >>> 0, true);
+  view.setUint32(14, opts.token >>> 0, true);
+  view.setUint16(18, ZRTP_CMD.PING, true);
+  view.setUint8(20, 1);
+  view.setUint16(21, sessBytes.length, true);
+  buf.set(sessBytes, 23);
+  return buf;
+}
+
+export function encodePeerPing(opts: {
+  userId: number;
+  partnerId: number;
+  callId: number;
+  elapsedMs: number;
+  seqNum?: number;
+}): Uint8Array {
+  const elapsedBytes = encoder.encode(String(Math.max(1, Math.floor(opts.elapsedMs))));
+  const rawLen = 23 + elapsedBytes.length;
+  const buf = new Uint8Array(Math.max(rawLen, 40));
+  const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  view.setUint8(0, ZRTP_PKT_TYPE.REQUEST);
+  view.setUint8(1, 1);
+  view.setUint32(2, (opts.seqNum ?? 0) >>> 0, true);
+  view.setUint32(6, opts.callId >>> 0, true);
+  view.setUint32(10, opts.userId >>> 0, true);
+  view.setUint32(14, opts.partnerId >>> 0, true);
+  view.setUint16(18, ZRTP_CMD.PEER_PING, true);
+  view.setUint8(20, 1);
+  view.setUint16(21, elapsedBytes.length, true);
+  buf.set(elapsedBytes, 23);
+  return buf;
+}
+
 export function encodeRequestForward(opts: {
   userId: number;
   token: number;
@@ -151,6 +197,30 @@ export function encodeRequestForward(opts: {
     cmd: ZRTP_CMD.REQUEST_FORWARD,
     subCmd: opts.subCmd ?? 1,
   });
+  return buf;
+}
+
+export function encodeRequestForwardWithPayload(opts: {
+  userId: number;
+  token: number;
+  subCmd: number;
+  payload?: Uint8Array;
+  seqNum?: number;
+  seqId?: number;
+}): Uint8Array {
+  const payload = opts.payload ?? new Uint8Array(0);
+  const buf = new Uint8Array(25 + payload.length);
+  const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  view.setUint8(0, ZRTP_PKT_TYPE.REQUEST);
+  view.setUint8(1, 1);
+  view.setUint32(2, (opts.seqNum ?? 0) >>> 0, true);
+  view.setUint32(6, (opts.seqId ?? 0) >>> 0, true);
+  view.setUint32(10, opts.userId >>> 0, true);
+  view.setUint32(14, opts.token >>> 0, true);
+  view.setUint16(18, ZRTP_CMD.REQUEST_FORWARD, true);
+  view.setUint8(20, opts.subCmd & 0xff);
+  view.setUint32(21, payload.length >>> 0, true);
+  buf.set(payload, 25);
   return buf;
 }
 

@@ -20,10 +20,15 @@ import {
   type RtcpPacket,
 } from "werift";
 import type { CallMediaKind } from "../gateway/types.ts";
+import {
+  WebrtcH264ToZaloRepacketizer,
+  ZaloH264ToWebrtcRepacketizer,
+  ZALO_H264_DELTA_PT,
+} from "./h264_rtp_transform.ts";
 import { ZrtcRelaySession } from "./zrtc_session.ts";
 
-export const ZALO_OPUS_PT = 111;
-export const ZALO_H264_PT = 102;
+export const ZALO_OPUS_PT = 112;
+export const ZALO_H264_PT = ZALO_H264_DELTA_PT;
 export const ZALO_OPUS_CLOCK_RATE = 16000;
 export const WEBRTC_OPUS_CLOCK_RATE = 48000;
 
@@ -54,6 +59,26 @@ export function parseZaloOpusClockRate(codecRaw: unknown): number {
     }
   }
   return ZALO_OPUS_CLOCK_RATE;
+}
+
+export function parseZaloOpusPayloadType(codecRaw: unknown): number {
+  let entries: unknown = codecRaw;
+  if (typeof codecRaw === "string" && codecRaw.trim() !== "") {
+    try {
+      entries = JSON.parse(codecRaw);
+    } catch {
+      return ZALO_OPUS_PT;
+    }
+  }
+  if (!Array.isArray(entries)) return ZALO_OPUS_PT;
+  for (const item of entries) {
+    if (!item || typeof item !== "object") continue;
+    const name = (item as { name?: unknown }).name;
+    if (typeof name !== "string" || !name.toLowerCase().startsWith("opus/")) continue;
+    const payload = Number((item as { payload?: unknown }).payload);
+    if (Number.isInteger(payload) && payload >= 0 && payload <= 127) return payload;
+  }
+  return ZALO_OPUS_PT;
 }
 
 /**
@@ -303,6 +328,7 @@ export interface CallMediaBridge {
   videoReceiver?: RTCRtpReceiver;
   audioPt: number;
   videoPt: number;
+  zaloAudioPt: number;
   zaloAudioClockRate: number;
   remoteAudioSsrc?: number;
   remoteVideoSsrc?: number;
@@ -310,6 +336,17 @@ export interface CallMediaBridge {
   firSeq: number;
   audioOutTsScaler: RtpTimestampScaler;
   audioInTsScaler: RtpTimestampScaler;
+  webrtcToZaloVideo: WebrtcH264ToZaloRepacketizer;
+  zaloToWebrtcVideo: ZaloH264ToWebrtcRepacketizer;
+  mediaStats: {
+    clientAudioRtp: number;
+    zaloAudioRtp: number;
+    clientVideoRtp: number;
+    zaloVideoRtp: number;
+    zaloVideoFrames: number;
+    clientVideoFrames: number;
+  };
+  mediaStatsTimer?: ReturnType<typeof setInterval>;
   zrtc?: ZrtcRelaySession;
 }
 
@@ -335,6 +372,7 @@ export class CallMediaGateway {
         deviceId,
         audioPt: ZALO_OPUS_PT,
         videoPt: ZALO_H264_PT,
+        zaloAudioPt: ZALO_OPUS_PT,
         zaloAudioClockRate: ZALO_OPUS_CLOCK_RATE,
         firSeq: 0,
         audioOutTsScaler: new RtpTimestampScaler(
@@ -345,6 +383,16 @@ export class CallMediaGateway {
           ZALO_OPUS_CLOCK_RATE,
           WEBRTC_OPUS_CLOCK_RATE,
         ),
+        webrtcToZaloVideo: new WebrtcH264ToZaloRepacketizer(),
+        zaloToWebrtcVideo: new ZaloH264ToWebrtcRepacketizer(),
+        mediaStats: {
+          clientAudioRtp: 0,
+          zaloAudioRtp: 0,
+          clientVideoRtp: 0,
+          zaloVideoRtp: 0,
+          zaloVideoFrames: 0,
+          clientVideoFrames: 0,
+        },
       };
       this.bridges.set(k, b);
     } else if (deviceId) {
@@ -357,7 +405,7 @@ export class CallMediaGateway {
     slot: string,
     callId: string,
     zrtc: ZrtcRelaySession,
-    opts?: { audioClockRate?: number },
+    opts?: { audioClockRate?: number; audioPayloadType?: number },
   ): void {
     const b = this.ensureBridge(slot, callId);
     if (b.zrtc && b.zrtc !== zrtc) {
@@ -365,6 +413,14 @@ export class CallMediaGateway {
     }
     if (opts?.audioClockRate && opts.audioClockRate > 0) {
       b.zaloAudioClockRate = opts.audioClockRate;
+    }
+    if (
+      opts?.audioPayloadType !== undefined &&
+      Number.isInteger(opts.audioPayloadType) &&
+      opts.audioPayloadType >= 0 &&
+      opts.audioPayloadType <= 127
+    ) {
+      b.zaloAudioPt = opts.audioPayloadType;
     }
     b.audioOutTsScaler = new RtpTimestampScaler(
       WEBRTC_OPUS_CLOCK_RATE,
@@ -375,10 +431,32 @@ export class CallMediaGateway {
       WEBRTC_OPUS_CLOCK_RATE,
     );
     b.zrtc = zrtc;
+    if (b.mediaStatsTimer) clearInterval(b.mediaStatsTimer);
+    b.mediaStatsTimer = setInterval(() => {
+      const stats = b.mediaStats;
+      if (
+        stats.clientAudioRtp === 0 &&
+        stats.zaloAudioRtp === 0 &&
+        stats.clientVideoRtp === 0 &&
+        stats.zaloVideoRtp === 0
+      ) {
+        return;
+      }
+      console.info(JSON.stringify({
+        ts: new Date().toISOString(),
+        kind: "info",
+        context: "zrtc.media.stats",
+        slot: b.slot,
+        callId: b.callId,
+        ...stats,
+      }));
+    }, 5_000);
+    b.mediaStatsTimer.unref?.();
 
     zrtc.onAudioRtp = (rtp) => {
       if (!b.audioOut) return;
       try {
+        b.mediaStats.zaloAudioRtp++;
         if (rtp.length >= 12) {
           const dv = new DataView(rtp.buffer, rtp.byteOffset, rtp.byteLength);
           b.remoteAudioSsrc = dv.getUint32(8, false);
@@ -394,11 +472,16 @@ export class CallMediaGateway {
     zrtc.onVideoRtp = (rtp) => {
       if (!b.videoOut) return;
       try {
+        b.mediaStats.zaloVideoRtp++;
         if (rtp.length >= 12) {
           const dv = new DataView(rtp.buffer, rtp.byteOffset, rtp.byteLength);
           b.remoteVideoSsrc = dv.getUint32(8, false);
         }
-        b.videoOut.writeRtp(rewriteRtpPayloadType(rtp, b.videoPt));
+        const packets = b.zaloToWebrtcVideo.processRtp(rtp, b.videoPt);
+        if (packets.length > 0) b.mediaStats.zaloVideoFrames++;
+        for (const packet of packets) {
+          b.videoOut.writeRtp(packet);
+        }
       } catch {
         // ignore transient write errors when peer is tearing down
       }
@@ -537,8 +620,9 @@ export class CallMediaGateway {
         tr.receiver.track.onReceiveRtp.subscribe((pkt: RtpPacket) => {
           if (!bridge.zrtc) return;
           try {
+            bridge.mediaStats.clientAudioRtp++;
             const scaledTs = bridge.audioOutTsScaler.scale(pkt.header.timestamp);
-            const raw = rewriteRtpHeader(pkt.serialize(), ZALO_OPUS_PT, scaledTs);
+            const raw = rewriteRtpHeader(pkt.serialize(), bridge.zaloAudioPt, scaledTs);
             bridge.zrtc.sendAudioRtp(raw);
           } catch {
             // ignore dropped frame
@@ -596,8 +680,12 @@ export class CallMediaGateway {
           bridge.clientVideoSsrc = pkt.header.ssrc;
           if (!bridge.zrtc) return;
           try {
-            const raw = rewriteRtpPayloadType(pkt.serialize(), ZALO_H264_PT);
-            bridge.zrtc.sendVideoRtp(raw);
+            bridge.mediaStats.clientVideoRtp++;
+            const packets = bridge.webrtcToZaloVideo.processRtp(pkt.serialize());
+            if (packets.length > 0) bridge.mediaStats.clientVideoFrames++;
+            for (const packet of packets) {
+              bridge.zrtc.sendVideoRtp(packet);
+            }
           } catch {
             // ignore dropped frame
           }
@@ -716,6 +804,7 @@ export class CallMediaGateway {
     const bridge = this.bridges.get(k);
     if (!bridge) return;
     this.bridges.delete(k);
+    if (bridge.mediaStatsTimer) clearInterval(bridge.mediaStatsTimer);
     bridge.zrtc?.close();
     if (bridge.pc) {
       try {

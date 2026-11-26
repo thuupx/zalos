@@ -11,6 +11,7 @@ import {
   encodeInitCall,
   encodePing,
   encodeRequestForward,
+  encodeRequestForwardWithPayload,
   encodeVideoRtcp,
   encodeVideoRtp,
   parseZrtpPacket,
@@ -108,6 +109,27 @@ describe("zrtc_packet", () => {
     const fwdSeqOnly = encodeRequestForward({ userId: 100, token: 999, seq: 9 });
     expect(new DataView(fwdSeqOnly.buffer).getUint32(2, true)).toBe(0);
     expect(new DataView(fwdSeqOnly.buffer).getUint32(6, true)).toBe(9);
+
+    const fwdPayload = encodeRequestForwardWithPayload({
+      userId: 100,
+      token: 999,
+      subCmd: 10,
+      payload: new Uint8Array([1, 2, 3, 4]),
+      seqNum: 12,
+      seqId: 34,
+    });
+    const fpdv = new DataView(fwdPayload.buffer);
+    expect(fwdPayload.length).toBe(29);
+    expect(fpdv.getUint8(0)).toBe(ZRTP_PKT_TYPE.REQUEST);
+    expect(fpdv.getUint8(1)).toBe(1);
+    expect(fpdv.getUint32(2, true)).toBe(12);
+    expect(fpdv.getUint32(6, true)).toBe(34);
+    expect(fpdv.getUint32(10, true)).toBe(100);
+    expect(fpdv.getUint32(14, true)).toBe(999);
+    expect(fpdv.getUint16(18, true)).toBe(ZRTP_CMD.REQUEST_FORWARD);
+    expect(fpdv.getUint8(20)).toBe(10);
+    expect(fpdv.getUint32(21, true)).toBe(4);
+    expect(Array.from(fwdPayload.subarray(25))).toEqual([1, 2, 3, 4]);
 
     const end = encodeEndCall({ userId: 100, token: 999, callId: 55, seq: 11 });
     const edv = new DataView(end.buffer);
@@ -242,7 +264,7 @@ describe("zrtc_packet", () => {
     expect(parseHostPort("127.0.0.1:99999")).toBeNull();
   });
 
-  test("ZrtcRelaySession completes InitCall handshake without RequestForward, registers distinct RTCP socket, and relays audio RTP", async () => {
+  test("ZrtcRelaySession completes InitCall handshake, sends media control state, registers distinct RTCP socket, and relays audio RTP", async () => {
     class MockSocket extends EventEmitter {
       sent: Array<{ buf: Buffer; port: number; address: string }> = [];
       closed = false;
@@ -300,8 +322,7 @@ describe("zrtc_packet", () => {
 
     const rtpSock = sockets[0]!;
     const rtcpSock = sockets[1]!;
-    // Sent ONLY InitCall on rtpSock (no spurious RequestForward)
-    expect(rtpSock.sent.length).toBe(1);
+    expect(rtpSock.sent.length).toBe(6);
     const initView = new DataView(
       rtpSock.sent[0]!.buf.buffer,
       rtpSock.sent[0]!.buf.byteOffset,
@@ -310,9 +331,48 @@ describe("zrtc_packet", () => {
     expect(initView.getUint32(2, true)).toBe(0);
     expect(initView.getUint16(18, true)).toBe(ZRTP_CMD.INIT_CALL_CALLER);
 
+    const relayPing = new DataView(
+      rtpSock.sent[1]!.buf.buffer,
+      rtpSock.sent[1]!.buf.byteOffset,
+      rtpSock.sent[1]!.buf.byteLength,
+    );
+    expect(relayPing.getUint16(18, true)).toBe(ZRTP_CMD.PING);
+    expect(relayPing.getUint8(20)).toBe(1);
+    const peerPing = new DataView(
+      rtpSock.sent[2]!.buf.buffer,
+      rtpSock.sent[2]!.buf.byteOffset,
+      rtpSock.sent[2]!.buf.byteLength,
+    );
+    expect(peerPing.getUint16(18, true)).toBe(ZRTP_CMD.PEER_PING);
+    expect(peerPing.getUint32(6, true)).toBe(99);
+    const forwardPing = new DataView(
+      rtpSock.sent[3]!.buf.buffer,
+      rtpSock.sent[3]!.buf.byteOffset,
+      rtpSock.sent[3]!.buf.byteLength,
+    );
+    expect(forwardPing.getUint16(18, true)).toBe(ZRTP_CMD.REQUEST_FORWARD);
+    expect(forwardPing.getUint8(20)).toBe(11);
+
+    const micControl = new DataView(
+      rtpSock.sent[4]!.buf.buffer,
+      rtpSock.sent[4]!.buf.byteOffset,
+      rtpSock.sent[4]!.buf.byteLength,
+    );
+    expect(micControl.getUint16(18, true)).toBe(ZRTP_CMD.REQUEST_FORWARD);
+    expect(micControl.getUint8(20)).toBe(5);
+    const videoControl = new DataView(
+      rtpSock.sent[5]!.buf.buffer,
+      rtpSock.sent[5]!.buf.byteOffset,
+      rtpSock.sent[5]!.buf.byteLength,
+    );
+    expect(videoControl.getUint16(18, true)).toBe(ZRTP_CMD.REQUEST_FORWARD);
+    expect(videoControl.getUint8(20)).toBe(10);
+    expect(videoControl.getUint32(21, true)).toBe(20);
+    expect(videoControl.getInt32(25 + 12, true)).toBe(50);
+
     // Registered distinct rtcpSock with a PING to the RTCP port
     expect(rtcpSock.closed).toBe(false);
-    expect(rtcpSock.sent.length).toBe(1);
+    expect(rtcpSock.sent.length).toBe(2);
     expect(rtcpSock.sent[0]!.port).toBe(4004);
     const pingView = new DataView(
       rtcpSock.sent[0]!.buf.buffer,

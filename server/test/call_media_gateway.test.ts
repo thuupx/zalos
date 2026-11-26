@@ -13,6 +13,7 @@ import {
   RtpTimestampScaler,
   filterAndRewriteIceCandidate,
   parseZaloOpusClockRate,
+  parseZaloOpusPayloadType,
   rewriteIceCandidateHost,
   rewriteRtpPayloadType,
   rewriteSdpIceCandidates,
@@ -319,6 +320,9 @@ describe("CallMediaGateway", () => {
 
     expect(parseZaloOpusClockRate('[{"name":"opus/16000/1","payload":111}]')).toBe(16000);
     expect(parseZaloOpusClockRate('[{"name":"opus/48000/2","payload":111}]')).toBe(48000);
+    expect(parseZaloOpusPayloadType('[{"name":"opus/16000/1","payload":112}]')).toBe(112);
+    expect(parseZaloOpusPayloadType('[{"name":"opus/48000/2","payload":113}]')).toBe(113);
+    expect(parseZaloOpusPayloadType("bad-json")).toBe(112);
     expect(parseZaloOpusClockRate("bad-json")).toBe(16000);
   });
 });

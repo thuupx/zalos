@@ -22,6 +22,7 @@ import {
   CallMediaGateway,
   parseIceServers,
   parseZaloOpusClockRate,
+  parseZaloOpusPayloadType,
   type IceCandidateJson,
 } from "./call_media_gateway.ts";
 import {
@@ -474,6 +475,7 @@ export class CallManager {
       );
       this.mediaGateway.attachZrtc(slot, call.callId, zrtc, {
         audioClockRate: parseZaloOpusClockRate(cfg.codec),
+        audioPayloadType: parseZaloOpusPayloadType(cfg.codec),
       });
       try {
         const codec =
@@ -600,6 +602,7 @@ export class CallManager {
         rtcpAddress = connected.relay.rtcpAddress;
         this.mediaGateway.attachZrtc(slot, callId, connected.zrtc, {
           audioClockRate: parseZaloOpusClockRate(sig.codec),
+          audioPayloadType: parseZaloOpusPayloadType(sig.codec),
         });
       }
 
