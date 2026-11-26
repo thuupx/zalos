@@ -207,6 +207,33 @@ class ComposerState extends ConsumerState<Composer> {
     setState(() => _mentionIndex = 0);
   }
 
+  /// Inserts a picked mention at the current selection, adding the separating
+  /// space Zalo keeps before a tag in the middle of a sentence.
+  void insertMention(AvatarMember member) {
+    if (!_caps.contains(AccountCapability.mentions)) return;
+    final value = _ui.input.value;
+    final text = value.text;
+    final start = value.selection.isValid
+        ? value.selection.start.clamp(0, text.length)
+        : text.length;
+    final end = value.selection.isValid
+        ? value.selection.end.clamp(0, text.length)
+        : text.length;
+    var insert = '@${member.name} ';
+    var mentionStart = start;
+    if (start > 0 && !RegExp(r'\s').hasMatch(text[start - 1])) {
+      insert = ' $insert';
+      mentionStart += 1;
+    }
+    final next = text.replaceRange(start, end, insert);
+    final cursor = start + insert.length;
+    _ui.input.value = TextEditingValue(
+        text: next, selection: TextSelection.collapsed(offset: cursor));
+    _ui.addMentionPick(name: member.name, uid: member.id, start: mentionStart);
+    focusInput();
+    setState(() => _mentionIndex = 0);
+  }
+
   List<Mention> _resolveMentions(String rawText) {
     final text = rawText.trim();
     final lead = rawText.length - rawText.trimLeft().length;

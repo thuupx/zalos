@@ -942,10 +942,10 @@ class FakeSession implements AccountSession {
   String? sendErrorCode;
 
   /// Injects an incoming message as if it arrived from the server.
-  Message receive(String threadId, String text, {String? from, MessageKind kind = MessageKind.text, List<Attachment> attachments = const [], int? ts}) {
+  Message receive(String threadId, String text, {String? from, MessageKind kind = MessageKind.text, List<Attachment> attachments = const [], List<Mention> mentions = const [], int? ts}) {
     final type = _threadMap[threadId]?.type ?? (threadId.startsWith('g') ? ThreadType.group : ThreadType.user);
     final sender = from ?? (type == ThreadType.group ? fakeGroups.firstWhere((g) => g.id == threadId).members.first : threadId);
-    final m = msg(threadId, type, sender, ts ?? _nowMs + _seq, text: text, kind: kind, attachments: attachments);
+    final m = msg(threadId, type, sender, ts ?? _nowMs + _seq, text: text, kind: kind, attachments: attachments, mentions: mentions);
     _append(m, countUnread: true);
     return m;
   }

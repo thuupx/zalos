@@ -6,6 +6,7 @@ import 'package:zalos/src/ui/components/pressable.dart';
 import 'package:zalos/src/ui/l10n/strings.dart';
 import 'package:zalos/src/ui/platform/services.dart';
 import 'package:zalos/src/ui/state/thread_ui.dart';
+import 'package:zalos/src/ui/theme/tokens.dart';
 import 'package:zalos/src/ui/util/format.dart';
 import 'package:zalos/src/ui/util/style_runs.dart';
 
@@ -197,6 +198,16 @@ void main() {
     expect(byKey('mention-u03'), findsOneWidget);
     await tapKey(tester, 'mention-u04', scroll: false);
     expect(_field(tester).controller!.text, 'Chào @Phạm Gia Huy ');
+    final fieldContext = tester.element(byKey('composerField'));
+    final painted = _controller(tester).buildTextSpan(
+        context: fieldContext,
+        style: Theme.of(fieldContext).textTheme.bodyMedium,
+        withComposing: false);
+    final mentionSpan = painted.children!
+        .whereType<TextSpan>()
+        .firstWhere((span) => span.text == '@Phạm Gia Huy');
+    expect(mentionSpan.style?.color,
+        Theme.of(fieldContext).extension<ZalosTokens>()!.brandText);
 
     await tester.enterText(byKey('composerField'), 'Chào @Phạm Gia Huy và @huy');
     await settle(tester);

@@ -110,6 +110,7 @@ const Map<String, String> stringsVi = {
   'membersTitle': 'Thành viên',
   'membersUnavailable': 'Zalo chưa trả về danh sách thành viên cho nhóm này.',
   'mentionAll': 'Nhắc tất cả mọi người',
+  'mentionUser': 'Nhắc tên',
   'messagesLoadFailed': 'Không tải được tin nhắn',
   'messagesStale': 'Chưa tải được tin nhắn mới nhất',
   'micDenied': 'zalos chưa được phép dùng micro. Hãy cấp quyền micro trong phần cài đặt.',

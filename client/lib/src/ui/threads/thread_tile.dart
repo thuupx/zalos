@@ -83,7 +83,7 @@ class _ListTimeState extends State<_ListTime> {
     return Text(
       formatListTime(widget.ts, context.s),
       textScaler: TextScaler.noScaling,
-      style: z.text.captionTabular.copyWith(color: widget.unread ? z.textPrimary : z.textTertiary, fontWeight: widget.unread ? FontWeight.w600 : FontWeight.w400),
+      style: z.text.captionTabular.copyWith(color: widget.unread ? z.textPrimary : z.textTertiary),
     );
   }
 }
@@ -158,7 +158,7 @@ class _ThreadTileState extends ConsumerState<ThreadTile> {
 
     final Widget preview;
     final String previewLabel;
-    final subStyle = z.text.rowSub.copyWith(color: unread ? z.textPrimary : z.textTertiary);
+    final subStyle = unread ? z.text.rowSubUnread : z.text.rowSub;
     if (typing.isNotEmpty) {
       previewLabel = s.t('typingPreview');
       preview = Text(previewLabel, maxLines: 1, overflow: TextOverflow.ellipsis, style: z.text.rowSub.copyWith(color: z.brandText));

@@ -71,7 +71,7 @@ void main() {
     await drain(tester);
   });
 
-  testWidgets('text styles use Plus Jakarta Sans with platform and color emoji fallbacks', (tester) async {
+  testWidgets('text styles use the bundled font with platform and color emoji fallbacks', (tester) async {
     final body = ZalosTokens.light.text.body;
     expect(body.fontFamily, ZType.fontFamily);
     expect(body.fontFamilyFallback, containsAll(<String>['system-ui', 'Apple Color Emoji', 'Noto Color Emoji']));

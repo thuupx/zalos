@@ -122,7 +122,7 @@ class ZType {
   ];
 
   /// Bundled app font with full Vietnamese and combining-mark coverage.
-  static const String fontFamily = 'Plus Jakarta Sans';
+  static const String fontFamily = 'GoogleSansFlex';
 
   /// Scripts the bundled font does not cover fall back to platform fonts;
   /// the color emoji fonts keep emoji in color.
@@ -142,6 +142,9 @@ class ZType {
 
   static const List<FontFeature> _tabular = [FontFeature.tabularFigures()];
 
+  static double _opticalSize(double size) =>
+      size < 8.0 ? 8.0 : (size > 144.0 ? 144.0 : size);
+
   TextStyle _s(double size, FontWeight w,
           {double height = _lh,
           Color? color,
@@ -157,24 +160,32 @@ class ZType {
           leadingDistribution: leading,
           color: color ?? _color,
           letterSpacing: spacing,
-          fontFeatures: tabular ? _tabular : null);
+          fontFeatures: tabular ? _tabular : null,
+          fontVariations: [
+            FontVariation('wght', w.value.toDouble()),
+            FontVariation('opsz', _opticalSize(size)),
+          ]);
 
   TextStyle get display => _s(24, FontWeight.w700, height: 1.25, spacing: -0.4);
   TextStyle get title => _s(18, FontWeight.w600, height: 1.3, spacing: -0.25);
-  TextStyle get rowTitle => _s(15.5, FontWeight.w500, spacing: -0.1);
-  TextStyle get rowTitleUnread => _s(15.5, FontWeight.w700, spacing: -0.1);
-  TextStyle get body => _s(15, FontWeight.w400, height: 1.4, spacing: -0.05);
+  TextStyle get rowTitle => _s(15.5, const FontWeight(550), spacing: -0.1);
+  TextStyle get rowTitleUnread => _s(15.5, const FontWeight(650), spacing: -0.1);
+  TextStyle get body => _s(15, FontWeight.w400, height: 1.45, spacing: 0);
   TextStyle get bodyWide =>
-      _s(15, FontWeight.w400, height: 22 / 15, spacing: -0.05);
+      _s(15, FontWeight.w400, height: 1.45, spacing: 0);
   TextStyle get rowSub => _s(13.5, FontWeight.w400, color: _tertiary);
+  TextStyle get rowSubUnread => _s(13.5, const FontWeight(520), color: _color);
   TextStyle get labelRegular => _s(14, FontWeight.w400);
   TextStyle get label => _s(14, FontWeight.w500);
   TextStyle get labelStrong => _s(14, FontWeight.w600, spacing: -0.05);
   TextStyle get meta => _s(13, FontWeight.w400, color: _secondary);
   TextStyle get metaStrong => _s(13, FontWeight.w600);
+  TextStyle get senderName => _s(13, const FontWeight(580),
+      height: 1.3, color: _secondary, spacing: 0.1);
   TextStyle get caption => _s(12, FontWeight.w400, color: _tertiary);
   TextStyle get captionTabular =>
-      _s(12, FontWeight.w400, color: _tertiary, tabular: true);
+      _s(11.5, const FontWeight(420),
+          height: 1.2, color: _tertiary, spacing: 0.2, tabular: true);
   TextStyle get captionStrong => _s(12, FontWeight.w600);
   TextStyle get navLabel =>
       _s(11, FontWeight.w500, height: 1.2, color: _tertiary, spacing: 0.05);

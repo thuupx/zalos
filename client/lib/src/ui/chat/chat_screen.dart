@@ -656,6 +656,70 @@ class ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObser
     }
   }
 
+  @override
+  void mentionUser(String uid, String name, String avatarUrl) {
+    if (!isGroup || uid.isEmpty || uid == selfUid || name.isEmpty) return;
+    _composerKey.currentState?.insertMention(AvatarMember(uid, name, avatarUrl));
+  }
+
+  @override
+  void showUser(String uid, String name, String avatarUrl) {
+    if (uid.isEmpty) return;
+    directory.need([uid]);
+    final displayName = name.isNotEmpty
+        ? name
+        : directory.nameOf(uid, context.tr('unknownUser'));
+    final resolvedAvatar = avatarUrl.isNotEmpty ? avatarUrl : directory.avatarOf(uid);
+    showZModal<void>(
+      context,
+      builder: (dialogContext) {
+        final z = dialogContext.z;
+        return ZDialogScaffold(
+          key: const Key('memberProfileSheet'),
+          title: context.tr('profile'),
+          showClose: true,
+          actions: [
+            if (isGroup && uid != selfUid)
+              ZButton(
+                key: const Key('profileMention'),
+                label: context.tr('mentionUser'),
+                icon: ZIcons.at,
+                variant: ZButtonVariant.secondary,
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                  mentionUser(uid, displayName, resolvedAvatar);
+                },
+              ),
+            if (uid != selfUid)
+              ZButton(
+                key: const Key('profileMessage'),
+                label: context.tr('sendMessage'),
+                icon: ZIcons.chat,
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                  openUser(uid, displayName, resolvedAvatar);
+                },
+              ),
+          ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ZAvatar(
+                  session: session,
+                  id: uid,
+                  name: displayName,
+                  url: resolvedAvatar,
+                  size: 96),
+              const SizedBox(height: ZSpace.s12),
+              Text(displayName,
+                  textAlign: TextAlign.center, style: z.text.title),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   /// The server stays the authority; this only decides whether to offer the
   /// admin action, from the group owner and deputy lists.
   Future<bool> _isGroupAdmin() async {

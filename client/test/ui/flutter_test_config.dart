@@ -7,7 +7,7 @@ import 'package:zalos/src/ui/theme/tokens.dart';
 import 'package:zalos/src/ui/util/format.dart';
 
 /// Loads real fonts so golden images are deterministic and show the real
-/// typography: the bundled Plus Jakarta Sans from the app assets, Roboto from
+/// typography: the bundled Google Sans Flex from the app assets, Roboto from
 /// the Flutter SDK cache and Material Symbols Rounded from the pub cache.
 Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -26,9 +26,8 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
     if (any) await loader.load();
   }
 
-  const appFonts = 'assets/fonts/PlusJakartaSans';
-  await load(ZType.fontFamily, [
-    for (final face in ['Regular', 'Italic', 'Medium', 'SemiBold', 'Bold']) '$appFonts/PlusJakartaSans-$face.ttf',
+  await load(ZType.fontFamily, const [
+    'assets/fonts/GoogleSansFlex/GoogleSansFlex.ttf',
   ]);
 
   final roboto = ['$fonts/Roboto-Regular.ttf', '$fonts/Roboto-Medium.ttf', '$fonts/Roboto-Bold.ttf', '$fonts/Roboto-Italic.ttf'];

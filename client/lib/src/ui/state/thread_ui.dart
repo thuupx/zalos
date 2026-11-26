@@ -74,6 +74,9 @@ List<Mention> resolveMentionPicks(String text, Iterable<MentionPick> picks) {
 class DraftTextController extends TextEditingController {
   List<StyleRun> _runs = const [];
 
+  /// Picked mentions of the owning thread state, used only for painting.
+  List<MentionPick> Function()? mentionPicks;
+
   /// Style runs of the current draft, oldest first.
   List<StyleRun> get runs => _runs;
 
@@ -95,14 +98,23 @@ class DraftTextController extends TextEditingController {
       return super.buildTextSpan(context: context, style: style, withComposing: withComposing);
     }
     final text = this.text;
-    if (text.isEmpty || _runs.isEmpty) return TextSpan(style: style, text: text);
+    if (text.isEmpty) return TextSpan(style: style, text: text);
     final z = Theme.of(context).extension<ZalosTokens>();
     if (z == null) return TextSpan(style: style, text: text);
+    final mentions = resolveMentionPicks(
+        text, mentionPicks?.call() ?? const <MentionPick>[]);
+    if (_runs.isEmpty && mentions.isEmpty) {
+      return TextSpan(style: style, text: text);
+    }
     final cuts = <int>{0, text.length};
     for (final run in _runs) {
       if (run.len <= 0) continue;
       cuts.add(run.start.clamp(0, text.length));
       cuts.add((run.start + run.len).clamp(0, text.length));
+    }
+    for (final mention in mentions) {
+      cuts.add(mention.pos.clamp(0, text.length));
+      cuts.add((mention.pos + mention.len).clamp(0, text.length));
     }
     final points = cuts.toList()..sort();
     final spans = <InlineSpan>[];
@@ -114,7 +126,19 @@ class DraftTextController extends TextEditingController {
         for (final run in _runs)
           if (run.len > 0 && run.start <= start && run.start + run.len >= end) run.st,
       ];
-      spans.add(TextSpan(text: text.substring(start, end), style: applyStyleRuns(style ?? const TextStyle(), codes, z)));
+      Mention? mention;
+      for (final candidate in mentions) {
+        if (candidate.pos <= start && candidate.pos + candidate.len >= end) {
+          mention = candidate;
+          break;
+        }
+      }
+      var spanStyle = applyStyleRuns(style ?? const TextStyle(), codes, z);
+      if (mention != null) {
+        spanStyle = spanStyle.copyWith(
+            color: z.brandText, fontWeight: FontWeight.w600);
+      }
+      spans.add(TextSpan(text: text.substring(start, end), style: spanStyle));
     }
     return TextSpan(style: style, children: spans);
   }
@@ -124,6 +148,7 @@ class DraftTextController extends TextEditingController {
 /// text, reply target, pending attachments and the scroll anchor.
 class ThreadUi extends ChangeNotifier {
   ThreadUi() {
+    input.mentionPicks = () => _mentionPicks;
     input.addListener(_onInput);
   }
 

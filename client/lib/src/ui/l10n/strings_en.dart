@@ -110,6 +110,7 @@ const Map<String, String> stringsEn = {
   'membersTitle': 'Members',
   'membersUnavailable': 'Zalo did not return the member list for this group.',
   'mentionAll': 'Mention everyone',
+  'mentionUser': 'Mention',
   'messagesLoadFailed': 'Could not load messages',
   'messagesStale': 'Could not load the latest messages',
   'micDenied': 'zalos is not allowed to use the microphone. Grant access in settings.',

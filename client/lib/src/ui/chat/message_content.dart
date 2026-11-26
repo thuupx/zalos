@@ -30,6 +30,7 @@ class MessageText extends StatefulWidget {
     required this.style,
     required this.selectable,
     required this.onOpenLink,
+    this.onOpenMention,
     this.styles = const [],
     this.query = '',
   });
@@ -42,6 +43,7 @@ class MessageText extends StatefulWidget {
   final TextStyle style;
   final bool selectable;
   final ValueChanged<String> onOpenLink;
+  final ValueChanged<Mention>? onOpenMention;
   final String query;
 
   @override
@@ -66,21 +68,24 @@ class _MessageTextState extends State<MessageText> {
     _recognizers.clear();
     final text = widget.text;
     if (text.isEmpty) return const <InlineSpan>[];
-    final marks = <({int start, int end, int kind, String? url})>[];
+    final marks =
+        <({int start, int end, int kind, String? url, Mention? mention})>[];
     for (final m in widget.mentions) {
       final start = m.pos.clamp(0, text.length);
       final end = (m.pos + m.len).clamp(start, text.length);
-      if (end > start) marks.add((start: start, end: end, kind: 0, url: null));
+      if (end > start) {
+        marks.add((start: start, end: end, kind: 0, url: null, mention: m));
+      }
     }
     for (final m in urlMatches(text)) {
       if (marks.any((k) => m.start < k.end && m.end > k.start)) continue;
-      marks.add((start: m.start, end: m.end, kind: 1, url: m.group(0)));
+      marks.add((start: m.start, end: m.end, kind: 1, url: m.group(0), mention: null));
     }
     final hit = widget.query.isEmpty ? null : foldMatch(text, widget.query);
     if (hit != null &&
         hit.end > hit.start &&
         !marks.any((k) => hit.start < k.end && hit.end > k.start)) {
-      marks.add((start: hit.start, end: hit.end, kind: 2, url: null));
+      marks.add((start: hit.start, end: hit.end, kind: 2, url: null, mention: null));
     }
     marks.sort((a, b) => a.start.compareTo(b.start));
 
@@ -129,7 +134,20 @@ class _MessageTextState extends State<MessageText> {
           base = TextStyle(backgroundColor: z.accent, color: z.onAccent);
       }
       final style = applyStyleRuns(base, codes, z);
-      if (mark?.kind == 1) {
+      if (mark?.kind == 0 && widget.onOpenMention != null) {
+        final tagged = mark!;
+        final recognizer = recognizers.putIfAbsent(
+            markIndex,
+            () => TapGestureRecognizer()
+              ..onTap = () => widget.onOpenMention!(tagged.mention!));
+        spans.add(TextSpan(
+          text: part,
+          recognizer: recognizer,
+          mouseCursor: SystemMouseCursors.click,
+          semanticsLabel: part,
+          style: style,
+        ));
+      } else if (mark?.kind == 1) {
         final link = mark!;
         final recognizer = recognizers.putIfAbsent(
             markIndex,

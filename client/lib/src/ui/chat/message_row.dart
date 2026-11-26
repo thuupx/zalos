@@ -42,6 +42,8 @@ abstract class ChatActions {
   void openPoll(Message m);
   void openLink(String url);
   void openUser(String uid, String name, String avatarUrl);
+  void showUser(String uid, String name, String avatarUrl);
+  void mentionUser(String uid, String name, String avatarUrl);
   Future<void> jumpToQuote(Quote quote);
 
   /// A message of this chat that is already loaded, by id or client id.
@@ -281,6 +283,13 @@ class _MessageRowState extends State<MessageRow>
     final senderName = a.isGroup && !self ? a.directory.nameOf(m.senderId, m.senderName) : m.senderName;
     final avatarUrl = a.isGroup ? a.directory.avatarOf(m.senderId) : a.peerAvatarUrl;
     final showAvatar = incomingAvatar && (wide ? flags.first : flags.last);
+    final senderAvatarTarget = wide ? metrics.avatar : ZSizes.touchTarget;
+    final senderAvatarHalo = (senderAvatarTarget - metrics.avatar) / 2;
+    void openSender() => a.showUser(m.senderId, senderName, avatarUrl);
+    void mentionSender() {
+      ZHaptics.selection();
+      a.mentionUser(m.senderId, senderName, avatarUrl);
+    }
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -597,7 +606,7 @@ class _MessageRowState extends State<MessageRow>
                 child: Text(senderName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: z.text.caption),
+                    style: z.text.senderName.copyWith(color: z.textTertiary)),
               ),
             stacked,
             if (m.sendState == SendState.failed)
@@ -699,12 +708,32 @@ class _MessageRowState extends State<MessageRow>
                         child: Padding(
                           padding: EdgeInsets.only(
                               bottom: !wide && reserveReactionSlot ? 12 : 0),
-                          child: ZAvatar(
-                              session: a.session,
-                              id: m.senderId,
-                              name: senderName,
-                              url: avatarUrl,
-                              size: metrics.avatar),
+                          child: SizedBox(
+                            width: metrics.avatar,
+                            height: metrics.avatar,
+                            child: OverflowBox(
+                              minWidth: senderAvatarTarget,
+                              maxWidth: senderAvatarTarget,
+                              minHeight: senderAvatarTarget,
+                              maxHeight: senderAvatarTarget,
+                              child: ZPressable(
+                                key: Key('senderAvatar-${m.id}'),
+                                onTap: openSender,
+                                onLongPress: a.isGroup ? mentionSender : null,
+                                circle: true,
+                                padding: EdgeInsets.all(senderAvatarHalo),
+                                semanticLabel: senderName,
+                                tooltip: senderName,
+                                canRequestFocus: false,
+                                child: ZAvatar(
+                                    session: a.session,
+                                    id: m.senderId,
+                                    name: senderName,
+                                    url: avatarUrl,
+                                    size: metrics.avatar),
+                              ),
+                            ),
+                          ),
                         ),
                       )
                     : null,
@@ -880,7 +909,20 @@ class _MessageBubble extends StatelessWidget {
             if (showName)
               Padding(
                 padding: const EdgeInsets.only(bottom: ZSpace.s4),
-                child: Text(senderName, maxLines: 1, overflow: TextOverflow.ellipsis, style: z.text.meta.copyWith(color: z.textTertiary)),
+                child: ZPressable(
+                  key: Key('senderName-${m.id}'),
+                  onTap: () => a.showUser(m.senderId, senderName, a.directory.avatarOf(m.senderId)),
+                  onLongPress: () {
+                    ZHaptics.selection();
+                    a.mentionUser(m.senderId, senderName, a.directory.avatarOf(m.senderId));
+                  },
+                  radius: ZRadius.tight,
+                  padding: const EdgeInsets.symmetric(horizontal: ZSpace.s4, vertical: 1),
+                  semanticLabel: senderName,
+                  tooltip: senderName,
+                  canRequestFocus: false,
+                  child: Text(senderName, maxLines: 1, overflow: TextOverflow.ellipsis, style: z.text.senderName.copyWith(color: z.textTertiary)),
+                ),
               ),
             if (quote != null)
               Padding(
@@ -920,7 +962,20 @@ class _MessageBubble extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: ZSpace.s4),
               padding: const EdgeInsets.symmetric(horizontal: ZSpace.s8, vertical: 1),
               decoration: BoxDecoration(color: z.eventPillBg, borderRadius: BorderRadius.circular(ZRadius.pill)),
-              child: Text(senderName, maxLines: 1, overflow: TextOverflow.ellipsis, style: z.text.meta.copyWith(color: z.textSecondary)),
+              child: ZPressable(
+                key: Key('senderName-${m.id}'),
+                onTap: () => a.showUser(m.senderId, senderName, a.directory.avatarOf(m.senderId)),
+                onLongPress: () {
+                  ZHaptics.selection();
+                  a.mentionUser(m.senderId, senderName, a.directory.avatarOf(m.senderId));
+                },
+                radius: ZRadius.tight,
+                padding: const EdgeInsets.symmetric(horizontal: ZSpace.s4, vertical: 1),
+                semanticLabel: senderName,
+                tooltip: senderName,
+                canRequestFocus: false,
+                child: Text(senderName, maxLines: 1, overflow: TextOverflow.ellipsis, style: z.text.senderName.copyWith(color: z.textSecondary)),
+              ),
             ),
           child,
           if (pill != null) pill,
@@ -935,6 +990,11 @@ class _MessageBubble extends StatelessWidget {
           style: bodyStyle,
           selectable: wide,
           onOpenLink: a.openLink,
+          onOpenMention: (mention) {
+            if (mention.uid == '-1') return;
+            final name = a.directory.nameOf(mention.uid);
+            a.showUser(mention.uid, name, a.directory.avatarOf(mention.uid));
+          },
           query: flags.query,
         );
 

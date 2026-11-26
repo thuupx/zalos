@@ -552,6 +552,74 @@ void main() {
     await drain(tester);
   });
 
+  testWidgets('group sender profile mentions a member and messages them', (tester) async {
+    final h = await pumpZalos(tester, size: expanded);
+    await openThreadByKey(tester, 'g01');
+    final senderMessage = _msgs(h, 'g01').lastWhere((m) =>
+        !m.isSelf && m.senderId == 'u04' && m.kind == MessageKind.text && !m.recalled);
+
+    await tapKey(tester, 'senderAvatar-${senderMessage.id}', scroll: false);
+    expect(byKey('memberProfileSheet'), findsOneWidget);
+    expect(find.text('Phạm Gia Huy'), findsWidgets);
+
+    await tapKey(tester, 'profileMention', scroll: false);
+    expect(byKey('memberProfileSheet'), findsNothing);
+    expect(tester.widget<TextField>(byKey('composerField')).controller!.text,
+        '@Phạm Gia Huy ');
+    await sendKey(tester, LogicalKeyboardKey.enter);
+    final sent = h.main.sentTexts.last;
+    expect(sent.text, '@Phạm Gia Huy');
+    expect(sent.mentions.single.uid, 'u04');
+    expect((sent.mentions.single.pos, sent.mentions.single.len), (0, 13));
+
+    await tapKey(tester, 'senderAvatar-${senderMessage.id}', scroll: false);
+    await tapKey(tester, 'profileMessage', scroll: false);
+    expect(byKey('memberProfileSheet'), findsNothing);
+    expect(tester.widget<Text>(byKey('chatTitle')).data, 'Phạm Gia Huy');
+    await drain(tester);
+  });
+
+  testWidgets('long pressing a group sender inserts their mention', (tester) async {
+    final h = await pumpZalos(tester, size: expanded);
+    await openThreadByKey(tester, 'g01');
+    final senderMessage = _msgs(h, 'g01').lastWhere((m) =>
+        !m.isSelf && m.senderId == 'u04' && m.kind == MessageKind.text && !m.recalled);
+
+    await tester.enterText(byKey('composerField'), 'Xin chào');
+    await tester.longPress(byKey('senderAvatar-${senderMessage.id}'));
+    await settle(tester);
+    expect(tester.widget<TextField>(byKey('composerField')).controller!.text,
+        'Xin chào @Phạm Gia Huy ');
+
+    await sendKey(tester, LogicalKeyboardKey.enter);
+    final sent = h.main.sentTexts.last;
+    expect(sent.text, 'Xin chào @Phạm Gia Huy');
+    expect(sent.mentions.single.uid, 'u04');
+    expect((sent.mentions.single.pos, sent.mentions.single.len), (9, 13));
+    await drain(tester);
+  });
+
+  testWidgets('tapping a mention opens the tagged member profile', (tester) async {
+    final h = await pumpZalos(tester);
+    await openThreadByKey(tester, 'g01');
+    h.main.receive('g01', '@Phạm Gia Huy xem giúp phần này nhé',
+        from: 'u03',
+        mentions: const [Mention(uid: 'u04', pos: 0, len: 13)]);
+    await settle(tester);
+
+    final tagged = find.textContaining('@Phạm Gia Huy', findRichText: true).last;
+    await tester.ensureVisible(tagged);
+    await tester.pump();
+    final box = tester.getRect(tagged);
+    await tester.tapAt(Offset(box.left + 8, box.top + 8));
+    await settle(tester);
+
+    expect(byKey('memberProfileSheet'), findsOneWidget);
+    expect(byKey('profileMention'), findsOneWidget);
+    expect(byKey('profileMessage'), findsOneWidget);
+    await drain(tester);
+  });
+
   for (final entry in {'compact': compact, 'expanded': expanded}.entries) {
     testWidgets('emoji and sticker panel at ${entry.key}', (tester) async {
       final h = await pumpZalos(tester, size: entry.value, app: FakeZalosApp(latency: const Duration(milliseconds: 200)));
