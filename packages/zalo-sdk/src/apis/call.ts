@@ -12,7 +12,7 @@ const LOG_END_CALL_RETRY_MS = [1000, 1000, 2000, 3000, 5000, 8000, 13000];
  * and `/api/voicecall/request` (matches `zcall_mac.node` `getActiveAudioCodecs()`).
  */
 export const DEFAULT_ZRTC_AUDIO_CODECS = JSON.stringify([
-  { name: "opus/16000/1", payload: 111, frmPtime: 20, dynamicFptime: 1 },
+  { name: "opus/16000/1", payload: 112, frmPtime: 20, dynamicFptime: 1 },
 ]);
 
 /**
