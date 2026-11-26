@@ -371,6 +371,7 @@ const Map<String, String> stringsVi = {
   'weekdayShort6': 'Th 7',
   'weekdayShort7': 'CN',
   'yesterday': 'Hôm qua',
+  'youAreMentioned': 'Bạn được nhắc',
   'you': 'Bạn',
   'yourself': 'chính mình',
   'sendErrWindow': 'Người dùng chưa tương tác trong 7 ngày nên OA không thể gửi tin',

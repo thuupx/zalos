@@ -620,6 +620,49 @@ void main() {
     await drain(tester);
   });
 
+  testWidgets('mention jump follows incoming self and all mentions in order', (tester) async {
+    final h = await pumpZalos(tester, size: expanded);
+    await openThreadByKey(tester, 'g01');
+    expect(byKey('mentionJump'), findsNothing);
+
+    final first = h.main.receive('g01', '@Phạm Minh Thư xem giúp tin nhắn này',
+        from: 'u03',
+        mentions: [Mention(uid: h.main.selfUid, pos: 0, len: 14)]);
+    final second = h.main.receive('g01', '@All nhớ xem lại lịch về quê',
+        from: 'u04',
+        mentions: const [Mention(uid: '-1', pos: 0, len: 4)]);
+    await settle(tester);
+
+    expect(byKey('mentionJump'), findsOneWidget);
+    expect(find.text('Bạn được nhắc'), findsOneWidget);
+    expect(find.descendant(of: byKey('mentionJump'), matching: find.text('2')), findsOneWidget);
+
+    await tapKey(tester, 'mentionJump', scroll: false);
+    await settle(tester);
+    expect(byKey('highlight-${first.id}'), findsOneWidget);
+    expect(byKey('mentionJump'), findsOneWidget);
+    expect(byKey('mentionJumpCount'), findsNothing);
+
+    await tapKey(tester, 'mentionJump', scroll: false);
+    await settle(tester);
+    expect(byKey('highlight-${second.id}'), findsOneWidget);
+    expect(byKey('mentionJump'), findsNothing);
+    await drain(tester);
+  });
+
+  testWidgets('mention jump is offered for an unread mention when opening a group', (tester) async {
+    final h = await pumpZalos(tester, size: expanded);
+    h.main.receive('g01', '@Phạm Minh Thư nhớ xem tin này trước khi về',
+        from: 'u03',
+        mentions: [Mention(uid: h.main.selfUid, pos: 0, len: 14)]);
+    await settle(tester);
+
+    await openThreadByKey(tester, 'g01');
+    expect(byKey('mentionJump'), findsOneWidget);
+    expect(find.text('Bạn được nhắc'), findsOneWidget);
+    await drain(tester);
+  });
+
   for (final entry in {'compact': compact, 'expanded': expanded}.entries) {
     testWidgets('emoji and sticker panel at ${entry.key}', (tester) async {
       final h = await pumpZalos(tester, size: entry.value, app: FakeZalosApp(latency: const Duration(milliseconds: 200)));

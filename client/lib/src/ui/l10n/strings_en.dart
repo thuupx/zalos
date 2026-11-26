@@ -371,6 +371,7 @@ const Map<String, String> stringsEn = {
   'weekdayShort6': 'Sat',
   'weekdayShort7': 'Sun',
   'yesterday': 'Yesterday',
+  'youAreMentioned': 'You are mentioned',
   'you': 'You',
   'yourself': 'yourself',
   'sendErrWindow': 'The user has not interacted in 7 days, so the OA cannot send',

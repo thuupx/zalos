@@ -93,6 +93,9 @@ class ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObser
   String? _peerPresence;
   bool _peerOnline = false;
   List<PinnedTopic> _pins = const [];
+  final List<String> _mentionKeys = [];
+  int _initialUnread = 0;
+  bool _seededMentionHits = false;
   StreamSubscription<BoardUpdateEvent>? _boardSub;
 
   @override
@@ -138,6 +141,8 @@ class ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObser
     _lastKey = initial.isEmpty ? null : messageKeyOf(initial.last);
     _seenKey = _lastKey;
     final unread = _currentThread?.unread ?? 0;
+    _initialUnread = unread;
+    _seedMentionHits(initial);
     if (_ui.scrollOffset == null && unread > 0) {
       _unreadPending = unread;
       _placeUnreadAnchor(initial);
@@ -190,6 +195,29 @@ class ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObser
       _unreadKey = messageKeyOf(msgs[index]);
     }
     _unreadPending = 0;
+  }
+
+  bool _mentionsSelf(Message m) =>
+      !m.isSelf &&
+      !m.recalled &&
+      m.mentions.any((mention) => mention.uid == selfUid || mention.uid == mentionAllUid);
+
+  void _addMentionHit(Message m) {
+    if (!_mentionsSelf(m)) return;
+    final key = messageKeyOf(m);
+    if (!_mentionKeys.contains(key)) _mentionKeys.add(key);
+  }
+
+  /// Seeds mentions inside the unread tail present when the chat opens. Older
+  /// pages loaded later are history, not pending mention jumps.
+  void _seedMentionHits(List<Message> msgs) {
+    if (_seededMentionHits || msgs.isEmpty) return;
+    _seededMentionHits = true;
+    if (!isGroup || _initialUnread <= 0) return;
+    final start = math.max(0, msgs.length - _initialUnread);
+    for (var i = start; i < msgs.length; i++) {
+      _addMentionHit(msgs[i]);
+    }
   }
 
   void _needSenders(List<Message> msgs) {
@@ -257,8 +285,18 @@ class ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObser
     final msgs = _messages.value;
     final newLast = msgs.isEmpty ? null : messageKeyOf(msgs.last);
     final wasEmpty = _lastKey == null;
-    if (wasEmpty) _placeUnreadAnchor(msgs);
+    if (wasEmpty) {
+      _placeUnreadAnchor(msgs);
+      _seedMentionHits(msgs);
+    }
     if (newLast != null && newLast != _lastKey && !wasEmpty) {
+      final previousIndex = _lastKey == null ? -1 : _indexOfKey(msgs, _lastKey!);
+      if (isGroup) {
+        final firstNew = previousIndex < 0 ? msgs.length - 1 : previousIndex + 1;
+        for (var i = firstNew; i < msgs.length; i++) {
+          _addMentionHit(msgs[i]);
+        }
+      }
       final last = msgs.last;
       _typing.clear(_thread.id, last.senderId);
       if (last.isSelf) {
@@ -744,15 +782,14 @@ class ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObser
     return null;
   }
 
-  @override
-  Future<void> jumpToQuote(Quote quote) async {
+  Future<bool> _seekMessage(bool Function(Message m) matches) async {
     for (var page = 0; page < 40; page++) {
       final msgs = _messages.value;
       for (var i = msgs.length - 1; i >= 0; i--) {
-        if (msgs[i].id == quote.msgId || msgs[i].cliId == quote.msgId) {
+        if (matches(msgs[i])) {
           if (_seeking) setState(() => _seeking = false);
           await _reveal(messageKeyOf(msgs[i]));
-          return;
+          return true;
         }
       }
       if (!_hasMore || _disposed) break;
@@ -761,11 +798,26 @@ class ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObser
       try {
         more = await session.loadOlder(_thread.id, _thread.type);
       } catch (_) {}
-      if (_disposed) return;
+      if (_disposed) return false;
       if (!more) setState(() => _hasMore = false);
     }
     if (!_disposed && _seeking) setState(() => _seeking = false);
-    _toast('quoteNotLoaded');
+    return false;
+  }
+
+  Future<void> _jumpToMention() async {
+    if (_mentionKeys.isEmpty) return;
+    final key = _mentionKeys.removeAt(0);
+    setState(() {});
+    final found = await _seekMessage((m) => messageKeyOf(m) == key);
+    if (!found) _toast('quoteNotLoaded');
+  }
+
+  @override
+  Future<void> jumpToQuote(Quote quote) async {
+    if (!await _seekMessage((m) => m.id == quote.msgId || m.cliId == quote.msgId)) {
+      _toast('quoteNotLoaded');
+    }
   }
 
   @override
@@ -1057,6 +1109,37 @@ class ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObser
       fit: StackFit.expand,
       children: [
         ColoredBox(color: z.surface, child: list),
+        if (_mentionKeys.isNotEmpty)
+          Positioned(
+            right: ZSpace.s16,
+            bottom: ZSpace.s16 + 48,
+            child: ZPopIn(
+              alignment: Alignment.bottomRight,
+              child: ZPressable(
+                key: const Key('mentionJump'),
+                onTap: _jumpToMention,
+                semanticLabel: context.tr('youAreMentioned'),
+                tooltip: context.tr('youAreMentioned'),
+                radius: ZRadius.pill,
+                color: z.layer,
+                shadow: z.shadowOverflow,
+                padding: const EdgeInsets.symmetric(horizontal: ZSpace.s12, vertical: ZSpace.s8),
+                minSize: ZSizes.touchTarget,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('@', style: z.text.captionStrong.copyWith(color: z.brandText)),
+                    const SizedBox(width: ZSpace.s4),
+                    Text(context.tr('youAreMentioned'), style: z.text.captionStrong.copyWith(color: z.textPrimary)),
+                    if (_mentionKeys.length > 1) ...[
+                      const SizedBox(width: ZSpace.s8),
+                      ZBadge(key: const Key('mentionJumpCount'), count: _mentionKeys.length, variant: ZBadgeVariant.mention),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
         Positioned(
           right: ZSpace.s16,
           bottom: ZSpace.s16,
