@@ -96,15 +96,18 @@ class WebRtcCallMediaController extends CallMediaController {
     RTCVideoRenderer Function()? rendererFactory,
     Future<void> Function(bool speakerOn)? setSpeakerphoneOn,
   })  : _peerConnectionFactory = peerConnectionFactory ?? createPeerConnection,
-        _getUserMedia = getUserMedia ?? navigator.mediaDevices.getUserMedia,
+        _getUserMediaOverride = getUserMedia,
         _rendererFactory = rendererFactory ?? RTCVideoRenderer.new,
         _setSpeakerphoneOn = setSpeakerphoneOn ?? Helper.setSpeakerphoneOn;
 
   final AccountSession _session;
   final Future<RTCPeerConnection> Function(Map<String, dynamic> configuration) _peerConnectionFactory;
-  final Future<MediaStream> Function(Map<String, dynamic> constraints) _getUserMedia;
+  final Future<MediaStream> Function(Map<String, dynamic> constraints)? _getUserMediaOverride;
   final RTCVideoRenderer Function() _rendererFactory;
   final Future<void> Function(bool speakerOn) _setSpeakerphoneOn;
+
+  Future<MediaStream> _getUserMedia(Map<String, dynamic> constraints) =>
+      (_getUserMediaOverride ?? navigator.mediaDevices.getUserMedia)(constraints);
 
   RTCPeerConnection? _pc;
   MediaStream? _localStream;
