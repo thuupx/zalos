@@ -99,6 +99,10 @@ export function createZalosServer(opts: {
         enqueue(() => channel.sendEvent("loginQr.done", { slot }));
         await chain;
       } catch (e) {
+        const raw = (e as { raw?: unknown }).raw;
+        console.error(
+          `login QR failed: ${String(e)}${raw === undefined ? "" : ` ${JSON.stringify(raw)}`}`,
+        );
         enqueue(() =>
           channel.sendEvent("loginQr.failed", { reason: String(e) }),
         );

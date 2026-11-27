@@ -27,6 +27,11 @@ const ID_PAGE_HEADERS: Record<string, string> = {
   Origin: DEFAULT_ID_ZALO,
   Referer: `${DEFAULT_ID_ZALO}/account?continue=${encodeURIComponent(QR_CONTINUE)}`,
 };
+// waiting-scan / waiting-confirm / checksession run on the chat.zalo.me page.
+const ID_CHAT_PAGE_HEADERS: Record<string, string> = {
+  Origin: DEFAULT_ID_ZALO,
+  Referer: `${DEFAULT_ID_ZALO}/account?continue=${encodeURIComponent(WEB_CONTINUE)}`,
+};
 
 /**
  * Zalo Web QR Login flow (`id.zalo.me/account/authen/qr/*`) compatible with `zca-js` & offline mock.
@@ -138,7 +143,7 @@ export async function loginQRWeb(
         const scanRes = await http.requestRaw(`${DEFAULT_ID_ZALO}/account/authen/qr/waiting-scan`, {
           method: "POST",
           kind: "form",
-          headerOverrides: ID_PAGE_HEADERS,
+          headerOverrides: ID_CHAT_PAGE_HEADERS,
           body: new URLSearchParams({ code, continue: WEB_CONTINUE, v: version }),
         });
         const scanJson = (await scanRes.json()) as {
@@ -199,7 +204,7 @@ export async function loginQRWeb(
         const cfirmRes = await http.requestRaw(`${DEFAULT_ID_ZALO}/account/authen/qr/waiting-confirm`, {
           method: "POST",
           kind: "form",
-          headerOverrides: ID_PAGE_HEADERS,
+          headerOverrides: ID_CHAT_PAGE_HEADERS,
           body: new URLSearchParams({
             code,
             gToken: "",
@@ -243,27 +248,41 @@ export async function loginQRWeb(
         break;
       }
 
-      // Step 6: Check session & follow manual redirects to collect session cookies
-      const checkRes = await http.requestRaw(
-        `${DEFAULT_ID_ZALO}/account/checksession?continue=${encodeURIComponent(`${WEB_CONTINUE}index.html`)}`,
-        { method: "GET", redirect: "manual", headerOverrides: { Referer: ID_PAGE_HEADERS.Referer } },
-      );
-      const nextLoc = checkRes.headers.get("location");
-      if (nextLoc) {
-        await http.requestRaw(new URL(nextLoc, DEFAULT_ID_ZALO).toString(), {
+      // Step 6: Check session and follow the whole redirect chain by hand,
+      // ingesting Set-Cookie at every hop (fetch would drop intermediate ones).
+      const hops: string[] = [];
+      let nextUrl: string | null =
+        `${DEFAULT_ID_ZALO}/account/checksession?continue=${encodeURIComponent(`${WEB_CONTINUE}index.html`)}`;
+      let referer = `${DEFAULT_ID_ZALO}/account?continue=${encodeURIComponent(WEB_CONTINUE)}`;
+      for (let i = 0; nextUrl !== null && i < 10; i++) {
+        const hopRes: Response = await http.requestRaw(nextUrl, {
           method: "GET",
           redirect: "manual",
-          headerOverrides: { Referer: `${DEFAULT_ID_ZALO}/` },
+          kind: "raw",
+          headerOverrides: { Referer: referer },
         });
+        hops.push(`${hopRes.status} ${new URL(nextUrl).host}${new URL(nextUrl).pathname}`);
+        const loc = hopRes.headers.get("location");
+        await hopRes.body?.cancel().catch(() => {});
+        nextUrl = loc ? new URL(loc, nextUrl).toString() : null;
+        referer = `${DEFAULT_ID_ZALO}/`;
       }
 
       // Step 7: Confirm jr/userinfo logged === true
       const jrRes = await http.requestRaw("https://jr.chat.zalo.me/jr/userinfo", {
         method: "GET",
+        headerOverrides: { Referer: WEB_CONTINUE, Origin: "https://chat.zalo.me" },
       });
       const jrJson = (await jrRes.json()) as { data?: { logged?: boolean } };
       if (!jrJson?.data?.logged) {
-        throw new ZaloApiError("Failed to confirm logged-in state via /jr/userinfo", null, jrJson);
+        const cookieNames = ctx.cookie
+          .toJSON()
+          .cookies.map((c: { key?: string; domain?: string }) => `${c.key}@${c.domain}`);
+        throw new ZaloApiError("Failed to confirm logged-in state via /jr/userinfo", null, {
+          jr: jrJson,
+          hops,
+          cookies: cookieNames,
+        });
       }
 
       const creds: ZaloCredentials = {
