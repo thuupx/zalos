@@ -74,6 +74,11 @@ docker compose up -d --build
 docker compose exec zalos zalos pair --role admin
 ```
 
+The image also builds and ships the Flutter web client, served on the same port at `http://<host>:7443/`.
+The web client needs a secure context for SharedArrayBuffer: use `http://127.0.0.1` in local mode or put the service behind HTTPS (for example `tailscale serve --https=443 http://127.0.0.1:7443` or any TLS reverse proxy).
+Plain `http://100.x.y.z` over the tailnet is not cross-origin isolated.
+Expect the first Docker build to be slow because it compiles the Rust wasm bundle and Flutter web client.
+
 To keep Tailscale's control socket isolated from the app container, layer the read-only overlay:
 
 ```bash

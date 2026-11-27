@@ -1,6 +1,4 @@
 .git
-client
-crates
 rust
 docs
 scripts
@@ -14,3 +12,16 @@ server/test/*
 deploy/*
 !deploy/docker
 *.md
+client/build
+client/.dart_tool
+client/rust/target
+client/web/pkg
+client/ios
+client/android
+client/macos
+client/windows
+client/linux
+client/test
+target
+**/target
+**/node_modules

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../domain/models.dart';
 import 'noise_channel.dart';
+import 'ws_uri.dart';
 
 class ChannelKeys {
   const ChannelKeys({
@@ -19,7 +20,7 @@ class ChannelKeys {
   final List<int> devicePrivateKey;
   final List<int> devicePsk;
 
-  Uri uri(String path) => Uri(scheme: 'ws', host: host, port: port, path: path);
+  Uri uri(String path) => tunnelUri(host, port, path);
 }
 
 /// Keeps a control or account channel connected: reconnects with exponential

@@ -8,6 +8,7 @@ import '../rust_lib/api/vault.dart' as vault;
 import 'key_store.dart';
 import 'mapping.dart';
 import 'protocol/noise_channel.dart';
+import 'protocol/ws_uri.dart';
 
 class PairingParams {
   const PairingParams({
@@ -182,7 +183,7 @@ Future<Credentials> runPairing(
   final params = parsePairingUri(uri);
   final keypair = await generateKeypair();
   final box = vault.boxKeypair();
-  final channelUri = Uri(scheme: 'ws', host: params.host, port: params.port, path: '/v1/pair/${params.pairingId}');
+  final channelUri = tunnelUri(params.host, params.port, '/v1/pair/${params.pairingId}');
   NoiseChannel? channel;
   try {
     channel = connector != null

@@ -1,0 +1,56 @@
+name: zalos
+
+# Variant for hosts that already run Tailscale themselves, typically in
+# userspace-networking mode (Synology DSM: no /dev/net/tun, so the sidecar in
+# compose.yaml cannot start). The server binds 0.0.0.0 inside the container
+# and publishes only on host loopback; tailscaled forwards inbound tailnet
+# connections to 127.0.0.1, so the port is reachable over the tailnet but not
+# from the LAN. The web client is served on the same port; put HTTPS in front
+# of it with `tailscale serve --bg --https=443 http://127.0.0.1:7443`.
+#
+#   cd deploy/docker
+#   cp .env.example .env    # set ZALOS_PUBLIC_HOST to this node's tailnet IP
+#   docker compose -f compose.nas.yaml up -d --build
+#
+# No `cpus:` limit: kernels without the CFS scheduler (Synology) reject it.
+
+services:
+  zalos:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    image: zalos:local
+    command: ["zalos", "serve", "--local"]
+    ports:
+      - "127.0.0.1:${ZALOS_PORT:-7443}:7443"
+      - "127.0.0.1:40000-40050:40000-40050/udp"
+    environment:
+      ZALOS_DATA_DIR: /var/lib/zalos
+      ZALOS_UPLOAD_TMP_DIR: /tmp/zalos-uploads
+      ZALOS_CONTAINER: "1"
+      ZALOS_ALLOW_LOCAL: "1"
+      ZALOS_PORT: "7443"
+      ZALOS_PUBLIC_HOST: ${ZALOS_PUBLIC_HOST:?set ZALOS_PUBLIC_HOST to the tailnet IP}
+      ZALOS_PUBLIC_PORT: ${ZALOS_PUBLIC_PORT:-7443}
+      ZALOS_RTC_PORT_MIN: "40000"
+      ZALOS_RTC_PORT_MAX: "40050"
+      TZ: ${TZ:-Asia/Ho_Chi_Minh}
+    volumes:
+      - zalos-data:/var/lib/zalos
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,noexec,nosuid,uid=10001,gid=10001,mode=0700
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    pids_limit: 256
+    labels:
+      # Built locally: nothing for an auto-updater to pull.
+      com.centurylinklabs.watchtower.enable: "false"
+    restart: unless-stopped
+    init: true
+
+volumes:
+  zalos-data:

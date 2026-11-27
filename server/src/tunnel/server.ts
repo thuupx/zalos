@@ -17,6 +17,7 @@ import { fromHex, fingerprint } from "../store/db.ts";
 import { RpcError, decode, encode, type JsonRequest } from "./rpc.ts";
 import { assertDiskHeadroom } from "../media.ts";
 import { auditEvent, logSafeError } from "../security/audit.ts";
+import { createWebStaticHandler } from "../web_static.ts";
 import type { Store } from "../store/db.ts";
 import type { AccountManager } from "../accounts/manager.ts";
 
@@ -374,6 +375,7 @@ export class TunnelServer {
     name?: string;
     version?: string;
     limits?: TunnelLimits;
+    webDir?: string | null;
   }) {
     this.store = opts.store;
     this.name = opts.name ?? "zalos";
@@ -395,8 +397,17 @@ export class TunnelServer {
       });
     });
     this.wss.on("error", () => {});
-    // Plain HTTP requests get a bare 404 instead of hanging.
-    this.http.on("request", (_req, res) => {
+    const webDir =
+      opts.webDir !== undefined
+        ? opts.webDir
+        : (process.env.ZALOS_WEB_DIR ?? null);
+    const webStatic = createWebStaticHandler(webDir);
+    // Without a web build, plain HTTP requests get a bare 404 instead of hanging.
+    this.http.on("request", (req, res) => {
+      if (webStatic !== null) {
+        webStatic(req, res);
+        return;
+      }
       res.writeHead(404);
       res.end();
     });

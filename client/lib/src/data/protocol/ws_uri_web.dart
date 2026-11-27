@@ -1,0 +1,1 @@
+Uri? platformPageBase() => Uri.base;
