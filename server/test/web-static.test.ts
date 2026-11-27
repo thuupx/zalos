@@ -71,7 +71,7 @@ test("GET / serves index.html with cross-origin isolation headers", async () => 
   expect(res.headers["x-content-type-options"]).toBe("nosniff");
   expect(res.headers["referrer-policy"]).toBe("no-referrer");
   expect(res.headers["content-security-policy"]).toBe(
-    "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob:; connect-src 'self' ws: wss:; frame-ancestors 'none'; base-uri 'none'",
+    "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob:; connect-src 'self' ws: wss: https://fonts.gstatic.com; frame-ancestors 'none'; base-uri 'self'",
   );
   expect(res.headers["cache-control"]).toBe("no-cache");
 });

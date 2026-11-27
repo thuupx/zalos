@@ -45,7 +45,7 @@ RUN flutter_rust_bridge_codegen build-web --wasm-pack-rustflags \
    -C link-arg=--export-if-defined=__tls_base \
    -C link-arg=--export-if-defined=__tls_size \
    -C link-arg=--export-if-defined=__tls_align"
-RUN flutter build web --release
+RUN flutter build web --release --no-web-resources-cdn
 
 FROM oven/bun:1.4.4@sha256:1d22548f177f4ff38e0c15baa3c2c46c6c2060ba2d1bc573bb4720b407548f1d
 ENV ZALOS_CONTAINER=1 \
