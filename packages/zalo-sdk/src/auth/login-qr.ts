@@ -21,6 +21,12 @@ export interface LoginQROptions {
 const DEFAULT_ID_ZALO = "https://id.zalo.me";
 const WEB_CONTINUE = "https://chat.zalo.me/";
 const QR_CONTINUE = "https://zalo.me/pc";
+// id.zalo.me rejects the QR endpoints with error -4 ("Truy cập không hợp lệ")
+// unless the request looks like it comes from its own login page.
+const ID_PAGE_HEADERS: Record<string, string> = {
+  Origin: DEFAULT_ID_ZALO,
+  Referer: `${DEFAULT_ID_ZALO}/account?continue=${encodeURIComponent(QR_CONTINUE)}`,
+};
 
 /**
  * Zalo Web QR Login flow (`id.zalo.me/account/authen/qr/*`) compatible with `zca-js` & offline mock.
@@ -54,11 +60,13 @@ export async function loginQRWeb(
     await http.requestRaw(`${DEFAULT_ID_ZALO}/account/logininfo`, {
       method: "POST",
       kind: "form",
+      headerOverrides: ID_PAGE_HEADERS,
       body: new URLSearchParams({ continue: QR_CONTINUE, v: version }),
     });
     await http.requestRaw(`${DEFAULT_ID_ZALO}/account/verify-client`, {
       method: "POST",
       kind: "form",
+      headerOverrides: ID_PAGE_HEADERS,
       body: new URLSearchParams({ type: "device", continue: QR_CONTINUE, v: version }),
     });
 
@@ -66,6 +74,7 @@ export async function loginQRWeb(
     const genRes = await http.requestRaw(`${DEFAULT_ID_ZALO}/account/authen/qr/generate`, {
       method: "POST",
       kind: "form",
+      headerOverrides: ID_PAGE_HEADERS,
       body: new URLSearchParams({ continue: QR_CONTINUE, v: version }),
     });
     const genJson = (await genRes.json()) as {
@@ -129,6 +138,7 @@ export async function loginQRWeb(
         const scanRes = await http.requestRaw(`${DEFAULT_ID_ZALO}/account/authen/qr/waiting-scan`, {
           method: "POST",
           kind: "form",
+          headerOverrides: ID_PAGE_HEADERS,
           body: new URLSearchParams({ code, continue: WEB_CONTINUE, v: version }),
         });
         const scanJson = (await scanRes.json()) as {
@@ -189,6 +199,7 @@ export async function loginQRWeb(
         const cfirmRes = await http.requestRaw(`${DEFAULT_ID_ZALO}/account/authen/qr/waiting-confirm`, {
           method: "POST",
           kind: "form",
+          headerOverrides: ID_PAGE_HEADERS,
           body: new URLSearchParams({
             code,
             gToken: "",
@@ -235,7 +246,7 @@ export async function loginQRWeb(
       // Step 6: Check session & follow manual redirects to collect session cookies
       const checkRes = await http.requestRaw(
         `${DEFAULT_ID_ZALO}/account/checksession?continue=${encodeURIComponent(`${WEB_CONTINUE}index.html`)}`,
-        { method: "GET", redirect: "manual" },
+        { method: "GET", redirect: "manual", headerOverrides: { Referer: ID_PAGE_HEADERS.Referer } },
       );
       const nextLoc = checkRes.headers.get("location");
       if (nextLoc) {
