@@ -59,7 +59,7 @@ For a bug fix, add a test that fails before the fix and passes after it.
 
 ## Rules that block a merge
 
-- Zalo safety: no extra Zalo calls per user action, keep the per-account send
+- Real Zalo traffic: no extra Zalo calls per user action, keep the per-account send
   queue, mimic the official client's requests exactly, develop on the fake
   gateway or mock, touch real Zalo only for final verification.
 - Security: no secrets staged (`.env`, `server/data*/`, cookies, pairing URIs,

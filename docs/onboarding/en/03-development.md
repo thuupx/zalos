@@ -10,9 +10,9 @@
 | **Mock** | `ZALOS_ZALO_MOCK_URL=http://127.0.0.1:7355 bun run src/cli.ts serve --dev` | offline WireMock Zalo (`mock/`) | exercising the real SDK/gateway code without Zalo |
 | **Real** | a deployed server (see [Deployment](05-deployment.md)) | real Zalo | final verification only |
 
-Default to **fake**. Use real Zalo as little as possible: every real login and
-every extra request is a risk for that Zalo account (see
-[Conventions](06-conventions.md#64-zalo-account-safety)).
+Default to **fake**. Keep real Zalo for final checks: the fake gateway is faster,
+needs no phone, and keeps test noise out of a real account (see
+[Conventions](06-conventions.md#64-working-with-real-zalo-accounts)).
 
 `--dev` binds loopback only (`127.0.0.1`, `::1`, `localhost`) and refuses to run
 under systemd. `--fake` is refused without `--dev`.

@@ -16,7 +16,7 @@ the bilingual guide; read the relevant page instead of answering from memory.
 | Dev loop and recipes | `docs/onboarding/en/03-development.md` | `docs/onboarding/vi/03-development.md` |
 | Tests and CI | `docs/onboarding/en/04-testing-and-ci.md` | `docs/onboarding/vi/04-testing-and-ci.md` |
 | Deployment and env vars | `docs/onboarding/en/05-deployment.md` | `docs/onboarding/vi/05-deployment.md` |
-| Conventions and account safety | `docs/onboarding/en/06-conventions.md` | `docs/onboarding/vi/06-conventions.md` |
+| Conventions and working with real Zalo | `docs/onboarding/en/06-conventions.md` | `docs/onboarding/vi/06-conventions.md` |
 | Troubleshooting | `docs/onboarding/en/07-troubleshooting.md` | `docs/onboarding/vi/07-troubleshooting.md` |
 
 Deep references: `docs/DESIGN.md` (protocol, RPC list, vault),
@@ -50,8 +50,8 @@ Deep references: `docs/DESIGN.md` (protocol, RPC list, vault),
 
 ## Guardrails
 
-- Real Zalo accounts can be restricted. Do not run QR logins, `accounts add`, or
-  anything that calls Zalo unless the user explicitly asks, and then do it once.
+- Real Zalo accounts belong to real people. Do not run QR logins, `accounts add`,
+  or anything that calls Zalo unless the user explicitly asks, and then do it once.
   Diagnose failures from logs before asking for another scan.
 - Pairing URIs, login QRs, `.env`, `server/data*/`, cookies and `.research/` are
   secrets. Never paste them into commits, issues or shared logs.

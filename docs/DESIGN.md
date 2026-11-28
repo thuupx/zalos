@@ -30,8 +30,9 @@ sides call the same `zalos-noise` crate.
   server reconnects with backoff and reports account status.
 - Zalo Web has no "recent conversations" API and limited history, so the server
   is the system of record: it persists every message and event it sees in SQLite.
-- Unofficial API: accounts can be locked by Zalo. The server keeps request rates
-  human-like and never fans a client action out into multiple Zalo calls.
+- To Zalo, each account is a regular Zalo Web session, the same as chat.zalo.me
+  in a browser. The server keeps request rates human-like and never fans a
+  client action out into multiple Zalo calls.
 - Calls use Zalo's proprietary ZRTC signalling, not standard WebRTC. The server
   speaks ZRTC to Zalo through `@zalos/zalo-sdk` and bridges media to clients over
   WebRTC (`server/src/accounts/call_*`, `zrtc_*`). See

@@ -32,7 +32,7 @@ device. Clients hold the vault keys that encrypt message bodies at rest.
 | 3 | [Development workflow](03-development.md) | Running server + client locally, fake/mock Zalo, recipes for common changes |
 | 4 | [Testing and CI](04-testing-and-ci.md) | Test suites, what CI enforces, how to verify a change |
 | 5 | [Deployment](05-deployment.md) | Docker + Tailscale, local mode, NAS, HTTPS for the web client, upgrades |
-| 6 | [Conventions](06-conventions.md) | Code style, commits, security rules, Zalo account safety |
+| 6 | [Conventions](06-conventions.md) | Code style, commits, security rules, working with real Zalo accounts |
 | 7 | [Troubleshooting](07-troubleshooting.md) | Known failures and how they were fixed |
 
 Deep references (read when you touch the area):

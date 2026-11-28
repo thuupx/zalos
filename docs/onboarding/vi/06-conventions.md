@@ -45,10 +45,10 @@
 - Toàn bộ crypto nằm ở đây. Xoá sạch bí mật trong bộ nhớ (`zeroize`), không
   `unwrap()` trên dữ liệu đầu vào, có test cho mọi API.
 
-## 6.4 An toàn tài khoản Zalo
+## 6.4 Làm việc với tài khoản Zalo thật
 
-zalos dùng giao thức web không chính thức của Zalo. Zalo có thể hạn chế hoặc khoá
-những tài khoản hoạt động giống bot. Quy tắc:
+Với Zalo, zalos là một phiên Zalo Web bình thường, giống hệt chat.zalo.me trên
+trình duyệt. Hãy giữ nó đúng như vậy. Quy tắc:
 
 - **Phát triển trên fake gateway hoặc mock.** Chỉ động vào Zalo thật để xác minh
   lần cuối, bằng tài khoản của chính bạn, và càng ít lần càng tốt.
@@ -58,8 +58,8 @@ những tài khoản hoạt động giống bot. Quy tắc:
 - **Bắt chước chính xác web client chính thức** (endpoint, header như
   `Origin`/`Referer`, tham số). Nếu Zalo từ chối một request, hãy tìm xem client
   thật gửi gì; đừng thử bừa các biến thể lên production.
-- **Đăng nhập QR** là thao tác bình thường của người dùng, nhưng thất bại lặp lại
-  nhiều lần sẽ gây chú ý: hãy chẩn đoán qua log (`login QR failed: ...`) trước khi
+- **Đăng nhập QR** là thao tác bình thường của người dùng, nhưng đừng quét đi quét
+  lại khi đang debug: hãy chẩn đoán qua log (`login QR failed: ...`) trước khi
   nhờ ai đó quét lại.
 - Mở Zalo Web hoặc Zalo PC ở chế độ web ở nơi khác sẽ đẩy phiên của server ra;
   server sẽ lùi lại (`ZALOS_ZCA_DISPLACED_MS`) thay vì giành lại phiên.

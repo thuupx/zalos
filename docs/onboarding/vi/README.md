@@ -34,7 +34,7 @@ nằm ở phía client.
 | 3 | [Quy trình phát triển](03-development.md) | Chạy server và client ở máy, Zalo giả lập (fake/mock), công thức cho các thay đổi thường gặp |
 | 4 | [Kiểm thử và CI](04-testing-and-ci.md) | Các bộ test, CI kiểm tra gì, cách xác minh một thay đổi |
 | 5 | [Triển khai](05-deployment.md) | Docker + Tailscale, chế độ local, NAS, HTTPS cho web client, nâng cấp |
-| 6 | [Quy ước](06-conventions.md) | Phong cách code, commit, quy tắc bảo mật, an toàn tài khoản Zalo |
+| 6 | [Quy ước](06-conventions.md) | Phong cách code, commit, quy tắc bảo mật, làm việc với tài khoản Zalo thật |
 | 7 | [Xử lý sự cố](07-troubleshooting.md) | Các lỗi đã gặp và cách khắc phục |
 
 Tài liệu chuyên sâu (đọc khi động vào phần đó, hiện chỉ có tiếng Anh):

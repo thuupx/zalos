@@ -45,10 +45,10 @@
 - All crypto lives here. Zeroize secrets (`zeroize`), no `unwrap()` on input
   data, tests for every API.
 
-## 6.4 Zalo account safety
+## 6.4 Working with real Zalo accounts
 
-zalos uses Zalo's unofficial web protocol. Zalo can restrict or lock accounts
-that behave like bots. Rules:
+To Zalo, zalos is a regular Zalo Web session, the same as chat.zalo.me in a
+browser. Keep it looking that way. Rules:
 
 - **Develop against the fake gateway or the mock.** Touch real Zalo only for
   final verification, with your own account, and as few times as possible.
@@ -58,7 +58,7 @@ that behave like bots. Rules:
 - **Mimic the official web client exactly** (endpoints, headers such as
   `Origin`/`Referer`, parameters). If Zalo rejects a request, find out what the
   real client sends; do not brute-force variations against production.
-- **QR login** is a normal user action, but repeated failed logins are noisy:
+- **QR login** is a normal user action, but do not loop on it while debugging:
   diagnose from logs (`login QR failed: ...`) before asking someone to scan again.
 - Opening Zalo Web/PC web mode elsewhere displaces the server session; the
   server backs off (`ZALOS_ZCA_DISPLACED_MS`) instead of fighting for it.

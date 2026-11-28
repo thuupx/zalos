@@ -10,9 +10,9 @@
 | **Mock** | `ZALOS_ZALO_MOCK_URL=http://127.0.0.1:7355 bun run src/cli.ts serve --dev` | Zalo giả lập offline bằng WireMock (`mock/`) | chạy code SDK/gateway thật mà không cần Zalo |
 | **Thật** | một server đã triển khai (xem [Triển khai](05-deployment.md)) | Zalo thật | chỉ để xác minh lần cuối |
 
-Mặc định hãy dùng **fake**. Dùng Zalo thật càng ít càng tốt: mỗi lần đăng nhập thật
-và mỗi request thừa đều là rủi ro cho tài khoản Zalo đó (xem
-[Quy ước](06-conventions.md#64-an-toàn-tài-khoản-zalo)).
+Mặc định hãy dùng **fake**. Để Zalo thật cho lần kiểm tra cuối: fake gateway nhanh
+hơn, không cần điện thoại, và không làm rối tài khoản thật bằng dữ liệu test (xem
+[Quy ước](06-conventions.md#64-làm-việc-với-tài-khoản-zalo-thật)).
 
 `--dev` chỉ bind vào loopback (`127.0.0.1`, `::1`, `localhost`) và từ chối chạy
 dưới systemd. `--fake` bị từ chối nếu không có `--dev`.
