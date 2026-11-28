@@ -1,7 +1,9 @@
 "use client"
 
 import {
+  Archive,
   Contact,
+  HardDrive,
   ListChecks,
   MessageSquareText,
   MonitorSmartphone,
@@ -21,10 +23,12 @@ import { useLocale } from "@/lib/i18n"
 const featureIcons = [
   Users,
   MonitorSmartphone,
+  HardDrive,
   MessageSquareText,
   ListChecks,
   Phone,
   Contact,
+  Archive,
 ]
 
 export function Features() {
@@ -52,7 +56,7 @@ export function Features() {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {t.features.items.map((item, index) => {
             const Icon = featureIcons[index] ?? MessageSquareText
             return (

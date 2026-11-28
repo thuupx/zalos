@@ -95,6 +95,12 @@ const vi = {
         badge: null,
       },
       {
+        title: "Nhẹ máy",
+        description:
+          "Lịch sử chat và media nằm trên server, máy chỉ tải khi cần xem. Khỏi lo Zalo ngốn bộ nhớ điện thoại nữa.",
+        badge: null,
+      },
+      {
         title: "Nhắn tin, gửi file",
         description:
           "Chat 1:1 và nhóm, reply, tag tên, thu hồi, tin nhắn tự huỷ, gửi file tới 100 MiB, tin nhắn thoại, sticker, tìm lại tin cũ.",
@@ -116,6 +122,12 @@ const vi = {
         title: "Danh bạ và QR",
         description:
           "Tìm bạn qua số điện thoại, kết bạn, chặn, quét QR y như app Zalo.",
+        badge: null,
+      },
+      {
+        title: "Gọn gàng hội thoại",
+        description:
+          "Ghim, tắt thông báo, gắn nhãn màu, lưu trữ, ẩn hội thoại bằng mã PIN, hẹn giờ tự xoá tin.",
         badge: null,
       },
     ],
@@ -244,7 +256,7 @@ const vi = {
       {
         question: "Tài khoản có bị khoá không?",
         answer:
-          "Có rủi ro, vì zalos dùng giao thức không chính thức. zalos giữ nhịp request giống người dùng thật, nhưng không dám hứa an toàn 100%.",
+          "Không. Với Zalo, zalos chỉ là một phiên Zalo Web bình thường, giống hệt bạn mở chat.zalo.me trên trình duyệt.",
       },
       {
         question: "Chạy được trên những nền tảng nào?",
@@ -360,6 +372,12 @@ const en: SiteCopy = {
         badge: null,
       },
       {
+        title: "Light on storage",
+        description:
+          "Chat history and media live on the server, and devices only download what you open. No more Zalo eating up your phone's storage.",
+        badge: null,
+      },
+      {
         title: "Chat and files",
         description:
           "1:1 and group chat, replies, mentions, recall, self-destructing messages, files up to 100 MiB, voice messages, stickers, message search.",
@@ -381,6 +399,12 @@ const en: SiteCopy = {
         title: "Contacts and QR",
         description:
           "Find people by phone number, add friends, block, and scan QR codes like in the Zalo app.",
+        badge: null,
+      },
+      {
+        title: "Tidy conversations",
+        description:
+          "Pin, mute, color labels, archive, hide conversations behind a PIN, and auto-delete timers.",
         badge: null,
       },
     ],
@@ -509,7 +533,7 @@ const en: SiteCopy = {
       {
         question: "Can my account get locked?",
         answer:
-          "There is some risk, since zalos uses an unofficial protocol. zalos paces its requests like a real user, but nobody can promise it is 100% safe.",
+          "No. To Zalo, zalos is just a regular Zalo Web session, the same as opening chat.zalo.me in your browser.",
       },
       {
         question: "Which platforms are supported?",
