@@ -1,8 +1,8 @@
-// ZALOS_ZALO_MOCK_URL: point the real zca-js gateway at the offline Zalo
+// ZALOS_ZALO_MOCK_URL: point the real SDK gateway at the offline Zalo
 // mock (mock/, see mock/README.md). Only accepted together with --dev or
 // --local; cli.ts enforces that.
 //
-// zca-js reaches Zalo over plain fetch (ctx.options.polyfill) to hosts
+// The SDK reaches Zalo over plain fetch (ctx.options.polyfill) to hosts
 // under these zones; the listener ws url comes from the login info, so
 // the mock controls it there directly.
 const ZALO_HOST_RE = /\.(zalo\.me|zaloapp\.com|zadn\.vn|zdn\.vn)$/;

@@ -1,4 +1,4 @@
-// End-to-end: real zca-js gateway <-> offline Zalo mock (mock/).
+// End-to-end: real SDK gateway <-> offline Zalo mock (mock/).
 // Run with `bun run test:e2e` (ZALOS_E2E=1). Plain `bun test` skips it.
 import {
   test,

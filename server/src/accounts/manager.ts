@@ -1386,10 +1386,10 @@ export class AccountManager {
     this.store.checkpoint();
   }
 
-  // zca-js only sends msgInfo.reference (and the forwarded marker) when the
+  // The SDK only sends msgInfo.reference (and the forwarded marker) when the
   // payload carries one; its reference is {id, ts, logSrcType, fwLvl}. The
   // id/ts come from the stored raw message. logSrcType and fwLvl are the web
-  // client's forward defaults (zca-js issue #196) when the raw payload does
+  // client's forward defaults when the raw payload does
   // not carry them.
   private forwardReference(
     slot: string,
@@ -2142,7 +2142,7 @@ export class AccountManager {
     this.gateways.clear();
   }
 
-  // zca-js never pings the HTTP keepalive endpoint itself; a session left
+  // The SDK never pings the HTTP keepalive endpoint itself; a session left
   // idle long enough is treated as expired. Every 5 minutes while online.
   private startKeepAlive(slot: string) {
     this.keepAliveTimer ??= setInterval(() => {
@@ -2203,7 +2203,7 @@ export class AccountManager {
         cliId,
         opts,
       );
-      // zca-js routes a `.gif` attachment to the gif upload whatever the
+      // The SDK routes a `.gif` attachment to the gif upload whatever the
       // requested kind was; mirror that in the local record.
       const recordKind =
         kind === "image" && /\.gif$/i.test(file.name) ? "gif" : kind;

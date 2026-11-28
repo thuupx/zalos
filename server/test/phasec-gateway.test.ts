@@ -3,7 +3,7 @@ import { ThreadType } from "@zalos/zalo-sdk";
 import { ZcaGateway } from "../src/gateway/zca.ts";
 import { OaGateway } from "../src/gateway/oa.ts";
 
-// A zca-js API stub with the exact method names and response shapes the
+// An SDK API stub with the exact method names and response shapes the
 // gateway reads. No network: ZcaGateway.start only binds the stub listener.
 function stubApi() {
   const sentReports: unknown[] = [];

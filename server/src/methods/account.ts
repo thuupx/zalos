@@ -44,7 +44,7 @@ function optionalString(v: unknown): string | undefined {
   return typeof v === "string" && v.trim() !== "" ? v.trim() : undefined;
 }
 
-// Users type phone numbers with spaces and dashes; zca-js only strips the
+// Users type phone numbers with spaces and dashes; the SDK only strips the
 // leading 0 for Vietnamese numbers.
 function phoneNumber(v: unknown): string {
   const cleaned = requiredString(v, "phone").replace(/[\s-]/g, "");
@@ -173,7 +173,7 @@ const MAX_STYLE_RUNS = 200;
 const MAX_QUICK_MESSAGE_KEYWORD = 50;
 const MAX_QUICK_MESSAGE_TITLE = 2000;
 
-// Styled text runs. The payload is passed to zca-js as-is after shape
+// Styled text runs. The payload is passed to the SDK as-is after shape
 // validation; an unknown style code is a client bug, not a silent drop.
 function styleRuns(v: unknown): StyleRun[] | undefined {
   if (v === undefined) return undefined;
@@ -473,7 +473,7 @@ export function registerAccountMethods(
           throw new RpcError("bad_request", "invalid kind");
         }
         const urgency = urgencyOf(params.urgency);
-        // zca-js sendVoice/sendVideo have no urgency field; refuse it
+        // SDK sendVoice/sendVideo have no urgency field; refuse it
         // rather than silently sending a normal-priority message.
         if (
           urgency !== undefined &&

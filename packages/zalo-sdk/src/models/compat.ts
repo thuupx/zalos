@@ -9,13 +9,13 @@ import type {
   ZaloReaction,
 } from "./events.ts";
 
-// Event / listener aliases matching zca-js exports
+// Event / listener aliases used by the server gateway
 export type Message = ZaloMessage;
 export type Reaction = ZaloReaction;
 export type Typing = TypingEvent;
 export type Undo = UndoEvent;
 
-// SendMessage & report param aliases matching zca-js exports
+// SendMessage & report param aliases used by the server gateway
 export interface SendMessageQuote {
   content: TMessage["content"];
   msgType: TMessage["msgType"];

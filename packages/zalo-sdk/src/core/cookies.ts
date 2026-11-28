@@ -88,7 +88,7 @@ export class ZaloCookieJar {
         // id.zalo.me sets the session cookies (zpsid, zpw_sek, ...) for other
         // Zalo hosts such as chat.zalo.me. A strict RFC 6265 jar rejects
         // those as a domain mismatch, which left QR logins without a session.
-        // Like zca-js, store a Zalo-domain cookie against its own Domain.
+        // Store a Zalo-domain cookie against its own Domain.
         const parsed = Cookie.parse(raw);
         const domain = parsed?.domain?.replace(/^\./, "").toLowerCase();
         if (parsed && domain && isZaloDomain(domain) && !hostMatches(url, domain)) {

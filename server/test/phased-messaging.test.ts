@@ -162,7 +162,7 @@ test("gif uploads keep the gif kind and a real filename", async () => {
   );
   expect(call).toBeDefined();
 
-  // An image kind with a `.gif` name is routed by zca-js to the gif upload
+  // An image kind with a `.gif` name is routed by the SDK to the gif upload
   // too; the local record mirrors that.
   const stream2 = a.sendBlob(bytes);
   const byName = (await a.request("messages.sendMedia", {

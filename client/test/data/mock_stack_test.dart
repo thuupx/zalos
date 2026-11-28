@@ -1,4 +1,4 @@
-// Data-layer tests against the WireMock Zalo mock stack: the real zca-js
+// Data-layer tests against the WireMock Zalo mock stack: the real SDK
 // adapter path end to end. Needs Docker (mock/compose.yaml) and `bun` on
 // PATH; skips cleanly without either.
 //

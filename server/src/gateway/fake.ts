@@ -378,7 +378,7 @@ export class FakeGateway implements ZaloGateway {
       method: "sendMedia",
       args: [threadId, threadType, kind, file, caption, data, cliId, opts],
     });
-    // zca-js routes a `.gif` attachment to the gif upload; mirror that so
+    // The SDK routes a `.gif` attachment to the gif upload; mirror that so
     // the selfListen echo does not downgrade the local gif kind.
     const recordKind =
       kind === "gif" || (kind === "image" && /\.gif$/i.test(file.name))

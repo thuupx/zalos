@@ -7,7 +7,7 @@ import { ZcaGateway } from "../src/gateway/zca.ts";
 import { OaGateway } from "../src/gateway/oa.ts";
 import type { Label } from "../src/gateway/types.ts";
 
-// A zca-js API stub with the exact method names and response shapes the
+// An SDK API stub with the exact method names and response shapes the
 // Phase D gateway code reads. No network: start() only binds the stub
 // listener.
 function stubApi() {
@@ -41,7 +41,7 @@ function stubApi() {
     linkSends,
     bankSends,
     zpwServiceMap: { quick_message: ["https://quick-message"] },
-    // zca-js custom() hands the caller the session-bound request utils;
+    // The SDK's custom() hands the caller the session-bound request utils;
     // the stub records the encrypted payload and answers like Zalo.
     custom: (
       name: string,
@@ -232,7 +232,7 @@ function stubApi() {
     getPinConversations: async () => ({
       conversations: ["u777000222"],
     }),
-    // Real zca-js shape: user and group mutes arrive in separate lists.
+    // Real SDK shape: user and group mutes arrive in separate lists.
     getMute: async () => ({
       chatEntries: [
         {
@@ -679,7 +679,7 @@ test("OA keeps the Phase D surface unsupported", async () => {
   }
 });
 
-test("sendText maps styles, urgency and ttl to zca-js", async () => {
+test("sendText maps styles, urgency and ttl to the SDK", async () => {
   const { api, gw } = await startedGateway();
   await gw.sendText("u1", "user", "hello", {
     styles: [
@@ -731,7 +731,7 @@ test("an explicit file send with a .gif name is not uploaded as a gif", async ()
 
   const sends = api.sentMedia as { payload: { attachments: string[] } }[];
   expect(sends).toHaveLength(1);
-  // zca-js would route a `.gif` name to the gif upload; staging under a
+  // The SDK would route a `.gif` name to the gif upload; staging under a
   // neutral extension keeps the file pipeline.
   expect(sends[0].payload.attachments[0].endsWith(".gif")).toBe(false);
   expect(sends[0].payload.attachments[0].endsWith("report.bin")).toBe(true);
@@ -919,7 +919,7 @@ test("quick message replacement upload goes through the public payload", async (
   await gw.stop();
 });
 
-test("sendMedia passes ttl and urgency to zca-js where supported", async () => {
+test("sendMedia passes ttl and urgency to the SDK where supported", async () => {
   const { api, gw } = await startedGateway();
   const dir = mkdtempSync(join(tmpdir(), "zalos-send-"));
   const image = join(dir, "photo.jpg");

@@ -265,7 +265,7 @@ export class ZaloListener extends EventEmitter {
       try {
         decoded = decodeWsPayload(envelope, this.cipherKey);
       } catch {
-        // Handshake succeeded with cipherKey; ignore non-JSON opaque AUTHEN data (matches zca-js).
+        // Handshake succeeded with cipherKey; ignore non-JSON opaque AUTHEN data (as the official web client does).
       }
       this.authenticated = true;
       this.retryCount = 0;

@@ -130,8 +130,7 @@ and [SECURITY_ARCHITECT.md](../../SECURITY_ARCHITECT.md).
 
 ## 2.7 The Zalo SDK (`packages/zalo-sdk`)
 
-Our own TypeScript implementation of the Zalo Web/PC protocol (it replaced
-`zca-js`):
+Our own TypeScript implementation of the Zalo Web/PC protocol:
 
 - `core/http.ts`: header profiles, cookie handling, AES envelopes, domain failover.
 - `core/cookies.ts`: `ZaloCookieJar` (tough-cookie). Zalo sets session cookies
@@ -144,7 +143,7 @@ Our own TypeScript implementation of the Zalo Web/PC protocol (it replaced
 
 Treat this package as protocol code: every change must be checked against real
 behavior and must not increase request volume. See
-[ZALO_SDK_MIGRATION_AND_CALLS.md](../../ZALO_SDK_MIGRATION_AND_CALLS.md).
+[ZALO_SDK_AND_CALLS.md](../../ZALO_SDK_AND_CALLS.md).
 
 ## 2.8 Client internals
 

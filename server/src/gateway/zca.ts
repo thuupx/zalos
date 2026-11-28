@@ -262,7 +262,7 @@ function stickerAnimOf(d: Record<string, unknown>): {
   return {};
 }
 
-// zca-js reduces each getFriendOnlines entry to its opaque status string.
+// The SDK reduces each getFriendOnlines entry to its opaque status string.
 // Only these values mean "online"; timestamps, "hidden"/"offline" and
 // anything unrecognized must not light an online dot.
 const ONLINE_PRESENCE = new Set(["online", "active"]);
@@ -287,7 +287,7 @@ function zcaStyles(styles: StyleRun[]): {
   }));
 }
 
-// getArchivedChatList items are untyped in zca-js. The official PC client
+// getArchivedChatList items are untyped in the SDK. The official PC client
 // reads {id, type} with type 1 = group; older payloads use g/u prefixes
 // or threadId/isGroup. Unknown entries are skipped, never guessed.
 function archivedRefOf(v: unknown): ConversationRef[] {
@@ -374,7 +374,7 @@ function labelDataOf(l: Label): LabelData {
 }
 
 // getLabels/updateLabels hand back labelData as a JSON string on the wire;
-// zca-js parses it, but accept both so a shape change degrades to a clear
+// The SDK parses it, but accept both so a shape change degrades to a clear
 // error instead of an empty label set.
 function labelsStateOf(res: {
   labelData?: unknown;
@@ -465,7 +465,7 @@ function shapeSummary(v: unknown): string {
   return typeof v;
 }
 
-// Companions are untyped in zca-js. Only meaningful known fields are
+// Companions are untyped in the SDK. Only meaningful known fields are
 // exposed; anything else becomes a value-free shape summary.
 function companionOf(v: unknown): LinkedDeviceCompanion | null {
   if (v === undefined || v === null) return null;
@@ -560,7 +560,7 @@ function linkedDevicesOf(res: unknown): LinkedDevices {
   };
 }
 
-// Zalo numeric errors -> RpcError codes. Local zca-js validation errors
+// Zalo numeric errors -> RpcError codes. Local SDK validation errors
 // (missing params, encryption) carry no code.
 function zaloRpcError(e: unknown, what: string): RpcError {
   if (e instanceof RpcError) return e;
@@ -570,7 +570,7 @@ function zaloRpcError(e: unknown, what: string): RpcError {
   // Label version conflict: the caller retries with a fresh version.
   if (code === 1005) return new RpcError("conflict", `${what}: ${message}`);
   if (e instanceof ZaloApiError && (code === null || code === undefined)) {
-    // zca-js local validation/encryption failure, before any request.
+    // SDK local validation/encryption failure, before any request.
     return new RpcError("bad_request", message);
   }
   return new RpcError(
@@ -580,7 +580,7 @@ function zaloRpcError(e: unknown, what: string): RpcError {
 }
 
 // UserBasic as returned by findUser/findUserByUsername. Field names follow
-// zca-js models/User.d.ts (snake_case); a wrapped {data} shape is accepted
+// SDK user model (snake_case); a wrapped {data} shape is accepted
 // because findByUsername's exact response wrapping is unverified.
 function userProfileOf(v: unknown): UserProfile | null {
   if (v === null || typeof v !== "object") return null;
@@ -640,7 +640,7 @@ function contactCardOf(c: {
 }
 
 // ---- structured inbound payloads ----
-// zca-js does not enumerate most of these msgTypes, so each extractor is
+// The SDK does not enumerate most of these msgTypes, so each extractor is
 // data-driven: it only returns a payload when the identifying fields are
 // present. Anything unrecognized stays kind "other" and the raw object is
 // still sealed with the record, so no data is dropped.
@@ -912,7 +912,7 @@ function todoOf(
   };
 }
 
-// parseLink's data is untyped in zca-js; keep only fields the composer
+// parseLink's data is untyped in the SDK; keep only fields the composer
 // renders and preserve the thumbnail url for the media proxy.
 function linkPreviewOf(res: unknown): LinkPreview {
   const r = objectOf(res) ?? {};
@@ -1005,7 +1005,7 @@ function quickMessageMediaOf(v: unknown): QuickMessageMedia | null {
   };
 }
 
-// zca-js's QuickMessage nests the text under message.title and media
+// The SDK's QuickMessage nests the text under message.title and media
 // under media.items; flatten it into the composer's flat shape.
 function quickMessageOf(v: unknown): QuickMessage | null {
   const o = objectOf(v);
@@ -1259,7 +1259,7 @@ export function normalizeZcaMessage(m: ZcaEventMessage): Message {
     }
   }
 
-  // Data-driven kinds: zca-js does not enumerate these msgTypes, so the
+  // Data-driven kinds: the SDK does not enumerate these msgTypes, so the
   // payload fields decide. The raw object is preserved either way.
   const bank = bankCardOf(raw, params);
   if (bank !== null) {
@@ -1923,7 +1923,7 @@ export class ZcaGateway implements ZaloGateway {
     });
   }
 
-  // zca-js applies Set-Cookie headers to its jar on every request. Hand a
+  // The SDK applies Set-Cookie headers to its jar on every request. Hand a
   // changed jar to the manager in the same serialized form QR login
   // produces (`CookieJar.toJSON().cookies`), which `login` accepts back.
   private checkCookies(api: API) {
@@ -2013,7 +2013,7 @@ export class ZcaGateway implements ZaloGateway {
   ) {
     const api = this.requireApi();
     return this.call(async () => {
-      // zca-js picks the dedicated gif upload from the staged file's
+      // The SDK picks the dedicated gif upload from the staged file's
       // extension, so a gif send must keep a real `.gif` name. A caller
       // that asked for a plain file must stay a file, so its final `.gif`
       // extension is swapped for `.bin`; the caller's original name is
@@ -2081,7 +2081,7 @@ export class ZcaGateway implements ZaloGateway {
           return { msgId: String(res.msgId ?? ""), cliId: cliId ?? "" };
         }
         // image, gif and file go through sendMessage attachments by path;
-        // zca-js routes a `.gif` name to the dedicated gif upload.
+        // The SDK routes a `.gif` name to the dedicated gif upload.
         const res = await api.sendMessage(
           {
             msg: caption ?? "",
@@ -2115,7 +2115,7 @@ export class ZcaGateway implements ZaloGateway {
   }
 
   // sendCard fetches the target's QR via getQR, then forwards a msgType 6
-  // payload through the file host (zca-js sendCard.js). Inbound cards
+  // payload through the file host. Inbound cards
   // arrive as chat.recommended and are normalized to kind "card".
   sendCard(
     threadId: string,
@@ -2158,7 +2158,7 @@ export class ZcaGateway implements ZaloGateway {
     });
   }
 
-  // zca-js parses the link again inside sendLink and only returns a msgId;
+  // The SDK parses the link again inside sendLink and only returns a msgId;
   // the manager builds the optimistic bubble from parseLink.
   sendLink(
     threadId: string,
@@ -2314,7 +2314,7 @@ export class ZcaGateway implements ZaloGateway {
             id,
           );
         } else {
-          // A text-only edit must not clear a stored photo, and zca-js
+          // A text-only edit must not clear a stored photo, and the SDK
           // cannot carry the existing photoId through its payload. Look up
           // the item and replay its media through the raw update instead.
           const existing = quickMessagesOf(
@@ -2381,7 +2381,7 @@ export class ZcaGateway implements ZaloGateway {
     const api = this.requireApi();
     return this.call(async () => {
       try {
-        // zca-js only sends content for reason Other; the RPC enforces
+        // The SDK only sends content for reason Other; the RPC enforces
         // that content is present in exactly that case.
         const options: SendReportOptions = opts.reason === "other"
           ? {
@@ -3291,7 +3291,7 @@ export class ZcaGateway implements ZaloGateway {
     });
   }
 
-  // deleteMessage(dest, onlyMe): zca-js refuses onlyMe=false for own
+  // deleteMessage(dest, onlyMe): the SDK refuses onlyMe=false for own
   // messages ("use undo") and for any message in a private chat, so this
   // maps to delete-for-me.
   deleteMessage(
@@ -3319,7 +3319,7 @@ export class ZcaGateway implements ZaloGateway {
   }
 
   // Group admins can delete another member's message for everyone
-  // (zca deleteMessage with onlyMe=false). zca-js itself rejects own
+  // (SDK deleteMessage with onlyMe=false). The SDK itself rejects own
   // messages and one-to-one threads; the manager enforces the same rules
   // before this is reached.
   deleteMessageForAll(
@@ -3548,7 +3548,7 @@ export class ZcaGateway implements ZaloGateway {
     const api = this.requireApi();
     return this.call(async () => {
       try {
-        // zca-js takes one thread type per call.
+        // The SDK takes one thread type per call.
         for (const type of ["user", "group"] as const) {
           const ids = threads
             .filter((t) => t.threadType === type)
@@ -3624,7 +3624,7 @@ export class ZcaGateway implements ZaloGateway {
         );
         const r = res as unknown as Record<string, unknown>;
         return {
-          // The PC client reads needSync; zca-js types it needResync.
+          // The PC client reads needSync; the SDK types it needResync.
           needResync: flagOf(r.needSync ?? r.needResync),
           version: intOf(r.version) ?? 0,
         };
@@ -3829,7 +3829,7 @@ export class ZcaGateway implements ZaloGateway {
         try {
           return userProfileOf(await api.findUser(phone));
         } catch (e) {
-          // zca-js's own findUser treats 216 as "no such user"; a dead
+          // The SDK's own findUser treats 216 as "no such user"; a dead
           // session still surfaces on every other call.
           if ((e as { code?: number | null }).code === 216) return null;
           throw zaloRpcError(e, "find user");
@@ -4089,7 +4089,7 @@ export class ZcaGateway implements ZaloGateway {
     });
   }
 
-  // zca-js parses the per-friend status JSON down to its status string.
+  // The SDK parses the per-friend status JSON down to its status string.
   friendOnlines() {
     const api = this.requireApi();
     return this.call(async (): Promise<FriendPresence[]> => {
@@ -4232,9 +4232,8 @@ export class ZcaGateway implements ZaloGateway {
     });
   }
 
-  // zca-js marks getGroupChatHistory deprecated (upstream removed the
-  // endpoint); it is the only group-history surface we have, so it is
-  // used on demand and mock-stubbed.
+  // getGroupChatHistory is the only group-history surface Zalo Web offers
+  // and may disappear, so it is used on demand and mock-stubbed.
   groupHistory(groupId: string, count: number) {
     const api = this.requireApi();
     return this.call(async () => {

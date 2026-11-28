@@ -89,7 +89,7 @@ export class ZaloApi {
   }
 
   /**
-   * Registers an extension RPC helper compatible with `zca-js` `api.custom()`.
+   * Registers an extension RPC helper (`api.custom()`) that receives the session-bound request utils.
    */
   custom<P = Record<string, unknown>, R = unknown>(
     name: string,

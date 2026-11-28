@@ -25,7 +25,7 @@ export interface ZaloOptions {
   checkUpdate?: boolean;
   /** Console logging toggle (default false). */
   logging?: boolean;
-  /** Client wire profile ("web" matches Zalo Web / zca-js, "pc_macos" / "pc_windows" match Zalo PC). */
+  /** Client wire profile ("web" matches Zalo Web, "pc_macos" / "pc_windows" match Zalo PC). */
   profile?: ClientProfileName;
   /** Override fetch implementation (e.g., offline mock router or custom TLS helper). */
   polyfill?: FetchLike;

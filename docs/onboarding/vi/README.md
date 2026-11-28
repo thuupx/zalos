@@ -41,7 +41,7 @@ Tài liệu chuyên sâu (đọc khi động vào phần đó, hiện chỉ có 
 
 - [docs/DESIGN.md](../../DESIGN.md): giao thức trên dây, danh sách RPC, thiết kế vault.
 - [docs/SECURITY_ARCHITECT.md](../../SECURITY_ARCHITECT.md): mô hình mối đe doạ và các biện pháp bảo vệ.
-- [docs/ZALO_SDK_MIGRATION_AND_CALLS.md](../../ZALO_SDK_MIGRATION_AND_CALLS.md):
+- [docs/ZALO_SDK_AND_CALLS.md](../../ZALO_SDK_AND_CALLS.md):
   SDK Zalo nội bộ và hệ thống gọi thoại/video.
 
 ## Bản đồ repo
@@ -53,7 +53,7 @@ Tài liệu chuyên sâu (đọc khi động vào phần đó, hiện chỉ có 
 | `crates/*-wasm` | Wrapper wasm-bindgen của hai crate trên cho server Bun. |
 | `server/` | Server Bun + TypeScript: tunnel, các RPC method, account manager, store, CLI. |
 | `server/vendor/` | Bản build wasm của các crate, được commit (build lại bằng `scripts/build-*-wasm.sh`). |
-| `packages/zalo-sdk` | `@zalos/zalo-sdk`, client giao thức Zalo Web của chúng ta (thay cho `zca-js`). |
+| `packages/zalo-sdk` | `@zalos/zalo-sdk`, client giao thức Zalo Web/PC của chúng ta. |
 | `client/` | App Flutter. Crate Rust FFI ở `client/rust`, binding ở `lib/src/rust_lib`. |
 | `mock/` | Backend Zalo chạy offline (WireMock + gateway Bun) cho test end-to-end. |
 | `deploy/` | Docker image và các file compose đã gia cố, systemd unit, script cài đặt. |

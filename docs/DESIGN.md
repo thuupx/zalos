@@ -16,7 +16,7 @@ zalos-server (Bun, Linux)   -- @zalos/zalo-sdk -->  Zalo (as a Zalo Web session)
 |------|------|
 | `crates/zalos-noise` | Rust wrapper over the `snow` Noise implementation. The only place Noise runs. Built as wasm (Bun server, web client) and as a native lib through flutter_rust_bridge (other clients). |
 | `crates/zalos-vault` | Rust HPKE (RFC 9180) vault used for encryption at rest. Built as wasm (server) and native/wasm (client) like the Noise crate. |
-| `packages/zalo-sdk` | `@zalos/zalo-sdk`, our own TypeScript client for the Zalo Web/PC protocol (HTTP APIs, QR login, realtime listener, call signalling). It replaced `zca-js`. See [ZALO_SDK_MIGRATION_AND_CALLS.md](ZALO_SDK_MIGRATION_AND_CALLS.md). |
+| `packages/zalo-sdk` | `@zalos/zalo-sdk`, our own TypeScript client for the Zalo Web/PC protocol (HTTP APIs, QR login, realtime listener, call signalling). See [ZALO_SDK_AND_CALLS.md](ZALO_SDK_AND_CALLS.md). |
 | `server/` | Bun, TypeScript, `@zalos/zalo-sdk`, `ws`, built-in `bun:sqlite`. |
 | `client/` | Flutter app `zalos`. |
 
@@ -34,8 +34,8 @@ sides call the same `zalos-noise` crate.
   human-like and never fans a client action out into multiple Zalo calls.
 - Calls use Zalo's proprietary ZRTC signalling, not standard WebRTC. The server
   speaks ZRTC to Zalo through `@zalos/zalo-sdk` and bridges media to clients over
-  WebRTC (`server/src/accounts/call_*`, `zrtc_*`). Calls are experimental; see
-  [ZALO_SDK_MIGRATION_AND_CALLS.md](ZALO_SDK_MIGRATION_AND_CALLS.md).
+  WebRTC (`server/src/accounts/call_*`, `zrtc_*`). See
+  [ZALO_SDK_AND_CALLS.md](ZALO_SDK_AND_CALLS.md).
 
 ## Channels and Noise
 

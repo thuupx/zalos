@@ -833,7 +833,7 @@ async function proxy(req: Request, url: URL): Promise<Response> {
   }
   if (ce !== null) resHeaders.delete("content-encoding");
 
-  // zca-js decrypts every /api/ response, including calls that carry no
+  // The SDK decrypts every /api/ response, including calls that carry no
   // params (e.g. getAllGroups); only the login api answers in plaintext.
   const encryptedApi = !isLoginApi && rest.startsWith("/api/") && query.has("zpw_ver");
   if (secretParam === null && !encryptedApi) {

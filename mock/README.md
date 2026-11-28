@@ -6,10 +6,8 @@ end to end. It exists so
 the whole zalos stack (Noise tunnel, account manager, persistence, RPC
 surface) can be exercised without a real Zalo account.
 
-Honest scope note: the request/response shapes here were first built
-from `zca-js`'s parsing code (zalos's former Zalo client) plus observed
-QR-login behavior, and are now kept in line with `@zalos/zalo-sdk`
-(`packages/zalo-sdk/src`). The mock proves the zalos <-> SDK integration
+Honest scope note: the request/response shapes here follow
+`@zalos/zalo-sdk` (`packages/zalo-sdk/src`) plus observed QR-login behavior. The mock proves the zalos <-> SDK integration
 and adapter behavior; it does **not** prove anything about
 real Zalo server behavior.
 

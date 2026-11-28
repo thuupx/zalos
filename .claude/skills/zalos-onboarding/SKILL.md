@@ -20,7 +20,7 @@ the bilingual guide; read the relevant page instead of answering from memory.
 | Troubleshooting | `docs/onboarding/en/07-troubleshooting.md` | `docs/onboarding/vi/07-troubleshooting.md` |
 
 Deep references: `docs/DESIGN.md` (protocol, RPC list, vault),
-`docs/SECURITY_ARCHITECT.md` (threat model), `docs/ZALO_SDK_MIGRATION_AND_CALLS.md`
+`docs/SECURITY_ARCHITECT.md` (threat model), `docs/ZALO_SDK_AND_CALLS.md`
 (SDK and calls).
 
 ## How to help

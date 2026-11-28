@@ -354,7 +354,7 @@ function parseLabelData(v: unknown): PhaseDLabel[] | null {
 
 function labelsPayload(state: PhaseDState) {
   return {
-    // The wire shape carries labelData as a JSON string; zca-js parses it.
+    // The wire shape carries labelData as a JSON string; the SDK parses it.
     labelData: JSON.stringify(state.labels.labelData),
     version: state.labels.version,
     lastUpdateTime: state.labels.lastUpdateTime,
@@ -420,7 +420,7 @@ export function phaseDResponse(
     case "/api/hiddenconvers/update-pin":
       if (method !== "GET") return null;
       if (typeof p.new_pin === "string" && p.new_pin !== "") {
-        // zca-js already hashed the PIN before sending it.
+        // The SDK already hashed the PIN before sending it.
         state.hidden.pin = p.new_pin;
       }
       return { ok: true, data: "" };
@@ -448,7 +448,7 @@ export function phaseDResponse(
       state.archived.items = state.archived.items.filter(
         (i) => !keys.has(archivedKey(i)),
       );
-      // actionType 0 archives, 1 unarchives (zca-js mapping).
+      // actionType 0 archives, 1 unarchives (SDK mapping).
       if (action === 0) {
         for (const item of ids) {
           if (
@@ -470,7 +470,7 @@ export function phaseDResponse(
         ok: true,
         data: {
           needSync: false,
-          // zca-js types the field as needResync; real responses use
+          // The SDK types the field as needResync; real responses use
           // needSync. Send both so either reader converges.
           needResync: false,
           version: state.archived.version,
@@ -621,7 +621,7 @@ export function phaseDResponse(
       const id = Number(p.itemId);
       const item = state.quickMessages.items.find((i) => i.id === id);
       if (item === undefined) {
-        // zca-js documents 212 for a missing quick message.
+        // The SDK documents 212 for a missing quick message.
         return { ok: false, code: 212, message: "quick message not found" };
       }
       const draft = parseQuickDraft(p);

@@ -34,7 +34,7 @@ const ID_CHAT_PAGE_HEADERS: Record<string, string> = {
 };
 
 /**
- * Zalo Web QR Login flow (`id.zalo.me/account/authen/qr/*`) compatible with `zca-js` & offline mock.
+ * Zalo Web QR Login flow (`id.zalo.me/account/authen/qr/*`) also served by the offline mock.
  */
 export async function loginQRWeb(
   http: ZaloHttpClient,

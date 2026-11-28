@@ -1,4 +1,4 @@
-// Phase D: hidden conversations. zca-js has no verify-PIN call, so the gate is
+// Hidden conversations. Zalo Web has no verify-PIN call, so the gate is
 // an explicit local visibility confirmation; PIN set/reset are separate writes
 // whose value never leaves the request.
 import 'package:material_ui/material_ui.dart';

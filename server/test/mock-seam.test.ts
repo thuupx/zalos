@@ -53,7 +53,7 @@ describe("mock fetch rewrite", () => {
   });
 });
 
-describe("mock crypto round-trips through zca-js", () => {
+describe("mock crypto round-trips through the SDK", () => {
   const key = "MDEyMzQ1Njc4OUFCQ0RFRg==";
   const msg = JSON.stringify({ error_code: 0, data: { hello: "xin chào" } });
 

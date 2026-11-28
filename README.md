@@ -30,6 +30,10 @@ flowchart LR
 - **Media & Stickers:** Images, videos, files (up to 100 MiB streaming), voice message recording & playback, link previews, contact cards, bank transfer cards, quick messages, and a full animated/sprite sticker picker with category dock and long-press preview.
 - **History & Search:** Local SQLite persistence with paginated older history, in-conversation search, and shared media/files/links galleries.
 
+### Voice & Video Calls
+- **1:1 Voice and Video Calls with Zalo users:** Place and answer calls from any zalos client. The server speaks Zalo's ZRTC call protocol and bridges media to WebRTC (Opus audio, H.264 video), with hold, mute, camera switch and media switching.
+- **Multi-Device Ringing:** Every device of the account rings; the first to answer takes the call and the others stop ringing.
+
 ### Group Productivity & Pinning
 - **Pinned Messages & Pin Bar:** Pin and unpin messages in both **1:1 chats** and **groups**, with a live pinned banner below the chat header, jump-to-message navigation, and real-time sync (`board.updated`).
 - **Group Board (Bảng tin):** Unified modal & conversation info view separating active pins and the full group board.
@@ -61,7 +65,7 @@ flowchart LR
 | `client/` | Cross-platform Flutter client (iOS, Android, macOS, Linux, Windows, Web). |
 | `landing/` | Marketing site (Next.js + shadcn). |
 | `deploy/` | Hardened Docker Compose (`compose.yaml`, `compose.sidecar-ro.yaml`, `compose.local.yaml`) and systemd unit. |
-| `docs/` | [Onboarding](docs/onboarding/en/README.md), [DESIGN.md](docs/DESIGN.md) and [SECURITY_ARCHITECT.md](docs/SECURITY_ARCHITECT.md). |
+| `docs/` | [Onboarding](docs/onboarding/en/README.md), [DESIGN.md](docs/DESIGN.md), [SECURITY_ARCHITECT.md](docs/SECURITY_ARCHITECT.md) and [ZALO_SDK_AND_CALLS.md](docs/ZALO_SDK_AND_CALLS.md). |
 | `.github/workflows/` | SSDF CI pipeline (security test gate, OSV-Scanner, Cargo Audit, Gitleaks, CycloneDX SBOM). |
 
 ---

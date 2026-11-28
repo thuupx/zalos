@@ -43,7 +43,7 @@ function bodyOf(env: TestEnv, slot: string, msgId: string) {
   return JSON.parse(row.body_json) as Record<string, unknown>;
 }
 
-test("forward carries the zca-js reference built from the stored raw message", async () => {
+test("forward carries the SDK reference built from the stored raw message", async () => {
   const { env, admin, slot, gw } = await setup();
   try {
     const a = await accountClient(env, admin, slot);

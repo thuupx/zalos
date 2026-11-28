@@ -130,7 +130,7 @@ và [SECURITY_ARCHITECT.md](../../SECURITY_ARCHITECT.md).
 
 ## 2.7 Zalo SDK (`packages/zalo-sdk`)
 
-Bản cài đặt giao thức Zalo Web/PC bằng TypeScript của riêng zalos (đã thay `zca-js`):
+Bản cài đặt giao thức Zalo Web/PC bằng TypeScript của riêng zalos:
 
 - `core/http.ts`: profile header, xử lý cookie, envelope AES, chuyển domain dự phòng.
 - `core/cookies.ts`: `ZaloCookieJar` (tough-cookie). Zalo đặt cookie phiên cho các
@@ -143,7 +143,7 @@ Bản cài đặt giao thức Zalo Web/PC bằng TypeScript của riêng zalos (
 
 Hãy coi package này là code giao thức: mọi thay đổi phải đối chiếu với hành vi thật
 và không được làm tăng số lượng request. Xem
-[ZALO_SDK_MIGRATION_AND_CALLS.md](../../ZALO_SDK_MIGRATION_AND_CALLS.md).
+[ZALO_SDK_AND_CALLS.md](../../ZALO_SDK_AND_CALLS.md).
 
 ## 2.8 Bên trong client
 

@@ -176,7 +176,7 @@ export class BusinessApi {
     );
   }
 
-  // ---- Quick Messages (includes fixed photoId-preserving update & zca-js file upload compatibility) ----
+  // ---- Quick Messages (photoId-preserving update and file-path uploads) ----
 
   async getQuickMessageList(version = 0): Promise<{ items: QuickMessage[]; version: number; cursor?: number }> {
     const url = this.http.serviceUrl("quick_message", "/api/quickmessage/list");

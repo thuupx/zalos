@@ -1,4 +1,4 @@
-// Mirrors zca-js dist/utils.js cryptography exactly:
+// Mirrors the cryptography in packages/zalo-sdk/src/core/crypto.ts exactly:
 // - encodeAES/decodeAES: AES-128-CBC, iv=0, Pkcs7, key is the base64
 //   session secret (zpw_enk). Implemented with node:crypto so the mock
 //   needs no crypto-js.

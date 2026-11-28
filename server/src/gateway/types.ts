@@ -1,5 +1,5 @@
-// Abstraction over Zalo. The zca-js adapter implements these interfaces;
-// every payload is a normalized shape, never a zca-js type.
+// Abstraction over Zalo. The SDK adapter implements these interfaces;
+// every payload is a normalized shape, never a raw SDK type.
 
 export type ThreadType = "user" | "group";
 
@@ -112,7 +112,7 @@ export type MessageKind =
   | "system"
   | "other";
 
-// zca-js TextStyle values (sendMessage styles). `ind_$` is the indent
+// SDK TextStyle values (sendMessage styles). `ind_$` is the indent
 // marker; indentSize carries the depth.
 export const TEXT_STYLE_CODES = [
   "b",
@@ -135,7 +135,7 @@ export type StyleRun = {
   start: number;
   len: number;
   st: TextStyleCode;
-  // Only meaningful for "ind_$"; zca-js multiplies it by 10.
+  // Only meaningful for "ind_$"; the SDK multiplies it by 10.
   indentSize?: number;
 };
 
@@ -328,7 +328,7 @@ export type UserInfo = {
   gender?: string;
 };
 
-// A user found by phone number or username. Never a raw zca-js UserBasic.
+// A user found by phone number or username. Never a raw SDK UserBasic.
 export type UserProfile = {
   uid: string;
   displayName: string;
@@ -399,7 +399,7 @@ export type ContactCard = {
 };
 
 // Bank card (thẻ ngân hàng): sendBankCard emits it. Inbound payload shapes
-// are not enumerated by zca-js, so every field except bin/accountNumber is
+// are not enumerated by the SDK, so every field except bin/accountNumber is
 // best effort and the raw payload stays sealed alongside it.
 export type BankCard = {
   bin: number;
@@ -724,7 +724,7 @@ export interface ZaloGateway {
     file: OutgoingFile,
     caption?: string,
     cliId?: string,
-    // Per-message TTL and urgency, same contract as sendText. zca-js only
+    // Per-message TTL and urgency, same contract as sendText. The SDK only
     // accepts urgency for sendMessage attachments (image/gif/file); voice
     // and video sends carry ttl alone.
     opts?: { ttl?: number; urgency?: Urgency },

@@ -39,7 +39,7 @@ Deep references (read when you touch the area):
 
 - [docs/DESIGN.md](../../DESIGN.md): wire protocol, RPC surface, vault design.
 - [docs/SECURITY_ARCHITECT.md](../../SECURITY_ARCHITECT.md): threat model and controls.
-- [docs/ZALO_SDK_MIGRATION_AND_CALLS.md](../../ZALO_SDK_MIGRATION_AND_CALLS.md):
+- [docs/ZALO_SDK_AND_CALLS.md](../../ZALO_SDK_AND_CALLS.md):
   the internal Zalo SDK and the voice/video call stack.
 
 ## Repository map
@@ -51,7 +51,7 @@ Deep references (read when you touch the area):
 | `crates/*-wasm` | wasm-bindgen wrappers of the two crates for the Bun server. |
 | `server/` | Bun + TypeScript server: tunnel, RPC methods, account manager, store, CLI. |
 | `server/vendor/` | Committed wasm builds of the crates (rebuilt by `scripts/build-*-wasm.sh`). |
-| `packages/zalo-sdk` | `@zalos/zalo-sdk`, our own Zalo Web protocol client (replaced `zca-js`). |
+| `packages/zalo-sdk` | `@zalos/zalo-sdk`, our own Zalo Web/PC protocol client. |
 | `client/` | Flutter app. Rust FFI crate in `client/rust`, bindings in `lib/src/rust_lib`. |
 | `mock/` | Offline Zalo backend (WireMock + Bun gateway) for end-to-end tests. |
 | `deploy/` | Hardened Docker images and compose files, systemd unit, installer. |

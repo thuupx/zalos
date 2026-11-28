@@ -43,7 +43,7 @@ flowchart LR
 - **Confidentiality in transit:** Every client-to-server channel is mutually authenticated and encrypted using Noise (`Noise_IKpsk2_25519_ChaChaPoly_BLAKE2s`) with server static-key pinning, independent of whether Tailscale is present.
 - **Confidentiality at rest (history):** Message bodies and cached media are sealed with client-derived HPKE public keys (`RFC 9180`). A compromised disk, database backup, or offline snapshot does not reveal sealed history.
 - **Least privilege:** New member devices start with **empty** account ACLs; administrative and vault lifecycle controls are strictly admin-bound.
-- **Single Zalo egress point:** Clients never talk to Zalo. All Zalo traffic (HTTP APIs, QR login, realtime WebSocket, call signalling) originates from the server through the internal `@zalos/zalo-sdk` package (`packages/zalo-sdk`), which replaced the third-party `zca-js` dependency. Outbound calls per account are serialized at least 300 ms apart (`CallQueue` in `server/src/gateway/zca.ts`).
+- **Single Zalo egress point:** Clients never talk to Zalo. All Zalo traffic (HTTP APIs, QR login, realtime WebSocket, call signalling) originates from the server through the internal `@zalos/zalo-sdk` package (`packages/zalo-sdk`). Outbound calls per account are serialized at least 300 ms apart (`CallQueue` in `server/src/gateway/zca.ts`).
 - **Clear operational metadata:** Thread IDs, message IDs, timestamps, sender IDs, unread counters, reactions, labels, and minimal Zalo references remain clear so the server can route, order, sync, react, recall, and delete.
 
 ---
