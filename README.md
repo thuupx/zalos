@@ -9,7 +9,7 @@ flowchart LR
   Z["Zalo\nPersonal Accounts & OA API"]
 
   C <-->|"WebSocket + Noise IKpsk2"| S
-  S <-->|"zca-js / OA OpenAPI"| Z
+  S <-->|"@zalos/zalo-sdk / OA OpenAPI"| Z
 ```
 
 > **New to the codebase?** Start with the developer onboarding guide:
@@ -56,7 +56,7 @@ flowchart LR
 |---|---|
 | `crates/zalos-noise` | Rust Noise protocol wrapper (`snow`), compiled to WASM (server/web) and native (Flutter via FRB). |
 | `crates/zalos-vault` | Rust RFC 9180 HPKE vault sealing, versioned key derivation, and `zeroize` secret handling. |
-| `server/` | Bun + TypeScript server (`ws`, `bun:sqlite`, `zca-js`, OA OpenAPI gateway, CLI & `doctor`). |
+| `server/` | Bun + TypeScript server (`ws`, `bun:sqlite`, `@zalos/zalo-sdk` personal-account gateway, OA OpenAPI gateway, voice/video call gateway, CLI & `doctor`). |
 | `packages/zalo-sdk` | `@zalos/zalo-sdk`, the internal Zalo Web/PC protocol client used by the server. |
 | `client/` | Cross-platform Flutter client (iOS, Android, macOS, Linux, Windows, Web). |
 | `landing/` | Marketing site (Next.js + shadcn). |

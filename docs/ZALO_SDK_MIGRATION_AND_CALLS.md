@@ -45,6 +45,8 @@ flowchart LR
 
 ## 2. Migration Plan: Dropping `zca-js` from `zalos-server`
 
+> **Status: completed.** `zca-js` was removed in commit `68305a7`; the server depends only on `@zalos/zalo-sdk` (`file:../packages/zalo-sdk`). The plan below is kept as a historical record.
+
 ### 2.1 Current Coupling Audit
 Only **one** production file in `server/` imports `"zca-js"`:
 - `server/src/gateway/zca.ts` imports `Zalo`, `ZaloApiError`, 14 runtime enums (`ThreadType`, `DestType`, `Urgency`, `TextStyle`, `Reactions`, `ChatTTL`, `MuteAction`, `MuteDuration`, `AvatarSize`, `ReportReason`, `BinBankCard`, `CloseReason`, `LoginQRCallbackEventType`, `FriendRecommendationsType`), and TS types.

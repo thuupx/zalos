@@ -8,7 +8,7 @@ Zalos is a self-hosted, multi-device bridge to Zalo. The server maintains active
 
 ```mermaid
 flowchart LR
-  subgraph Client["Client Device (iOS / Android / macOS / Web)"]
+  subgraph Client["Client Device (iOS / Android / macOS / Windows / Linux / Web)"]
     KS["OS Secure Storage\n(Noise Key, PSK, Box Key, Vault Root)"]
     UI["Flutter UI + Step-Up Auth"]
     RC["Rust Crypto (FRB)\nNoise + HPKE + Zeroize"]
@@ -21,7 +21,7 @@ flowchart LR
   subgraph Server["Hardened Bun Server (non-root, ro-root)"]
     TN["Tunnel & AuthZ\nRate Limits + ACL"]
     AM["Account Manager\nIdempotency + Audit Log"]
-    MG["SSRF-Pinned Egress\nZalo / CDN / OA"]
+    MG["SSRF-Pinned Egress\n@zalos/zalo-sdk · CDN · OA"]
   end
 
   subgraph Storage["Server Persistence"]
@@ -43,6 +43,7 @@ flowchart LR
 - **Confidentiality in transit:** Every client-to-server channel is mutually authenticated and encrypted using Noise (`Noise_IKpsk2_25519_ChaChaPoly_BLAKE2s`) with server static-key pinning, independent of whether Tailscale is present.
 - **Confidentiality at rest (history):** Message bodies and cached media are sealed with client-derived HPKE public keys (`RFC 9180`). A compromised disk, database backup, or offline snapshot does not reveal sealed history.
 - **Least privilege:** New member devices start with **empty** account ACLs; administrative and vault lifecycle controls are strictly admin-bound.
+- **Single Zalo egress point:** Clients never talk to Zalo. All Zalo traffic (HTTP APIs, QR login, realtime WebSocket, call signalling) originates from the server through the internal `@zalos/zalo-sdk` package (`packages/zalo-sdk`), which replaced the third-party `zca-js` dependency. Outbound calls per account are serialized at least 300 ms apart (`CallQueue` in `server/src/gateway/zca.ts`).
 - **Clear operational metadata:** Thread IDs, message IDs, timestamps, sender IDs, unread counters, reactions, labels, and minimal Zalo references remain clear so the server can route, order, sync, react, recall, and delete.
 
 ---
@@ -137,6 +138,7 @@ flowchart TD
 - **Connection-time DNS pinning:** `pinnedHttpFetch` validates every resolved IP inside the socket `lookup` callback using `ipaddr.js` (unwrapping IPv4-mapped, compatible, 6to4, NAT64, and RFC 6145 forms and blocking loopback, RFC 1918, CGNAT/Tailscale, link-local, and site-local ranges), eliminating two-stage DNS rebinding TOCTOU.
 - **Protocol & redirect hygiene:** Redirects are manual (max 5 hops), every hop is revalidated, and `HTTPS → HTTP` downgrades are refused unconditionally.
 - **Hybrid egress mode:** Allows HTTPS to public hosts (for external link previews) while restricting Zalo session cookies strictly to recognized Zalo hosts; setting `ZALOS_MEDIA_ALLOWLIST_ONLY=1` locks outbound media strictly to Zalo/CDN domains.
+- **Zalo session cookie scoping (`packages/zalo-sdk/src/core/cookies.ts`):** Zalo's login service sets session cookies for sibling hosts (for example `id.zalo.me` setting cookies for `chat.zalo.me`). The SDK cookie jar accepts such a cross-host `Domain` only when it is a Zalo domain (`zalo.me`, `zaloapp.com`, `zadn.vn`, `zdn.vn` and their subdomains); any other cross-domain `Set-Cookie` is dropped, and cookies are only sent to hosts that domain-match them.
 
 ### Durable Idempotency
 - Every send method (including `sendBankCard`) serializes through SQLite `idempotency_keys` and an in-flight map keyed by `(slot, cli_id)` with a canonical SHA-256 `request_hash`.
@@ -169,7 +171,7 @@ flowchart TD
 - **Temporary decrypted media (`native_io.dart`):** Materialized with cryptographically random 128-bit filenames under `0700`/`0600` permissions and purged on app startup and unpair.
 - **Platform hardening:**
   - **Android:** `allowBackup="false"`, `fullBackupContent="false"`, backup exclusion rules (`data_extraction_rules.xml`), and scoped `network_security_config.xml` (no global cleartext traffic).
-  - **Web (`scripts/serve-web.sh`):** Sets COOP, COEP, `Cache-Control: no-store`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, and a strict `Content-Security-Policy`.
+  - **Web (`server/src/web_static.ts`, used by the Docker image; `scripts/serve-web.sh` for local builds):** Sets COOP `same-origin`, COEP `require-corp`, CORP `same-origin`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `Cache-Control: no-cache` (with `Last-Modified`/304 revalidation), and the CSP `default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob:; connect-src 'self' ws: wss: https://fonts.gstatic.com; frame-ancestors 'none'; base-uri 'self'`. CanvasKit is bundled locally (`flutter build web --no-web-resources-cdn`) so no script is loaded from a CDN. `'unsafe-eval'` is required because flutter_rust_bridge loads its wasm glue through `new Function(...)`; `fonts.gstatic.com` is only reachable through `connect-src` for Flutter's font fallback. The web client must be served over HTTPS (`tailscale serve`) or `localhost`.
 
 ---
 
@@ -192,6 +194,6 @@ The following inherent limitations remain by design and must stay visible to ope
 4. **Transport revocation vs. prior ciphertexts:** Revoking a device immediately blocks future server access and `vault.rotate` protects future records, but cannot retroactively un-decrypt ciphertexts a compromised device already copied alongside the old root.
 5. **Physical storage erasure:** SQLite `secure_delete`, `VACUUM`, WAL truncation, and file unlinking clean live files but cannot recall SSD wear-leveling blocks, copy-on-write snapshots, backups, screenshots, notifications, or Zalo's own remote copies.
 6. **Managed-runtime memory:** Rust `zeroize` wipes native secret buffers, but garbage-collected runtimes (Dart, JS, WASM) and OS clipboards cannot guarantee deterministic memory erasure.
-7. **Web client assurance:** Web storage relies on `localStorage` for its wrapping key; any origin XSS compromises local credentials and vault history. Native clients remain the recommended high-assurance platform.
+7. **Web client assurance:** Web storage relies on `localStorage` for its wrapping key; any origin XSS compromises local credentials and vault history. The web CSP must allow `'unsafe-eval'` for the flutter_rust_bridge wasm loader, which weakens the CSP as an XSS backstop. Native clients remain the recommended high-assurance platform.
 8. **Out-of-band fingerprint verification:** Vault root approval depends on the human admin genuinely comparing the displayed fingerprint before confirming.
 9. **Hidden conversations PIN:** Zalo does not expose a local PIN verification API; the hidden gate is a visibility prompt rather than a cryptographic lock, while PIN reset is guarded by device step-up authentication.

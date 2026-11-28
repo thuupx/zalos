@@ -1,14 +1,16 @@
 # Offline Zalo mock
 
-An offline mock of the Zalo web backend that the **real** `zca-js`
-gateway in `server/src/gateway/zca.ts` talks to end to end. It exists so
+An offline mock of the Zalo web backend that the **real** personal-account
+gateway in `server/src/gateway/zca.ts` (built on `@zalos/zalo-sdk`) talks to
+end to end. It exists so
 the whole zalos stack (Noise tunnel, account manager, persistence, RPC
 surface) can be exercised without a real Zalo account.
 
-Honest scope note: the request/response shapes here are built from
-`zca-js`'s own parsing code (`server/node_modules/zca-js/dist`) plus
-observed QR-login behavior. The mock proves the zalos <-> zca-js
-integration and adapter behavior; it does **not** prove anything about
+Honest scope note: the request/response shapes here were first built
+from `zca-js`'s parsing code (zalos's former Zalo client) plus observed
+QR-login behavior, and are now kept in line with `@zalos/zalo-sdk`
+(`packages/zalo-sdk/src`). The mock proves the zalos <-> SDK integration
+and adapter behavior; it does **not** prove anything about
 real Zalo server behavior.
 
 ## Layout
@@ -32,7 +34,7 @@ real Zalo server behavior.
   - **crypto**: Zalo's application-layer encryption. Login endpoints
     (`/api/login/*`) use the zcid/zcid_ext key derivation; everything
     else uses the session key from `zpw_enk` (`MOCK_SESSION_KEY`,
-    AES-128-CBC zero-IV like zca-js). Encrypted `params` are decrypted
+    AES-128-CBC zero-IV, as in `packages/zalo-sdk/src/core/crypto.ts`). Encrypted `params` are decrypted
     and forwarded to WireMock as a JSON body (or the
     `x-zalo-decrypted-params` header for multipart/GET), and scalar
     fields are also mirrored as `mock_<name>` query params so stubs can
@@ -119,7 +121,7 @@ curl      localhost:7355/__journal                                # plaintext re
 curl      localhost:7355/__mock/state                             # live ws socket count
 ```
 
-The journal is WireMock's request journal: every request `zca-js` sent
+The journal is WireMock's request journal: every request the SDK sent
 to "Zalo", with decrypted params either as the JSON body or the
 `x-zalo-decrypted-params` header - exactly what a test can assert on.
 
@@ -133,7 +135,8 @@ to "Zalo", with decrypted params either as the JSON body or the
 
 ## Adding a stub
 
-1. Find the real request shape in `server/node_modules/zca-js/dist/apis/<name>.js`.
+1. Find the request shape in `packages/zalo-sdk/src/apis/<module>.ts` (and,
+   for anything new, confirm it against a real capture).
 2. Add a mapping under `wiremock/mappings/` with the path
    `/<original-host>/<path>`; match `urlPath` or `urlPathPattern`.
 3. Wrap the response as `{"data": {<inner>}}`. Use

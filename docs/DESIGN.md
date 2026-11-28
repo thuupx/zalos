@@ -5,9 +5,9 @@ from one device, through a self-hosted proxy. Every user runs their own server;
 nothing is centralized.
 
 ```
-Flutter client (iOS/Android/Windows/macOS/web)
+Flutter client (iOS/Android/Windows/macOS/Linux/web)
    |  WebSocket over the tailnet, one Noise session per channel
-zalos-server (Bun, Linux)   -- zca-js -->  Zalo (as a Zalo Web session)
+zalos-server (Bun, Linux)   -- @zalos/zalo-sdk -->  Zalo (as a Zalo Web session)
 ```
 
 ## Components
@@ -15,13 +15,15 @@ zalos-server (Bun, Linux)   -- zca-js -->  Zalo (as a Zalo Web session)
 | Path | What |
 |------|------|
 | `crates/zalos-noise` | Rust wrapper over the `snow` Noise implementation. The only place Noise runs. Built as wasm (Bun server, web client) and as a native lib through flutter_rust_bridge (other clients). |
-| `server/` | Bun, TypeScript, `zca-js`, `ws`, built-in `bun:sqlite`. |
+| `crates/zalos-vault` | Rust HPKE (RFC 9180) vault used for encryption at rest. Built as wasm (server) and native/wasm (client) like the Noise crate. |
+| `packages/zalo-sdk` | `@zalos/zalo-sdk`, our own TypeScript client for the Zalo Web/PC protocol (HTTP APIs, QR login, realtime listener, call signalling). It replaced `zca-js`. See [ZALO_SDK_MIGRATION_AND_CALLS.md](ZALO_SDK_MIGRATION_AND_CALLS.md). |
+| `server/` | Bun, TypeScript, `@zalos/zalo-sdk`, `ws`, built-in `bun:sqlite`. |
 | `client/` | Flutter app `zalos`. |
 
 No cryptographic protocol code is written by hand in TypeScript or Dart. Both
 sides call the same `zalos-noise` crate.
 
-## Constraints inherited from zca-js
+## Constraints of the Zalo Web protocol
 
 - It is a Zalo Web session. Zalo allows one web listener per account, so opening
   Zalo Web / Zalo PC web mode for that account stops the server listener. The
@@ -30,7 +32,10 @@ sides call the same `zalos-noise` crate.
   is the system of record: it persists every message and event it sees in SQLite.
 - Unofficial API: accounts can be locked by Zalo. The server keeps request rates
   human-like and never fans a client action out into multiple Zalo calls.
-- No call API. Video call is out of scope for now.
+- Calls use Zalo's proprietary ZRTC signalling, not standard WebRTC. The server
+  speaks ZRTC to Zalo through `@zalos/zalo-sdk` and bridges media to clients over
+  WebRTC (`server/src/accounts/call_*`, `zrtc_*`). Calls are experimental; see
+  [ZALO_SDK_MIGRATION_AND_CALLS.md](ZALO_SDK_MIGRATION_AND_CALLS.md).
 
 ## Channels and Noise
 
@@ -91,7 +96,8 @@ capped by the Noise transport message size, per-device and global connection/upl
 quotas plus a token-bucket RPC rate limiter protect server resources, and a
 channel whose outgoing buffer exceeds 8 MiB is closed so a stalled client cannot
 grow server memory. Outbound traffic toward Zalo is paced through a 300 ms send
-queue per account, matching zca-js expectations.
+queue per account (`CallQueue` in `server/src/gateway/zca.ts`: one call at a
+time, at least 300 ms apart).
 
 Close codes:
 
@@ -249,7 +255,8 @@ loginQr events above.
 per account slot, so clients never talk to Zalo directly.
 
 Upload temp files are plaintext on disk for the duration of a send because
-zca-js needs a file path; they live under `tmp/` inside the data directory,
+the gateway hands `@zalos/zalo-sdk` a file path to upload from; they live under
+`tmp/` inside the data directory,
 are deleted when the send finishes, and the whole `tmp/` directory is wiped
 at startup. Download temp files also land in `tmp/` and are removed after
 sealing.
