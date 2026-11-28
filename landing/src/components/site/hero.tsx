@@ -33,7 +33,7 @@ export function Hero() {
             <span className="size-1.5 rounded-full bg-gold" />
             {t.hero.badge}
           </div>
-          <h1 className="mt-6 text-balance text-4xl font-semibold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+          <h1 className="mt-6 text-balance text-4xl leading-[1.15] font-semibold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
             {t.hero.title}
           </h1>
           <p className="mt-5 text-pretty text-lg leading-8 text-muted-foreground">
