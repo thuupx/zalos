@@ -379,7 +379,7 @@ export class TunnelServer {
   }) {
     this.store = opts.store;
     this.name = opts.name ?? "zalos";
-    this.version = opts.version ?? "0.1.0";
+    this.version = opts.version ?? "1.0.0";
     this.limits = { ...DEFAULT_LIMITS, ...(opts.limits ?? {}) };
     this.serverKey = this.store.serverKeypair();
     this.http = createServer();
