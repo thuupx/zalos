@@ -12,6 +12,9 @@ flowchart LR
   S <-->|"zca-js / OA OpenAPI"| Z
 ```
 
+> **New to the codebase?** Start with the developer onboarding guide:
+> [English](docs/onboarding/en/README.md) · [Tiếng Việt](docs/onboarding/vi/README.md).
+
 ---
 
 ## Features
@@ -54,9 +57,11 @@ flowchart LR
 | `crates/zalos-noise` | Rust Noise protocol wrapper (`snow`), compiled to WASM (server/web) and native (Flutter via FRB). |
 | `crates/zalos-vault` | Rust RFC 9180 HPKE vault sealing, versioned key derivation, and `zeroize` secret handling. |
 | `server/` | Bun + TypeScript server (`ws`, `bun:sqlite`, `zca-js`, OA OpenAPI gateway, CLI & `doctor`). |
+| `packages/zalo-sdk` | `@zalos/zalo-sdk`, the internal Zalo Web/PC protocol client used by the server. |
 | `client/` | Cross-platform Flutter client (iOS, Android, macOS, Linux, Windows, Web). |
+| `landing/` | Marketing site (Next.js + shadcn). |
 | `deploy/` | Hardened Docker Compose (`compose.yaml`, `compose.sidecar-ro.yaml`, `compose.local.yaml`) and systemd unit. |
-| `docs/` | [DESIGN.md](docs/DESIGN.md) and [SECURITY_ARCHITECT.md](docs/SECURITY_ARCHITECT.md). |
+| `docs/` | [Onboarding](docs/onboarding/en/README.md), [DESIGN.md](docs/DESIGN.md) and [SECURITY_ARCHITECT.md](docs/SECURITY_ARCHITECT.md). |
 | `.github/workflows/` | SSDF CI pipeline (security test gate, OSV-Scanner, Cargo Audit, Gitleaks, CycloneDX SBOM). |
 
 ---

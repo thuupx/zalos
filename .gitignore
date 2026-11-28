@@ -14,6 +14,7 @@ deploy/docker/.env
 
 # Runtime data (server key, database)
 server/data/
+server/data-*/
 
 # Golden test failure output
 client/test/ui/failures/
