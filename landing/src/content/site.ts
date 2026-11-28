@@ -11,65 +11,65 @@ const links = {
 const vi = {
   links,
   nav: {
-    skipToContent: "Bỏ qua, tới nội dung chính",
-    ariaLabel: "Menu chính",
+    skipToContent: "Chuyển tới nội dung chính",
+    ariaLabel: "Điều hướng chính",
     features: "Tính năng",
-    howItWorks: "Cách chạy",
+    howItWorks: "Cách hoạt động",
     security: "Bảo mật",
-    quickStart: "Bắt đầu",
+    quickStart: "Cài đặt",
     faq: "Hỏi đáp",
     github: "GitHub",
     openMenu: "Mở menu",
     mobileMenuTitle: "Menu",
   },
   controls: {
-    languageLabel: "Đổi ngôn ngữ",
+    languageLabel: "Ngôn ngữ",
     themeToggle: "Đổi giao diện sáng/tối",
-    githubLabel: "Xem source zalos trên GitHub",
+    githubLabel: "Mã nguồn zalos trên GitHub",
   },
   hero: {
-    badge: "Self-host · Nhiều thiết bị · Nhiều tài khoản",
-    title: "Một tài khoản Zalo, xài trên mọi thiết bị.",
+    badge: "Proxy Zalo tự host · Mã nguồn mở",
+    title: "Dùng Zalo trên nhiều thiết bị qua server tự host",
     subtitle:
-      "zalos là server Zalo bạn tự host. Login Zalo một lần trên server, rồi dùng cùng lúc trên điện thoại, máy tính, iPad hay trình duyệt. Có cả Zalo OA luôn.",
-    primaryCta: "Tự host ngay",
-    secondaryCta: "Xem source trên GitHub",
+      "Zalo giới hạn một điện thoại và một máy tính, lại không có bản Linux. zalos giữ phiên đăng nhập trên server bạn tự chạy, đồng bộ tin nhắn, cuộc gọi và lịch sử về mọi thiết bị, hỗ trợ nhiều tài khoản cá nhân lẫn Zalo OA.",
+    primaryCta: "Hướng dẫn cài đặt",
+    secondaryCta: "Mã nguồn trên GitHub",
     platforms: ["iOS", "Android", "macOS", "Windows", "Linux", "Web"],
     mockup: {
       caption:
-        "Giao diện chat của zalos: một nhóm đang nhắn tin, tin nhắn sync qua nhiều thiết bị.",
-      groupName: "Team zalos",
-      devices: "3 thiết bị đang online",
-      pinned: "Ghim: checklist deploy lên NAS",
+        "Giao diện chat của zalos hiển thị một nhóm làm việc đang trao đổi, đồng bộ trên 3 thiết bị.",
+      groupName: "Nhóm Sản phẩm",
+      devices: "Đang đồng bộ · 3 thiết bị",
+      pinned: "Ghim: Checklist phát hành bản 2.4",
       composerPlaceholder: "Nhập tin nhắn...",
       messages: [
         {
           side: "in",
-          text: "Deploy lên NAS xong rồi nha",
+          text: "Mình vừa đẩy bản sửa lỗi thanh toán lên staging rồi",
           time: "09:41",
           reaction: null,
         },
         {
           side: "out",
-          text: "Ngon, để mình login trên iPad thử",
+          text: "Ok để mình kiểm tra lại luồng QR rồi báo",
           time: "09:42",
           reaction: "2",
         },
         {
           side: "in",
-          text: "Tin nhắn sync qua điện thoại luôn rồi đó",
+          text: "Xem thêm đơn có mã giảm giá nhé, hôm qua bị lệch tổng tiền",
           time: "09:43",
           reaction: null,
         },
         {
           side: "out",
-          text: "Thấy rồi, seen bên máy tính cũng khớp luôn",
+          text: "Khớp rồi. 2h chiều nay đẩy lên production được không?",
           time: "09:44",
           reaction: null,
         },
         {
           side: "in",
-          text: "Thêm máy mới thì tạo mã pair mới nha, mã cũ hết hạn rồi",
+          text: "Được, lát mình gửi ghi chú phát hành vào nhóm trước",
           time: "09:45",
           reaction: null,
         },
@@ -78,208 +78,211 @@ const vi = {
   },
   features: {
     eyebrow: "Tính năng",
-    title: "zalos làm được gì",
+    title: "Các tính năng chính",
     intro:
-      "Gần như mọi thứ bạn hay dùng trên Zalo, giờ chạy qua server của chính bạn.",
+      "Từ chat cá nhân, nhóm làm việc đến gọi thoại và quản lý OA. Mọi kết nối từ thiết bị chỉ đi qua server của bạn rồi mới chuyển tiếp tới Zalo.",
     items: [
       {
-        title: "Nhiều tài khoản",
+        title: "Nhiều tài khoản và phân quyền",
         description:
-          "Tài khoản cá nhân và Zalo OA nằm chung một app, chuyển qua lại một chạm.",
+          "Gộp nhiều tài khoản cá nhân và Zalo OA vào cùng một ứng dụng. Mỗi thiết bị có vai trò admin hoặc member, chỉ mở được tài khoản do admin cấp quyền.",
         badge: null,
       },
       {
-        title: "Sync mọi thiết bị",
+        title: "Đồng bộ nhiều thiết bị",
         description:
-          "Tin nhắn, seen, reaction, trạng thái đang gõ đều sync ngay giữa điện thoại, máy tính và web.",
+          "Tin nhắn, trạng thái đã xem, cảm xúc và đang nhập khớp nhau trên điện thoại, máy tính bảng, desktop (kể cả Linux) và trình duyệt web.",
         badge: null,
       },
       {
-        title: "Nhẹ máy",
+        title: "Không nặng bộ nhớ máy",
         description:
-          "Lịch sử chat và media nằm trên server, máy chỉ tải khi cần xem. Khỏi lo Zalo ngốn bộ nhớ điện thoại nữa.",
+          "Lịch sử chat và media được lưu trong SQLite trên server, thiết bị chỉ tải nội dung khi cần mở. Điện thoại không còn bị Zalo chiếm hàng chục gigabyte.",
         badge: null,
       },
       {
-        title: "Nhắn tin, gửi file",
+        title: "Nhắn tin và gửi tệp",
         description:
-          "Chat 1:1 và nhóm, reply, tag tên, thu hồi, tin nhắn tự huỷ, gửi file tới 100 MiB, tin nhắn thoại, sticker, tìm lại tin cũ.",
+          "Chat 1:1 và nhóm, trích dẫn, nhắc tên (@All), định dạng chữ, đánh dấu khẩn cấp, thu hồi, tin tự huỷ, tệp tới 100 MiB, tin nhắn thoại, sticker và tìm kiếm.",
         badge: null,
       },
       {
-        title: "Làm việc nhóm",
+        title: "Bảng tin và tiện ích nhóm",
         description:
-          "Ghim tin, bảng tin, bình chọn, ghi chú, nhắc hẹn. Team chạy việc trong nhóm Zalo vẫn đủ đồ nghề.",
+          "Ghim tin nhắn trong cả chat riêng lẫn nhóm, quản lý bảng tin, tạo bình chọn (nhiều lựa chọn, ẩn danh), ghi chú nhóm và đặt nhắc hẹn lặp lại.",
         badge: null,
       },
       {
-        title: "Gọi thoại, gọi video",
+        title: "Gọi thoại và video 1:1",
         description:
-          "Gọi 1:1 với người dùng Zalo như bình thường. Máy nào của bạn cũng đổ chuông, máy nào bắt trước thì nghe.",
+          "Gọi trực tiếp với người dùng Zalo thông thường qua cầu nối ZRTC sang WebRTC trên server. Tất cả thiết bị cùng đổ chuông, máy nào nhận trước sẽ bắt máy.",
         badge: null,
       },
       {
-        title: "Danh bạ và QR",
+        title: "Danh bạ và quét QR",
         description:
-          "Tìm bạn qua số điện thoại, kết bạn, chặn, quét QR y như app Zalo.",
+          "Tìm người dùng theo số điện thoại, gửi và duyệt lời mời kết bạn, đặt biệt danh, chặn liên hệ và quét cả mã QR của Zalo lẫn mã ghép cặp zalos.",
         badge: null,
       },
       {
-        title: "Gọn gàng hội thoại",
+        title: "Quản lý hội thoại",
         description:
-          "Ghim, tắt thông báo, gắn nhãn màu, lưu trữ, ẩn hội thoại bằng mã PIN, hẹn giờ tự xoá tin.",
+          "Ghim cuộc trò chuyện, tắt thông báo, gắn nhãn màu, lưu trữ, ẩn hội thoại sau mã PIN và đặt lịch tự xoá tin nhắn theo từng cuộc trò chuyện.",
         badge: null,
       },
     ],
   },
   howItWorks: {
-    eyebrow: "Cách chạy",
-    title: "Ba bước là dùng được",
+    eyebrow: "Cách hoạt động",
+    title: "Cách thiết lập và đồng bộ",
     intro:
-      "Server, thiết bị, phiên đăng nhập đều nằm trong tay bạn. zalos chỉ lo chuyển tin và sync.",
+      "Thiết bị không gọi thẳng tới Zalo. Server của bạn giữ một phiên Zalo Web cho mỗi tài khoản, giãn nhịp request như thao tác thật, lưu sự kiện vào SQLite rồi đẩy đồng bộ xuống các máy đã ghép cặp.",
     steps: [
       {
-        title: "Dựng server bằng Docker",
+        title: "Chạy container zalos",
         description:
-          "Chạy docker compose là có server. Image có sẵn luôn bản web, khỏi build riêng.",
+          "Khởi chạy bằng Docker Compose trên VPS, NAS hoặc máy cá nhân. Image đã đóng gói sẵn bản Flutter Web nên không cần dựng riêng frontend.",
       },
       {
-        title: "Pair thiết bị",
+        title: "Ghép cặp thiết bị",
         description:
-          "Server tạo mã pair dùng một lần. Quét QR hoặc dán mã vào app là vào được.",
+          "Chạy lệnh zalos pair để tạo mã hoặc QR dùng một lần. Thiết bị đầu tiên mặc định là admin; các máy thêm sau nhận vai trò member với quyền truy cập rỗng cho tới khi được cấp.",
       },
       {
-        title: "Login Zalo bằng QR",
+        title: "Đăng nhập tài khoản Zalo",
         description:
-          "Mở Zalo trên điện thoại, quét QR là server bắt đầu sync tin nhắn về.",
+          "Quét mã QR từ app Zalo trên điện thoại hoặc thêm Zalo OA trong mục Tài khoản. Server sẽ bắt đầu nhận tin và đồng bộ về các thiết bị.",
       },
     ],
-    architectureTitle: "Dữ liệu đi như thế nào",
+    architectureTitle: "Đường đi của kết nối",
     architecture: {
-      clients: "App zalos",
-      transport: "WebSocket + Noise",
-      server: "Server của bạn",
-      zalo: "Zalo",
+      clients: "Client Flutter",
+      transport: "WebSocket + Noise IKpsk2",
+      server: "Server zalos (Bun + SQLite)",
+      zalo: "Zalo Web / OA API",
     },
   },
   security: {
     eyebrow: "Bảo mật",
-    title: "Server của bạn, key của bạn",
+    title: "Mã hoá bằng Rust, khoá giữ trên thiết bị",
     intro:
-      "Không có server trung gian nào hết. Dữ liệu nằm trên máy bạn và được mã hoá kỹ.",
+      "Toàn bộ phần mật mã nằm trong hai crate Rust (zalos-noise và zalos-vault), không tự viết lại bằng TypeScript hay Dart. Nếu ổ đĩa hoặc bản sao lưu SQLite trên server bị lộ, nội dung tin nhắn và media đã niêm phong vẫn không đọc được.",
     points: [
       {
-        title: "Kết nối bằng Noise",
-        chip: "IKpsk2_25519_ChaChaPoly_BLAKE2s",
+        title: "Đường truyền Noise xác thực hai chiều",
+        chip: "Noise_IKpsk2_25519",
         description:
-          "Mỗi kết nối là một phiên Noise xác thực hai chiều. App ghim key của server nên không ai giả mạo được.",
+          "Mọi kết nối WebSocket chạy Noise_IKpsk2_25519_ChaChaPoly_BLAKE2s, ràng buộc theo từng route và ghim khoá tĩnh của server ngay từ lúc ghép cặp.",
       },
       {
-        title: "Mã hoá dữ liệu lưu trữ",
-        chip: "HPKE / RFC 9180",
+        title: "Kho lưu trữ mã hoá bằng HPKE",
+        chip: "HPKE · RFC 9180",
         description:
-          "Tin nhắn và media trên server được mã hoá bằng HPKE. Key nằm trên thiết bị của bạn, server không tự đọc được.",
+          "Nội dung tin nhắn và media cache được niêm phong trên server bằng khoá công khai của client. Khoá gốc 32 byte chỉ nằm trên thiết bị và hỗ trợ xoay khoá theo phiên bản.",
       },
       {
-        title: "Mã pair dùng một lần",
-        chip: "10 phút",
-        description: "Mỗi mã chỉ dùng được một lần và tự hết hạn sau 10 phút.",
+        title: "Ghép cặp một lần và phân quyền ACL",
+        chip: "RBAC · 10m TTL",
+        description:
+          "Mã ghép cặp hết hạn sau 10 phút và chỉ dùng một lần. Thiết bị mới nhận PSK riêng, mặc định không có quyền xem tài khoản nào và có thể bị thu hồi ngay lập tức.",
       },
       {
-        title: "Container quyền tối thiểu",
-        chip: "non-root",
+        title: "Container chạy quyền tối thiểu",
+        chip: "non-root · ro-fs",
         description:
-          "Chạy bằng user thường, filesystem read-only, bỏ hết capability không cần thiết.",
+          "Server chạy dưới user thường, root filesystem chỉ đọc, cắt bỏ Linux capabilities và có bước tự kiểm tra (zalos doctor) trước khi mở kết nối.",
       },
       {
-        title: "Chặn SSRF",
-        chip: "SSRF guard",
+        title: "Kiểm soát lưu lượng tải media",
+        chip: "DNS-pinned SSRF",
         description:
-          "Request tải media nào cũng được kiểm tra địa chỉ trước khi đi ra ngoài.",
+          "Mọi lượt tải tệp và ảnh đều ghim địa chỉ IP lúc kết nối để chặn DNS rebinding, chặn hạ cấp HTTPS xuống HTTP và hỗ trợ giới hạn domain Zalo/CDN.",
       },
       {
-        title: "Chạy riêng trong tailnet",
-        chip: "Tailscale",
+        title: "Không cần mở port ra ngoài",
+        chip: "Tailscale · tailnet",
         description:
-          "Thiết kế để chạy trong mạng Tailscale riêng, không cần mở port ra internet.",
+          "Triển khai kèm sidecar Tailscale để giữ server trong mạng riêng. Khi cần dùng bản web qua HTTPS, chỉ cần bật tailscale serve mà không phải lộ cổng công khai.",
       },
     ],
-    linkLabel: "Đọc chi tiết kiến trúc bảo mật",
+    linkLabel: "Xem chi tiết tài liệu kiến trúc bảo mật",
   },
   quickStart: {
-    eyebrow: "Bắt đầu",
-    title: "Chọn cách chạy",
+    eyebrow: "Cài đặt",
+    title: "Triển khai server và chạy app",
     intro:
-      "Chạy thật thì dùng Docker + Tailscale. Chỉ thử trên máy thì chạy local, hoặc build thẳng app Flutter.",
+      "Dùng Docker + Tailscale nếu muốn truy cập từ xa an toàn, chạy chế độ local để thử nhanh trên máy, hoặc tự build client Flutter từ mã nguồn. Lần build Docker đầu tiên sẽ mất vài phút do biên dịch Rust WASM và Flutter Web.",
     tabs: {
       docker: "Docker + Tailscale",
-      local: "Local",
-      client: "App",
+      local: "Chạy local",
+      client: "Flutter client",
     },
-    copy: "Copy",
-    copied: "Đã copy",
-    copyLabel: "Copy lệnh",
-    scrollLabel: "Khối lệnh, kéo ngang để xem hết",
-    note: "Cần hướng dẫn chi tiết hơn?",
-    noteLink: "Xem tài liệu onboarding.",
+    copy: "Sao chép",
+    copied: "Đã chép",
+    copyLabel: "Sao chép lệnh",
+    scrollLabel: "Cuộn ngang để xem đầy đủ câu lệnh",
+    note: "Chi tiết cấu hình môi trường, NAS và xử lý lỗi có trong",
+    noteLink: "tài liệu onboarding",
   },
   faq: {
     eyebrow: "Hỏi đáp",
-    title: "Vài điều nên biết trước",
-    intro: "Nói trước luôn mấy giới hạn để bạn khỏi bất ngờ.",
+    title: "Câu hỏi thường gặp",
+    intro:
+      "Một vài chi tiết về cách lưu dữ liệu, mạng nội bộ và phiên Zalo Web trước khi bạn dựng server.",
     items: [
       {
-        question: "zalos có phải app chính thức của Zalo không?",
+        question: "zalos có phải sản phẩm chính thức của Zalo không?",
         answer:
-          "Không. zalos là dự án độc lập, không liên quan gì tới Zalo hay VNG. App dùng giao thức Zalo Web không chính thức.",
+          "Không. Đây là dự án mã nguồn mở độc lập, không liên quan tới Zalo hay VNG. Tài khoản cá nhân kết nối như một phiên Zalo Web thông thường; riêng Zalo OA dùng OpenAPI chính thức.",
       },
       {
-        question: "Dữ liệu của mình nằm ở đâu?",
+        question: "Dữ liệu tin nhắn được lưu ở đâu và server có đọc được không?",
         answer:
-          "Trên server bạn tự host, không đi qua bên thứ ba nào. Nội dung tin nhắn và media được mã hoá, key nằm trên thiết bị của bạn.",
+          "Toàn bộ dữ liệu nằm trên server bạn tự chạy, không đi qua bên thứ ba. Nội dung tin nhắn và media cache được mã hoá bằng HPKE với khoá giữ trên thiết bị, nên server không tự giải mã được lịch sử. Metadata như ID cuộc trò chuyện, thời gian, người gửi và số chưa đọc được giữ dạng rõ để phục vụ đồng bộ.",
       },
       {
-        question: "Có bắt buộc dùng Tailscale không?",
+        question: "Có bắt buộc phải dùng Tailscale không?",
         answer:
-          "Không bắt buộc, chạy local cũng được. Nhưng muốn dùng khi ra ngoài thì Tailscale là cách gọn và an toàn nhất, khỏi mở port.",
+          "Không bắt buộc. Bạn có thể chạy trên localhost (127.0.0.1) hoặc đặt sau reverse proxy có TLS riêng. Tuy nhiên Tailscale là cách đơn giản nhất để dùng trên điện thoại khi ra ngoài mà không cần mở port hay quản lý chứng chỉ thủ công.",
       },
       {
-        question: "Sao bản web cần HTTPS?",
+        question: "Tại sao bản web yêu cầu HTTPS?",
         answer:
-          "Trình duyệt chỉ cho chạy phần mã hoá khi trang mở qua HTTPS. Dùng tailscale serve là có HTTPS ngay, một lệnh là xong.",
+          "Bản Flutter Web chạy các module Rust WASM cần SharedArrayBuffer và cross-origin isolation (COOP/COEP), mà trình duyệt chỉ bật trên HTTPS hoặc 127.0.0.1. Truy cập qua HTTP thường như http://100.x.y.z sẽ không chạy được; hãy đặt sau tailscale serve hoặc reverse proxy HTTPS.",
       },
       {
-        question: "Mở Zalo Web ở chỗ khác thì sao?",
+        question: "Nếu mở Zalo Web ở trình duyệt khác thì chuyện gì xảy ra?",
         answer:
-          "Zalo chỉ cho một phiên web mỗi tài khoản, nên zalos sẽ tạm bị đẩy ra. Đóng Zalo Web bên kia là zalos tự kết nối lại.",
+          "Zalo chỉ cho phép một phiên web duy nhất cho mỗi tài khoản, nên phiên trên server zalos sẽ tạm thời bị ngắt. Khi bạn đóng tab Zalo Web kia, server sẽ chờ hết khoảng trễ rồi tự kết nối lại.",
       },
       {
-        question: "Tài khoản có bị khoá không?",
+        question: "Tài khoản Zalo có bị khoá không?",
         answer:
-          "Không. Với Zalo, zalos chỉ là một phiên Zalo Web bình thường, giống hệt bạn mở chat.zalo.me trên trình duyệt.",
+          "Không. Với phía Zalo, zalos hoạt động như một phiên Zalo Web bình thường, tương đương việc bạn mở chat.zalo.me trên trình duyệt. Server gom toàn bộ thao tác từ các thiết bị vào phiên duy nhất đó và giãn cách các request đi ra tối thiểu 300 ms.",
       },
       {
-        question: "Chạy được trên những nền tảng nào?",
+        question: "Hỗ trợ những nền tảng nào?",
         answer:
-          "App có bản iOS, Android, macOS, Windows, Linux và web. Server chạy bằng Docker.",
+          "Client Flutter hỗ trợ iOS, Android, macOS, Windows, Linux và trình duyệt web. Server chạy trên Bun + SQLite, đóng gói sẵn Docker image và kèm theo systemd unit nếu muốn chạy trực tiếp trên Linux.",
       },
     ],
   },
   cta: {
-    title: "Tự host zalos thử nhé?",
-    body: "Dựng server, pair thiết bị, quét QR login Zalo là dùng được.",
-    primary: "Bắt đầu",
-    secondary: "Xem trên GitHub",
+    title: "Tự chạy trên máy chủ của bạn",
+    body: "Toàn bộ mã nguồn server, crate Rust và app Flutter đều mở trên GitHub. Clone repo, dựng Docker và bắt đầu với một thiết bị admin.",
+    primary: "Xem hướng dẫn cài đặt",
+    secondary: "Mở GitHub",
   },
   footer: {
-    description: "Server Zalo tự host, dùng nhiều thiết bị, nhiều tài khoản.",
-    navLabel: "Liên kết",
+    description:
+      "Proxy Zalo tự host và ứng dụng Flutter đa nền tảng cho nhiều thiết bị, nhiều tài khoản.",
+    navLabel: "Tài liệu và mã nguồn",
     github: "GitHub",
-    onboardingVi: "Onboarding (tiếng Việt)",
-    onboardingEn: "Onboarding (English)",
+    onboardingVi: "Hướng dẫn (Tiếng Việt)",
+    onboardingEn: "Hướng dẫn (English)",
     security: "Kiến trúc bảo mật",
     disclaimer:
-      "zalos là dự án độc lập, không liên kết và không được Zalo hay VNG bảo trợ.",
+      "zalos là dự án mã nguồn mở độc lập, không liên kết và không được Zalo hay VNG xác nhận hoặc bảo trợ.",
   },
 }
 
@@ -289,64 +292,64 @@ const en: SiteCopy = {
   links,
   nav: {
     skipToContent: "Skip to content",
-    ariaLabel: "Main menu",
+    ariaLabel: "Primary navigation",
     features: "Features",
     howItWorks: "How it works",
     security: "Security",
-    quickStart: "Get started",
+    quickStart: "Setup",
     faq: "FAQ",
     github: "GitHub",
     openMenu: "Open menu",
     mobileMenuTitle: "Menu",
   },
   controls: {
-    languageLabel: "Change language",
-    themeToggle: "Toggle light/dark mode",
-    githubLabel: "View the zalos source on GitHub",
+    languageLabel: "Language",
+    themeToggle: "Switch color theme",
+    githubLabel: "zalos source code on GitHub",
   },
   hero: {
-    badge: "Self-hosted · Many devices · Many accounts",
-    title: "One Zalo account, on every device you own.",
+    badge: "Self-hosted Zalo proxy · Open source",
+    title: "Use Zalo across multiple devices via your own server",
     subtitle:
-      "zalos is a Zalo server you host yourself. Log in to Zalo once on the server, then use it from your phone, laptop, iPad and browser at the same time. Zalo Official Accounts work too.",
-    primaryCta: "Host it yourself",
-    secondaryCta: "View source on GitHub",
+      "Zalo limits you to one phone and one desktop, with no Linux app. zalos keeps the session on your own server and syncs messages, calls, and history to all your devices, across personal accounts and Zalo Official Accounts.",
+    primaryCta: "Setup guide",
+    secondaryCta: "Source on GitHub",
     platforms: ["iOS", "Android", "macOS", "Windows", "Linux", "Web"],
     mockup: {
       caption:
-        "The zalos chat screen: a group chatting, messages synced across devices.",
-      groupName: "zalos team",
-      devices: "3 devices online",
-      pinned: "Pinned: NAS deploy checklist",
-      composerPlaceholder: "Type a message...",
+        "zalos chat interface showing a product team group synced across 3 devices.",
+      groupName: "Product Team",
+      devices: "Synced · 3 devices",
+      pinned: "Pinned: v2.4 release checklist",
+      composerPlaceholder: "Message...",
       messages: [
         {
           side: "in",
-          text: "NAS deploy is done",
+          text: "Pushed the checkout fix to staging",
           time: "09:41",
           reaction: null,
         },
         {
           side: "out",
-          text: "Nice, logging in on my iPad now",
+          text: "Got it, testing the QR payment flow now",
           time: "09:42",
           reaction: "2",
         },
         {
           side: "in",
-          text: "Messages already showed up on my phone",
+          text: "Check orders with promo codes too, totals were off yesterday",
           time: "09:43",
           reaction: null,
         },
         {
           side: "out",
-          text: "Same here, read receipts match on my laptop too",
+          text: "Numbers match now. Good to ship at 2pm?",
           time: "09:44",
           reaction: null,
         },
         {
           side: "in",
-          text: "New device? Make a fresh pairing code, the old one expired",
+          text: "Yep, I'll drop the release notes in here first",
           time: "09:45",
           reaction: null,
         },
@@ -355,208 +358,211 @@ const en: SiteCopy = {
   },
   features: {
     eyebrow: "Features",
-    title: "What zalos does",
+    title: "Core features",
     intro:
-      "Most of what you use Zalo for every day, running through your own server.",
+      "Personal chats, work groups, calls, and Official Accounts. Every client talks only to your server, which relays traffic to Zalo.",
     items: [
       {
-        title: "Many accounts",
+        title: "Multiple accounts & access control",
         description:
-          "Personal accounts and Zalo Official Accounts in one app. Switch with a tap.",
+          "Run personal Zalo accounts alongside Official Accounts in one app. Devices get admin or member roles, with per-account ACLs and instant revocation.",
         badge: null,
       },
       {
-        title: "Sync across devices",
+        title: "Multi-device sync",
         description:
-          "Messages, read receipts, reactions and typing sync right away between phone, desktop and web.",
+          "Messages, read receipts, reactions, and typing indicators stay in sync across phone, tablet, desktop (including Linux), and web.",
         badge: null,
       },
       {
-        title: "Light on storage",
+        title: "Light on device storage",
         description:
-          "Chat history and media live on the server, and devices only download what you open. No more Zalo eating up your phone's storage.",
+          "Chat history and media stay in SQLite on your server, and clients only fetch what you open. Zalo stops eating up gigabytes of phone storage.",
         badge: null,
       },
       {
-        title: "Chat and files",
+        title: "Messaging & media",
         description:
-          "1:1 and group chat, replies, mentions, recall, self-destructing messages, files up to 100 MiB, voice messages, stickers, message search.",
+          "1:1 and group chat with quotes, @mentions, formatting, urgency tags, recall, self-destruct timers, files up to 100 MiB, voice notes, stickers, and search.",
         badge: null,
       },
       {
-        title: "Group tools",
+        title: "Group board & productivity",
         description:
-          "Pinned messages, group board, polls, notes and reminders. Everything a team needs inside a Zalo group.",
+          "Pinned messages in both DMs and groups, a group board, polls (multi-choice and anonymous), shared notes, and one-time or recurring reminders.",
         badge: null,
       },
       {
-        title: "Voice and video calls",
+        title: "1:1 voice & video calls",
         description:
-          "1:1 calls with regular Zalo users. All your devices ring, and whichever picks up first takes the call.",
+          "Call regular Zalo users from any client via the server's ZRTC-to-WebRTC bridge. Every paired device rings together; whichever answers takes the call.",
         badge: null,
       },
       {
-        title: "Contacts and QR",
+        title: "Contacts & QR scanner",
         description:
-          "Find people by phone number, add friends, block, and scan QR codes like in the Zalo app.",
+          "Find users by phone number, manage friend requests, set aliases, block contacts, and scan both Zalo QR codes and zalos pairing codes.",
         badge: null,
       },
       {
-        title: "Tidy conversations",
+        title: "Conversation organization",
         description:
-          "Pin, mute, color labels, archive, hide conversations behind a PIN, and auto-delete timers.",
+          "Pin or mute chats, assign color labels, archive threads, hide conversations behind a PIN, and set per-chat auto-delete timers.",
         badge: null,
       },
     ],
   },
   howItWorks: {
     eyebrow: "How it works",
-    title: "Three steps and you're in",
+    title: "How setup and sync work",
     intro:
-      "You own the server, the devices and the login session. zalos just moves messages and keeps everything in sync.",
+      "Clients never talk to Zalo directly. Your server maintains one Zalo Web session per account, spaces outbound requests out, writes events to SQLite, and broadcasts updates to paired devices.",
     steps: [
       {
-        title: "Run the server with Docker",
+        title: "Start the server container",
         description:
-          "One docker compose command. The image ships the web app too, no separate build.",
+          "Bring up the Docker Compose stack on a VPS, NAS, or home server. The image bundles the Flutter web client on the same port.",
       },
       {
         title: "Pair your devices",
         description:
-          "The server gives you a one-time pairing code. Scan the QR or paste the code into the app.",
+          "Run zalos pair to generate a single-use URI or QR code. The first device is admin; later member devices start with no account access until granted.",
       },
       {
-        title: "Log in to Zalo with QR",
+        title: "Sign in to Zalo",
         description:
-          "Scan the QR with Zalo on your phone and the server starts syncing your messages.",
+          "Scan the QR code from your phone's Zalo app, or add a Zalo Official Account under Me → Accounts, and the server starts syncing conversations.",
       },
     ],
-    architectureTitle: "How your data flows",
+    architectureTitle: "Connection path",
     architecture: {
-      clients: "zalos apps",
-      transport: "WebSocket + Noise",
-      server: "Your server",
-      zalo: "Zalo",
+      clients: "Flutter clients",
+      transport: "WebSocket + Noise IKpsk2",
+      server: "zalos server (Bun + SQLite)",
+      zalo: "Zalo Web / OA API",
     },
   },
   security: {
     eyebrow: "Security",
-    title: "Your server, your keys",
+    title: "Rust crypto, keys on your devices",
     intro:
-      "There is no middleman server. Your data stays on your machine, and it is encrypted.",
+      "All cryptography lives in two Rust crates (zalos-noise and zalos-vault), never reimplemented in TypeScript or Dart. If a server disk or SQLite backup leaks, sealed message bodies and cached media remain unreadable.",
     points: [
       {
-        title: "Noise connections",
-        chip: "IKpsk2_25519_ChaChaPoly_BLAKE2s",
+        title: "Mutually authenticated Noise transport",
+        chip: "Noise_IKpsk2_25519",
         description:
-          "Every connection is a mutually authenticated Noise session. Apps pin the server key, so nobody can impersonate it.",
+          "Every WebSocket runs Noise_IKpsk2_25519_ChaChaPoly_BLAKE2s, bound to its route prologue and pinned to the server's static key from pairing.",
       },
       {
-        title: "Encrypted storage",
-        chip: "HPKE / RFC 9180",
+        title: "Client-held HPKE vault",
+        chip: "HPKE · RFC 9180",
         description:
-          "Messages and media on the server are encrypted with HPKE. The keys live on your devices, so the server can't read them on its own.",
+          "Message bodies and cached media are sealed at rest with a client-derived public key. The 32-byte vault root never leaves your devices and supports versioned key rotation.",
       },
       {
-        title: "One-time pairing codes",
-        chip: "10 minutes",
-        description: "Each code works once and expires after 10 minutes.",
+        title: "Single-use pairing & per-account ACLs",
+        chip: "RBAC · 10m TTL",
+        description:
+          "Pairing tokens expire in 10 minutes and work once. Each device gets its own PSK, starts with an empty member ACL, and can be revoked live.",
       },
       {
-        title: "Locked-down container",
-        chip: "non-root",
+        title: "Hardened container defaults",
+        chip: "non-root · ro-fs",
         description:
-          "Runs as a regular user on a read-only filesystem with every unneeded capability dropped.",
+          "Runs non-root on a read-only root filesystem with dropped Linux capabilities and startup hardening checks via zalos doctor.",
       },
       {
-        title: "SSRF protection",
-        chip: "SSRF guard",
+        title: "DNS-pinned SSRF guard",
+        chip: "DNS-pinned SSRF",
         description:
-          "Every media download is checked against its resolved address before it leaves the server.",
+          "Media fetches pin resolved IPs at connect time to block DNS rebinding and HTTPS downgrades, with an optional strict Zalo/CDN egress allowlist.",
       },
       {
-        title: "Private on your tailnet",
-        chip: "Tailscale",
+        title: "Private over your tailnet",
+        chip: "Tailscale · tailnet",
         description:
-          "Built to live on your own Tailscale network. No ports open to the internet.",
+          "Ships with a Tailscale sidecar setup so no ports are exposed to the public internet. Use tailscale serve for HTTPS when accessing the web client.",
       },
     ],
-    linkLabel: "Read the security architecture",
+    linkLabel: "Read SECURITY_ARCHITECT.md",
   },
   quickStart: {
-    eyebrow: "Get started",
-    title: "Pick how you want to run it",
+    eyebrow: "Setup",
+    title: "Deploy the server",
     intro:
-      "For real use, go with Docker + Tailscale. Just trying it out? Run it locally, or build the Flutter app directly.",
+      "Use Docker + Tailscale for daily access across devices, local mode to test on loopback, or build the Flutter client directly. The first Docker build takes a few minutes while it compiles Rust WASM and Flutter Web.",
     tabs: {
       docker: "Docker + Tailscale",
-      local: "Local",
-      client: "App",
+      local: "Local mode",
+      client: "Flutter client",
     },
     copy: "Copy",
     copied: "Copied",
     copyLabel: "Copy commands",
-    scrollLabel: "Commands, scroll sideways to see all",
-    note: "Need more detail?",
-    noteLink: "Read the onboarding guide.",
+    scrollLabel: "Scroll horizontally to view full commands",
+    note: "For environment setup, NAS deployment, and troubleshooting, see the",
+    noteLink: "onboarding guide",
   },
   faq: {
     eyebrow: "FAQ",
-    title: "Good to know first",
-    intro: "The limits, up front, so nothing surprises you later.",
+    title: "Frequently asked questions",
+    intro:
+      "A few details on storage, networking, and how the Zalo Web session behaves before you deploy.",
     items: [
       {
-        question: "Is zalos an official Zalo app?",
+        question: "Is zalos affiliated with Zalo?",
         answer:
-          "No. zalos is an independent project with no ties to Zalo or VNG. It uses Zalo's unofficial web protocol.",
+          "No. It is an independent open-source project with no affiliation with Zalo or VNG. Personal accounts connect as a regular Zalo Web session; Official Accounts use Zalo's OA OpenAPI.",
       },
       {
-        question: "Where does my data live?",
+        question: "Where is data stored, and can the server read it?",
         answer:
-          "On the server you host. Nothing goes through a third party. Message content and media are encrypted, and the keys stay on your devices.",
+          "Everything stays on the server you host, with no third-party relay. Message bodies and cached media are sealed at rest using HPKE with keys held on your devices, so the server cannot decrypt stored history. Operational metadata (thread IDs, timestamps, senders, unread counts) remains clear for routing and sync.",
       },
       {
         question: "Do I have to use Tailscale?",
         answer:
-          "No, you can run it locally. But if you want to use it away from home, Tailscale is the simplest safe option, with no ports to open.",
+          "No. You can run on localhost (127.0.0.1) or behind any TLS reverse proxy you already manage. Tailscale is just the easiest way to reach your server from mobile devices without opening firewall ports.",
       },
       {
-        question: "Why does the web app need HTTPS?",
+        question: "Why does the web client require HTTPS?",
         answer:
-          "Browsers only allow the encryption the web app relies on over HTTPS. tailscale serve gives you HTTPS with one command.",
+          "The Flutter web client uses Rust WASM modules that rely on SharedArrayBuffer and cross-origin isolation (COOP/COEP), which browsers only allow on HTTPS or 127.0.0.1. Plain HTTP over a LAN or tailnet IP will not work; put it behind tailscale serve or a TLS proxy.",
       },
       {
-        question: "What if I open Zalo Web somewhere else?",
+        question: "What happens if I open Zalo Web in another browser?",
         answer:
-          "Zalo allows one web session per account, so zalos gets bumped for a while. Close the other Zalo Web tab and zalos reconnects on its own.",
+          "Zalo only permits one active web session per account, so opening Zalo Web elsewhere temporarily disconnects zalos. Once you close that other tab, the server waits out a cooldown and reconnects automatically.",
       },
       {
-        question: "Can my account get locked?",
+        question: "Could my Zalo account get locked?",
         answer:
-          "No. To Zalo, zalos is just a regular Zalo Web session, the same as opening chat.zalo.me in your browser.",
+          "No. To Zalo, zalos looks like a regular Zalo Web session, the same as keeping chat.zalo.me open in a browser. The server funnels all device actions through that single session and spaces outbound requests at least 300 ms apart.",
       },
       {
         question: "Which platforms are supported?",
         answer:
-          "The app runs on iOS, Android, macOS, Windows, Linux and the web. The server runs in Docker.",
+          "The Flutter client builds for iOS, Android, macOS, Windows, Linux, and Web. The Bun + SQLite server ships as a Docker image, with a systemd unit included if you prefer running directly on Linux.",
       },
     ],
   },
   cta: {
-    title: "Give self-hosting zalos a try?",
-    body: "Start the server, pair a device, scan the QR to log in to Zalo, done.",
-    primary: "Get started",
-    secondary: "View on GitHub",
+    title: "Run it on your own hardware",
+    body: "The server, Rust crypto crates, and Flutter client are all open source on GitHub. Clone the repo, bring up Docker, and pair your first admin device.",
+    primary: "Jump to setup",
+    secondary: "Open GitHub",
   },
   footer: {
-    description: "A self-hosted Zalo server for many devices and many accounts.",
-    navLabel: "Links",
+    description:
+      "Self-hosted Zalo proxy and cross-platform Flutter client for multi-device, multi-account use.",
+    navLabel: "Docs and source",
     github: "GitHub",
     onboardingVi: "Onboarding (Vietnamese)",
     onboardingEn: "Onboarding (English)",
     security: "Security architecture",
     disclaimer:
-      "zalos is an independent project. It is not affiliated with, endorsed by or sponsored by Zalo or VNG.",
+      "zalos is an independent open-source project and is not affiliated with, endorsed by, or sponsored by Zalo or VNG.",
   },
 }
 

@@ -22,13 +22,13 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
   ),
-  title: "zalos · Một tài khoản Zalo, xài trên mọi thiết bị",
+  title: "zalos · Proxy Zalo tự host cho nhiều thiết bị",
   description:
-    "Server Zalo bạn tự host. Login một lần, dùng cùng lúc trên điện thoại, máy tính, iPad và web. Có app cho iOS, Android, macOS, Windows, Linux.",
+    "Proxy Zalo tự host và ứng dụng Flutter cho iOS, Android, macOS, Windows, Linux và Web. Hỗ trợ nhiều thiết bị, nhiều tài khoản cá nhân lẫn Zalo OA.",
   openGraph: {
-    title: "zalos · Một tài khoản Zalo, xài trên mọi thiết bị",
+    title: "zalos · Proxy Zalo tự host cho nhiều thiết bị",
     description:
-      "Server Zalo bạn tự host, dùng nhiều thiết bị, nhiều tài khoản.",
+      "Proxy Zalo tự host cho nhiều thiết bị và nhiều tài khoản, kèm mã hoá Noise và HPKE.",
     siteName: "zalos",
     locale: "vi_VN",
     type: "website",
